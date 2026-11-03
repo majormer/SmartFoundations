@@ -6,6 +6,7 @@
 #include "FGBuildablePolePipe.h"
 #include "Hologram/FGConveyorPoleHologram.h"
 #include "Hologram/FGPipelinePoleHologram.h"
+#include "FGFactoryConnectionComponent.h"
 #include "UObject/UnrealType.h"
 
 bool SFSelectedPoleState::IsSelectedPole(AFGHologram* Hologram)
@@ -21,6 +22,27 @@ bool SFSelectedPoleState::GetSelectedMeshes(AFGHologram* Hologram, TArray<UStati
 {
 	OutMeshes.Reset();
 	if (!IsSelectedPole(Hologram)) return false;
+	if (AFGConveyorPoleHologram* Conveyor = Cast<AFGConveyorPoleHologram>(Hologram))
+	{
+		// The native initial mesh/height can exist while SnapOnly0 still sits at the base.
+		// The selected-pole preview bypasses the legacy conveyor-pole sync branch, so refresh
+		// that initial native state before measuring it or copying its connector to children.
+		// Never refresh an active height drag: native placement owns that update sequence.
+		EPoleHologramBuildStep Step = EPoleHologramBuildStep::PHBS_AdjustHeight;
+		if (const FProperty* Property = FindFProperty<FProperty>(AFGPoleHologram::StaticClass(), TEXT("mBuildStep")))
+			Property->CopyCompleteValue(&Step, Property->ContainerPtrToValuePtr<void>(Conveyor));
+		const UFGFactoryConnectionComponent* Snap = Conveyor->GetSnapConnection();
+		if (!IsValid(Snap)) return false;
+		const float SnapHeight = Conveyor->GetActorTransform().InverseTransformPosition(Snap->GetComponentLocation()).Z;
+		if (Step == EPoleHologramBuildStep::PHBS_PlacementAndRotation
+			&& (!FMath::IsFinite(Conveyor->GetPoleHeight()) || Conveyor->GetPoleHeight() <= 0.0f
+				|| FMath::IsNearlyZero(SnapHeight, 0.01f)))
+		{
+			UFunction* Refresh = Conveyor->FindFunction(TEXT("OnRep_PoleVariationIndex"));
+			if (!Refresh) return false;
+			Conveyor->ProcessEvent(Refresh, nullptr);
+		}
+	}
 	OutMeshes.Add(CastChecked<AFGPoleHologram>(Hologram)->GetPoleMesh());
 	if (Hologram->IsA<AFGPipelinePoleHologram>())
 	{

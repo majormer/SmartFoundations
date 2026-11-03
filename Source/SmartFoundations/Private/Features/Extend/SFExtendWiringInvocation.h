@@ -24,6 +24,13 @@ public:
     const FObjectKey& GetParentIdentity() const { return Parent; }
     const FNetConstructionID& GetRequestedConstructionId() const { return RequestedConstructionId; }
 
+    // Preserve the last pre-wiring refusal for the operation's settlement report.
+    // An early Construct callback normally precedes payment; a later successful
+    // invocation clears that provisional reason rather than reporting it as failure.
+    bool Refuse(const TCHAR* Reason) { LastRefusal = Reason; return false; }
+    void ClearRefusal() { LastRefusal.Reset(); }
+    const FString& GetLastRefusal() const { return LastRefusal; }
+
     bool BindParent(const FGuid& CurrentWorld, const FObjectKey& ConstructingRoot,
         const FNetConstructionID& NativeId, const FObjectKey& ReturnedParent)
     {
@@ -68,6 +75,9 @@ public:
     TArray<FSFScaledExtendClone> ScaledPlans;
     TMap<FString, FObjectKey> SourceBindings;
     TMap<FString, TWeakObjectPtr<UClass>> ExpectedClasses;
+    // Native routing can replace a lane's template curve. Freeze the final
+    // pre-construction spline rather than treating template tangents as output.
+    TMap<FString, FSFSplineData> PreparedPipeSplines;
     TSet<FObjectKey> ActualOutputs;
     TMap<FString, TObjectPtr<AActor>> ActorView;
     bool bRequiresOwnedNativePhase = false;
@@ -82,4 +92,5 @@ private:
     bool bParentBound = false;
     bool bInvalidated = false;
     bool bInvoked = false;
+    FString LastRefusal;
 };

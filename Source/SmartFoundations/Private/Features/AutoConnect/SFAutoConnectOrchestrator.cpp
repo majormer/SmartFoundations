@@ -1,6 +1,7 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 #include "Features/AutoConnect/SFAutoConnectOrchestrator.h"
+#include "Shared/Conduits/SFFactoryBranchPolicy.h"
 #include "Features/AutoConnect/SFAutoConnectService.h"
 #include "Features/AutoConnect/Preview/SFLiftRoutePreview.h"
 #include "Buildables/FGBuildableBlueprintDesigner.h"
@@ -253,6 +254,7 @@ void USFAutoConnectOrchestrator::Cleanup()
 	}
 	ReservedInputs.Empty();
 	AngleRejectedSideConnectors.Empty();
+	FacingRejectedSideConnectors.Empty();
 	
 	// Clear timers if active
 	if (ParentHologram.IsValid() && ParentHologram->GetWorld())
@@ -784,6 +786,7 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 	AutoConnectService->GetSkipSummary().ResetBeltBuilding();
 	AutoConnectService->GetSkipSummary().ResetBeltManifold();
 	AngleRejectedSideConnectors.Empty();
+	FacingRejectedSideConnectors.Empty();
 
 	// Issue #246: Check if belt auto-connect is enabled in runtime settings
 	// This respects the global config setting (bAutoConnectEnabled) which initializes runtime settings
@@ -891,7 +894,25 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 	// ========================================
 	TSet<UFGFactoryConnectionComponent*> AssignedDistributorConnectors;
 	TSet<UFGFactoryConnectionComponent*> AssignedBuildingConnectors;
+	// One branch per distributor/building pair; opposite sides may serve different buildings.
+	TMap<AFGHologram*, TSet<AFGBuildable*>> AssignedBuildingsByDistributor;
 	TMap<AFGHologram*, TArray<FPotentialConnection>> AssignmentsByDistributor;
+    TMap<AFGHologram*, TMap<UFGFactoryConnectionComponent*, UFGFactoryConnectionComponent*>> AssignedBranches;
+    auto HasCompatibleBank = [&](const FPotentialConnection& Candidate)
+    {
+        const auto* Branches = AssignedBranches.Find(Candidate.Distributor);
+        if (!Branches) return true;
+        for (const auto& Branch : *Branches)
+        {
+            if (Branch.Key == Candidate.DistributorConnector) continue;
+            if (!SFFactoryBranchPolicy::OpposingBanks(Candidate.Distributor->GetActorLocation(),
+                Branch.Value->GetComponentLocation(), Branch.Value->GetConnectorNormal(),
+                Candidate.BuildingConnector->GetComponentLocation(), Candidate.BuildingConnector->GetConnectorNormal(), true))
+                return false;
+        }
+        return true;
+    };
+
 	
 	int32 TotalAssignments = 0;
 	for (const FPotentialConnection& Conn : AllConnections)
@@ -903,14 +924,23 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 		}
 		
 		// Skip if building connector already assigned
-		if (AssignedBuildingConnectors.Contains(Conn.BuildingConnector))
+		if (AssignedBuildingConnectors.Contains(Conn.BuildingConnector)
+			|| AssignedBuildingsByDistributor.FindOrAdd(Conn.Distributor).Contains(Conn.Building))
 		{
 			continue;
 		}
 		
+        if (!HasCompatibleBank(Conn))
+        {
+            FacingRejectedSideConnectors.Add(Conn.DistributorConnector);
+            continue;
+        }
+
 		// Assign this connection
 		AssignedDistributorConnectors.Add(Conn.DistributorConnector);
 		AssignedBuildingConnectors.Add(Conn.BuildingConnector);
+		AssignedBuildingsByDistributor.FindOrAdd(Conn.Distributor).Add(Conn.Building);
+        AssignedBranches.FindOrAdd(Conn.Distributor).Add(Conn.DistributorConnector, Conn.BuildingConnector);
 		ReservedInputs.Add(Conn.BuildingConnector, Conn.Distributor);
 		
 		// Track assignment by distributor for belt creation
@@ -983,6 +1013,8 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 				else
 				{
 					AssignedBuildingConnectors.Remove(Conn.BuildingConnector);
+				AssignedBuildingsByDistributor.FindOrAdd(Conn.Distributor).Remove(Conn.Building);
+                AssignedBranches.FindOrAdd(Conn.Distributor).Remove(Conn.DistributorConnector);
 					ReservedInputs.Remove(Conn.BuildingConnector);
 					AutoConnectService->GetSkipSummary().BeltsInvalidShape++;
 				}
@@ -1094,6 +1126,8 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 
 				// Release the declined pairing so another distributor may still use the port
 				AssignedBuildingConnectors.Remove(Conn.BuildingConnector);
+				AssignedBuildingsByDistributor.FindOrAdd(Conn.Distributor).Remove(Conn.Building);
+                AssignedBranches.FindOrAdd(Conn.Distributor).Remove(Conn.DistributorConnector);
 				ReservedInputs.Remove(Conn.BuildingConnector);
 
 				// Find the next-best unassigned candidate for this distributor connector
@@ -1105,10 +1139,16 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 						continue;
 					}
 					if (TriedBuildingConnectors.Contains(Cand.BuildingConnector) ||
-						AssignedBuildingConnectors.Contains(Cand.BuildingConnector))
+						AssignedBuildingConnectors.Contains(Cand.BuildingConnector)
+						|| AssignedBuildingsByDistributor.FindOrAdd(Cand.Distributor).Contains(Cand.Building))
 					{
 						continue;
 					}
+                    if (!HasCompatibleBank(Cand))
+                    {
+                        FacingRejectedSideConnectors.Add(Cand.DistributorConnector);
+                        continue;
+                    }
 					NextCandidate = &Cand;
 					break;
 				}
@@ -1121,6 +1161,8 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 				// Reserve the replacement pairing and try again
 				Conn = *NextCandidate;
 				AssignedBuildingConnectors.Add(Conn.BuildingConnector);
+		AssignedBuildingsByDistributor.FindOrAdd(Conn.Distributor).Add(Conn.Building);
+        AssignedBranches.FindOrAdd(Conn.Distributor).Add(Conn.DistributorConnector, Conn.BuildingConnector);
 				ReservedInputs.Add(Conn.BuildingConnector, Conn.Distributor);
 				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      🔁 RETRY with next candidate: %s -> %s"),
 					*GetNameSafe(Conn.DistributorConnector), *GetNameSafe(Conn.BuildingConnector));
@@ -1146,6 +1188,8 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 					AutoConnectService->GetSkipSummary().BeltsInvalidShape++;
 				}
 				AssignedBuildingConnectors.Remove(Conn.BuildingConnector);
+				AssignedBuildingsByDistributor.FindOrAdd(Conn.Distributor).Remove(Conn.Building);
+                AssignedBranches.FindOrAdd(Conn.Distributor).Remove(Conn.DistributorConnector);
 				ReservedInputs.Remove(Conn.BuildingConnector);
 				AssignedDistributorConnectors.Remove(Conn.DistributorConnector);
 				UE_LOG(LogSmartAutoConnect, Verbose, TEXT("      ❌ BUILDING BELT DROPPED after retries (tooSteep=%d invalidShape=%d)"),
@@ -1237,6 +1281,10 @@ void USFAutoConnectOrchestrator::EvaluateConnections()
 			AutoConnectService->StoreBeltPreviews(Distributor, TArray<TSharedPtr<FBeltPreviewHelper>>());
 		}
 	}
+
+    for (UFGFactoryConnectionComponent* Connector : FacingRejectedSideConnectors)
+        if (!AssignedDistributorConnectors.Contains(Connector))
+            ++AutoConnectService->GetSkipSummary().BeltsMisalignedPorts;
 
 	// Summary log
 	UE_LOG(LogSmartAutoConnect, Verbose, TEXT("🎯 EVALUATION COMPLETE: %d belts for %d distributors | Reservations: %d"),
@@ -2193,6 +2241,15 @@ void USFAutoConnectOrchestrator::CollectPotentialConnections(
 						continue; // Too far
 					}
 					
+                    if (!SFFactoryBranchPolicy::FacesOpposite(DistConnectorNormal, BuildingConnector->GetConnectorNormal(),
+                        USFAutoConnectService::FACING_SANITY_ANGLE, true))
+                    {
+                        if (SFFactoryBranchPolicy::IsForwardCandidate(DistConnectorNormal,
+                            BuildingConnectorPos - DistConnectorPos, true))
+                            FacingRejectedSideConnectors.Add(DistConnector);
+                        continue;
+                    }
+
 					// Calculate the angle between connector normal and direction to building
 					FVector ToBuilding = (BuildingConnectorPos - DistConnectorPos).GetSafeNormal();
 					float AngleCosine = FVector::DotProduct(DistConnectorNormal, ToBuilding);

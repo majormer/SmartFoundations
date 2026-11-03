@@ -249,6 +249,7 @@ private:
 	 * but were rejected by the belt angle gate. Members still unassigned after global assignment
 	 * count as "too steep" skips in the HUD tally. Cleared at each EvaluateConnections(). */
 	TSet<UFGFactoryConnectionComponent*> AngleRejectedSideConnectors;
+	TSet<UFGFactoryConnectionComponent*> FacingRejectedSideConnectors;
 
 	/** Manifold reservation map - tracks distributor→distributor chaining inputs separately */
 	TMap<UFGFactoryConnectionComponent*, AFGHologram*> ManifoldReservedInputs;

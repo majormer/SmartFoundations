@@ -32,7 +32,7 @@ struct FContext
     bool bCreatingGroup = false;
     bool bCreationAttempted = false;
 };
-TArray<TSharedPtr<FContext>> Contexts;
+TArray<TSharedPtr<FContext>> NativeConstructionContexts;
 bool SameInput(const FNetConstructionID& A, const FNetConstructionID& B)
 {
     return A.NetPlayerID == B.NetPlayerID && A.Server_ID == B.Server_ID && A.Client_ID == B.Client_ID;
@@ -58,23 +58,23 @@ FSFNativeConstructionContext::FScope::FScope(AFGHologram* Preview, const FNetCon
     bEntered = true;
     auto* World = Preview->GetWorld();
     TSharedPtr<FContext> Outer;
-    if (!Contexts.IsEmpty()) Outer = Contexts.Last();
+    if (!NativeConstructionContexts.IsEmpty()) Outer = NativeConstructionContexts.Last();
     auto* Root = Preview;
     TSet<AFGHologram*> Seen;
     while (Root)
     {
         if (Outer && Outer->World.Get() == World && SameInput(Outer->Id, Id)
             && FObjectKey(Root) == Outer->RootKey)
-        { Contexts.Add(Outer); return; }
+        { NativeConstructionContexts.Add(Outer); return; }
         if (!IsValid(Root) || Seen.Contains(Root) || Root->GetWorld() != World || !Root->HasAuthority())
-        { Contexts.Add(TSharedPtr<FContext>()); return; }
+        { NativeConstructionContexts.Add(TSharedPtr<FContext>()); return; }
         Seen.Add(Root);
         auto* Parent = ParentOf(Root);
         if (!Parent) break;
         Root = Parent;
     }
     if (!IsValid(Root) || !IsValid(World) || World->bIsTearingDown || World->GetNetMode() == NM_Client)
-    { Contexts.Add(TSharedPtr<FContext>()); return; }
+    { NativeConstructionContexts.Add(TSharedPtr<FContext>()); return; }
     auto Basis = MakeShared<FContext>();
     Basis->RootKey = FObjectKey(Root); Basis->Root = Root; Basis->World = World;
     Basis->RootPin = MakeShared<TStrongObjectPtr<AFGHologram>>(Root);
@@ -82,27 +82,27 @@ FSFNativeConstructionContext::FScope::FScope(AFGHologram* Preview, const FNetCon
     Basis->bBlueprint = Root->IsA<AFGBlueprintHologram>();
     Basis->bHadDesigner = Root->GetBlueprintDesigner() != nullptr;
     Basis->bMultiGrid = HasGrid(Root);
-    Contexts.Add(MoveTemp(Basis));
+    NativeConstructionContexts.Add(MoveTemp(Basis));
 }
 FSFNativeConstructionContext::FScope::~FScope()
 {
-    if (bEntered) Contexts.Pop(EAllowShrinking::No);
+    if (bEntered) NativeConstructionContexts.Pop(EAllowShrinking::No);
 }
 AFGHologram* FSFNativeConstructionContext::GetRoot()
 {
-    return IsInGameThread() && !Contexts.IsEmpty() && Contexts.Last() ? Contexts.Last()->Root.Get() : nullptr;
+    return IsInGameThread() && !NativeConstructionContexts.IsEmpty() && NativeConstructionContexts.Last() ? NativeConstructionContexts.Last()->Root.Get() : nullptr;
 }
 bool FSFNativeConstructionContext::MatchesInput(const FObjectKey& Root, const FNetConstructionID& Id, const UWorld* World)
 {
-    if (!IsInGameThread() || Contexts.IsEmpty()) return false;
-    const auto Basis = Contexts.Last();
+    if (!IsInGameThread() || NativeConstructionContexts.IsEmpty()) return false;
+    const auto Basis = NativeConstructionContexts.Last();
     return Basis && Basis->RootKey == Root && Basis->World.Get() == World && SameInput(Basis->Id, Id);
 }
 
 bool FSFNativeConstructionContext::AdoptGroup(AFGHologram* Root, const FNetConstructionID& Id, AFGBlueprintProxy* Group)
 {
-    if (!IsInGameThread() || Contexts.IsEmpty() || !IsValid(Root) || !IsValid(Group)) return false;
-    const auto Basis = Contexts.Last();
+    if (!IsInGameThread() || NativeConstructionContexts.IsEmpty() || !IsValid(Root) || !IsValid(Group)) return false;
+    const auto Basis = NativeConstructionContexts.Last();
     if (!Basis || Basis->RootKey != FObjectKey(Root) || !SameInput(Basis->Id, Id)
         || Basis->bBlueprint || Basis->bHadDesigner || Root->GetBlueprintDesigner()
         || Basis->World.Get() != Root->GetWorld() || Group->GetWorld() != Root->GetWorld()
@@ -113,8 +113,8 @@ bool FSFNativeConstructionContext::AdoptGroup(AFGHologram* Root, const FNetConst
 }
 AFGBlueprintProxy* FSFNativeConstructionContext::GetGroup(const UWorld* World)
 {
-    if (!IsInGameThread() || Contexts.IsEmpty()) return nullptr;
-    const auto Basis = Contexts.Last();
+    if (!IsInGameThread() || NativeConstructionContexts.IsEmpty()) return nullptr;
+    const auto Basis = NativeConstructionContexts.Last();
     auto* Group = Basis ? Basis->Group.Get() : nullptr;
     return Basis && !Basis->bBlueprint && !Basis->bHadDesigner && Basis->World.Get() == World
         && IsValid(Group) && !Group->IsActorBeingDestroyed() && Group->HasAuthority() && Group->GetWorld() == World ? Group : nullptr;
@@ -123,8 +123,8 @@ AFGBlueprintProxy* FSFNativeConstructionContext::GetGroup(const UWorld* World)
 AFGBlueprintProxy* FSFNativeConstructionContext::GroupBuildable(AFGBuildable* Buildable, bool& bCreatedProxy)
 {
     bCreatedProxy = false;
-    if (!IsInGameThread() || Contexts.IsEmpty() || !IsValid(Buildable)) return nullptr;
-    const auto Basis = Contexts.Last();
+    if (!IsInGameThread() || NativeConstructionContexts.IsEmpty() || !IsValid(Buildable)) return nullptr;
+    const auto Basis = NativeConstructionContexts.Last();
     if (!Basis || Basis->bBlueprint || Basis->bHadDesigner || Basis->bCreatingGroup) return nullptr;
     auto* World = Basis->World.Get();
     if (!IsValid(World) || World->bIsTearingDown || World->GetNetMode() == NM_Client

@@ -28,13 +28,13 @@ bool FSFNativeFloorHolePlacement::Validate(AFGHologram* Root, AFGHologram* Child
     FCollisionQueryParams Query(SCENE_QUERY_STAT(SmartNativeFloorHole), false, Root);
     Query.AddIgnoredActor(Player);
     Query.AddIgnoredActor(Child);
-    TArray<AFGHologram*> Pending{Root};
+    TArray<AFGHologram*> PendingHolograms{Root};
     TSet<AFGHologram*> Seen;
-    while (!Pending.IsEmpty())
+    while (!PendingHolograms.IsEmpty())
     {
-        auto* Holo = Pending.Pop(EAllowShrinking::No);
+        auto* Holo = PendingHolograms.Pop(EAllowShrinking::No);
         if (!IsValid(Holo) || Seen.Contains(Holo)) continue;
-        Seen.Add(Holo); Query.AddIgnoredActor(Holo); Pending.Append(Holo->GetHologramChildren());
+        Seen.Add(Holo); Query.AddIgnoredActor(Holo); PendingHolograms.Append(Holo->GetHologramChildren());
     }
     const FVector Axis = Pose.GetUnitAxis(EAxis::Z);
     TArray<FHitResult> Hits;

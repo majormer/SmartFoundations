@@ -44,6 +44,7 @@
 #include "Equipment/FGBuildGunBuild.h"        // UFGBuildGunStateBuild::InternalConstructHologram / GetHologram
 #include "Core/Net/SFNetworkHelper.h"     // FSFNetworkHelper::IsClient
 #include "Core/Net/SFConstructPayloadGuard.h"
+#include "Config/Smart_ConfigStruct.h"
 #include "Engine/Engine.h"                     // GEngine on-screen message
 #include "Holograms/Core/SFScalingSpecExpansion.h"
 #include "Holograms/Core/SFSignHologramState.h"
@@ -654,7 +655,10 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 						constexpr int32 SF_MP_BLUEPRINT_ACTOR_CAP = 2000;
 						const int32 ActorsPerCopy = FMath::Max(1, BlueprintHolo->mBuildableToNewRoot.Num());
 						const int64 TotalActorEstimate = static_cast<int64>(Spec.CellCount()) * ActorsPerCopy;
-						if (TotalActorEstimate > SF_MP_BLUEPRINT_ACTOR_CAP)
+						// Read the placing client's setting at fire time. This opt-out only lifts
+						// the actor estimate cap; payload, placement and authority checks remain intact.
+						if (TotalActorEstimate > SF_MP_BLUEPRINT_ACTOR_CAP
+							&& FSmart_ConfigStruct::GetActiveConfig(World).bBlueprintPlacementSafetyLimit)
 						{
 							UE_LOG(LogSmartFoundations, Verbose,
 								TEXT("[#168-MP] Refused client blueprint-grid fire: ~%lld buildings (%d copies x %d each) exceeds the per-placement cap (%d). Build in smaller sections."),

@@ -2,6 +2,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "UObject/ObjectKey.h"
+#include "UObject/Class.h"
 #include "Features/Extend/SFExtendCloneTopology.h"
 
 /** Captured value intent plus append-only construction role bindings. No cargo,
@@ -11,9 +12,15 @@ class FSFExtendWiringPlan
 public:
     explicit FSFExtendWiringPlan(const FSFCloneTopology& InTopology) : Topology(InTopology)
     {
-        IncludeRequirements(Topology);
+        Topology.ChildHolograms.Reset();
+        IncludeRequirements(InTopology);
     }
     const FSFCloneTopology& GetTopology() const { return Topology; }
+    const FSFCloneHologram* FindRole(const FString& Role) const
+    {
+        const int32* Index = RoleIndices.Find(Role);
+        return Index ? &Topology.ChildHolograms[*Index] : nullptr;
+    }
     const TSet<FString>& GetRequiredRoles() const { return RequiredRoles; }
     const TSet<FString>& GetRequiredSources() const { return RequiredSources; }
     const TMap<FString, FObjectKey>& GetBindings() const { return Bindings; }
@@ -129,6 +136,19 @@ public:
         if (bSealed) { bInvalid = true; return; }
         for (const FSFCloneHologram& Child : Additional.ChildHolograms)
         {
+            // Scaled layouts can arrive both merged into the base and as per-copy
+            // plans. Keep one canonical value per role before any native effects.
+            if (!Child.HologramId.IsEmpty())
+            {
+                if (const int32* Existing = RoleIndices.Find(Child.HologramId))
+                {
+                    if (!FSFCloneHologram::StaticStruct()->CompareScriptStruct(
+                        &Topology.ChildHolograms[*Existing], &Child, 0)) bInvalid = true;
+                    continue;
+                }
+                RoleIndices.Add(Child.HologramId, Topology.ChildHolograms.Num());
+            }
+            Topology.ChildHolograms.Add(Child);
             if (Child.bPreviewOnly || !Child.bConstructible) continue;
             const bool bConveyor = Child.Role == TEXT("belt_segment") || Child.Role == TEXT("lift_segment")
                 || (Child.Role == TEXT("lane_segment") && (Child.LaneSegmentType == TEXT("belt") || Child.LaneSegmentType == TEXT("lift")));
@@ -181,7 +201,8 @@ private:
         }
         else RequiredRoles.Add(Endpoint.Target);
     }
-    const FSFCloneTopology Topology;
+    FSFCloneTopology Topology;
+    TMap<FString, int32> RoleIndices;
     TSet<FString> RequiredRoles;
     TSet<FString> RequiredSources;
     TMap<FString, FObjectKey> Bindings;

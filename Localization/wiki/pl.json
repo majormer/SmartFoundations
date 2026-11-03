@@ -77,11 +77,10 @@
     "status": "reviewed",
     "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification"
   },
-  "Auto-Connect:4": {
-    "text": "Otwórz **K → Skalowanie** i użyj odpowiedniej sekcji **Auto-Connect** dla wybranego budynku. W przypadku obsługiwanych budynków logistycznych `U` otwiera ustawienia połączeń. Domyślne ustawienia globalne znajdują się w **Opcje → Ustawienia modów → Smart!**; wybory dla bieżącego podglądu znajdują się w Panelu. Preferencje połączeń są aktualizowane na żywo, niezależnie od opcji **Zastosuj rozmieszczenie natychmiast**.",
-    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b",
-    "status": "reviewed",
-    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification"
+  "Auto-Connect:56": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b"
   },
   "Auto-Connect:5": {
     "text": "Użyj Panelu, kółka myszy lub klawiszy numerycznych, aby ukształtować siatkę; przed budową sprawdź wygenerowane połączenia i strzałki kierunku w świecie gry. HUD raportuje wartości rozmieszczenia, zamiast udostępniać kolejny formularz ustawień połączeń. Zobacz [Sterowanie](Controls), aby poznać domyślne klawisze i zachowanie Sterowania względem gracza.",
@@ -118,6 +117,16 @@
     "source_hash": "e298b5a94ff81e994527adc768d5e9764cc98d01ecb1dd6ea12f6dca747287fd",
     "status": "reviewed",
     "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification"
+  },
+  "Auto-Connect:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bfcb0d7bcbf0b5b36a80dd16a2dac958a4db4fc0261b34174dd132215ae37e01"
+  },
+  "Auto-Connect:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "59bd907b72a7a1bd727a61b3bb63c228bae6f45d96d4267b1fa73010ed0ca1df"
   },
   "Auto-Connect:11": {
     "text": "### Połączenia maszyn z podnośnikiem",
@@ -173,11 +182,10 @@
     "status": "reviewed",
     "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification"
   },
-  "Auto-Connect:18": {
-    "text": "**Skalowane podpory rurociągu tworzą ciąg rur.** Gdy skalujesz linię Podpór rurociągu lub Ściennych wsporników rurociągu, Smart! łączy je ciągłym rurociągiem między kopiami — tak samo jak skalowana linia Słupów taśmociągu tworzy ciąg taśmociągu. Ciecz przepływa przez cały ciąg, a własny punkt zaczepienia każdej podpory pozostaje wolny, więc nadal możesz ręcznie podłączyć do niej rurę. Wysokość podpory naziemnej i kąt jej górnej części przenoszą się na całą linię, dzięki czemu nachylony ciąg pozostaje spójny.",
-    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01",
-    "status": "reviewed",
-    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification"
+  "Auto-Connect:57": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01"
   },
   "Auto-Connect:19": {
     "text": "Generowane rurociągi dziedziczą malowanie z połączonej rury źródłowej. Łącznik dziedziczy malowanie tylko wtedy, gdy połączone z nim rurociągi mają ten sam kolor; przeniesienie podglądu do połączenia bez źródła malowania przywraca jego oryginalny kolor.",
@@ -203,6 +211,16 @@
     "status": "reviewed",
     "review_method": "Contextual language review with official game terminology; not native-speaker certification."
   },
+  "Auto-Connect:50": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "a731c462366f0c155a14546a1265f77d5e93778036e1ebd4a44e669ff5112e22"
+  },
+  "Auto-Connect:51": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "0a29d3c9b8ec32dedec575d19408d9bb4da0cbb09a58b8d2ed2dc2c0f3f833c7"
+  },
   "Auto-Connect:21": {
     "text": "## Auto-Connect hipertub",
     "source_hash": "4bcc46f7a3e328199f2b10ea31239d134d1815f33bf0911b2c5020959c930f54",
@@ -221,17 +239,15 @@
     "status": "reviewed",
     "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification"
   },
-  "Auto-Connect:24": {
-    "text": "**Skalowane podpory hipertuby tworzą ciąg hipertuby.** Gdy skalujesz linię Nakładanych podpór hipertuby, Smart! łączy je ciągłą hipertubą między kopiami — tak samo jak skalowana linia Słupów taśmociągu tworzy ciąg taśmociągu lub Podpór rurociągu tworzy ciąg rur. Ciąg podąża za odstępem i wysokością linii i może stromo wspinać się, a własny punkt zaczepienia każdej podpory pozostaje wolny, więc nadal możesz ręcznie podłączyć do niej hipertubę.",
-    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455",
-    "status": "reviewed",
-    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification"
+  "Auto-Connect:58": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455"
   },
-  "Auto-Connect:25": {
-    "text": "Auto-Connect hipertub ma **własny przełącznik włączania i tryb trasowania**, niezależny od rurociągów — ustaw je w Panelu Smart, w ustawieniach Auto-Connect podczas budowy (przytrzymaj `U`) lub w konfiguracji moda. Zobacz [Referencja ustawień](Settings-Reference).",
-    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213",
-    "status": "reviewed",
-    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification"
+  "Auto-Connect:59": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213"
   },
   "Auto-Connect:26": {
     "text": "## Obrócone ciągi podpór ściennych",
@@ -239,11 +255,10 @@
     "status": "reviewed",
     "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification"
   },
-  "Auto-Connect:27": {
-    "text": "Podglądy ściennych wsporników rurociągów i hipertub powtarzają pełny obrót obiektu bazowego. Opcja **Obrót ściany** w Panelu oferuje obsługiwane przez grę **skoki co 45°**, także dla pionowego ciągu. Jest to niezależne od obrotu siatki, który wygina sekwencję kopii.",
-    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce",
-    "status": "reviewed",
-    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification"
+  "Auto-Connect:60": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce"
   },
   "Auto-Connect:28": {
     "text": "W sterowaniu względem budynku oś Y podąża za obróconym ciągiem ściany. W sterowaniu względem gracza pionowe wejście podąża za najbardziej pionowym wspieranym kierunkiem: dla pionowego ciągu ściany **X+Z + kółko myszy** rozszerza ciąg w pionie, podczas gdy **Z + kółko myszy** rozszerza go na boki. Panel zachowuje swoje kolumny X/Y/Z; użyj strzałek, aby zobaczyć te osie. Łączniki ścienne taśmociągów zachowują swoje standardowe ograniczenia orientacji i używają podnośników taśmowych do transportu pionowego.",
@@ -317,11 +332,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Auto-Connect:45": {
-    "text": "_Ostatnia aktualizacja: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
-    "status": "reviewed",
-    "review_method": "Contextual language review with official game terminology; not native-speaker certification."
+  "Auto-Connect:55": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Blueprints:0": {
     "text": "# Schematy Smart!",
@@ -425,11 +439,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Blueprints:17": {
-    "text": "Bezpieczny limit ładunku konstrukcyjnego dotyczy również siatek Schematów. Odrzucone zbyt duże umieszczenie zachowuje podgląd: zmniejsz siatkę i buduj sekcjami. Dla dużego umieszczenia standardowego Schematu wyłącz [Asystę Smart](Smart-Assistance) i wybierz go ponownie.",
-    "source_hash": "540e7f14c64d49d7f11fb6b7090a1475087984b4955b0dccb93ca481787d4236",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Blueprints:34": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "60707b2c9e66e6d33812f6b75b700b1d1cfafde4fcb92a54f5847b69c82a8ac8"
   },
   "Blueprints:18": {
     "text": "Multiplayer używa autorytatywnej walidacji i normalnych kosztów. Zmieniona końcówka lub niewystarczające zasoby mogą unieważnić wcześniej poprawny podgląd. Zobacz [Auto-łączenie](Auto-Connect) i [Kompatybilność i Multiplayer](Compatibility-and-Multiplayer).",
@@ -509,11 +522,10 @@
     "status": "reviewed",
     "review_method": "Reused identical source hash from previously reviewed translation."
   },
-  "Blueprints:33": {
-    "text": "_Ostatnia aktualizacja: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
-    "status": "reviewed",
-    "review_method": "Contextual language review with official game terminology; not native-speaker certification."
+  "Blueprints:35": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Buildable-Gallery:0": {
     "text": "# Galeria Budowli",
@@ -983,17 +995,15 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Compatibility-and-Multiplayer:3": {
-    "text": "Smart! 35.0.0 jest przeznaczony dla **Satisfactory 1.2.4 / CL 502094 lub nowszego** oraz **SML 3.12.x**. Zaktualizuj grę i mod loader przed instalacją. Starsze wersje gry nie są obsługiwane.",
-    "source_hash": "67e479ca52c59b7506d6acd2ace2bb75b701e6c7854e5b2d570aeec46f92d66e",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Compatibility-and-Multiplayer:23": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "ddb7f6d3428242b7eb2a16d6468bc1c961f041f29251922f6c6a6922bfa78751"
   },
-  "Compatibility-and-Multiplayer:4": {
-    "text": "Smart Camera 2.0 i Smart! 35.0 muszą być aktualizowane jako kompatybilna para, gdy oba są zainstalowane. Kamera działa również samodzielnie; narzędzia budowlane Smart nie wymagają Kamery. Preferencje Kamery i wygląd HUD należą do każdego lokalnego gracza, a nie do wszystkich na serwerze.",
-    "source_hash": "d778ecad7f4a6a4eb530120898db7c258299752b3b3849ab7cb18dce25829247",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Compatibility-and-Multiplayer:24": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "52b5e96461ffcb32e45b4e4f8c6a7bb4ae65053d1b8488b28119e6c0efbcaf11"
   },
   "Compatibility-and-Multiplayer:5": {
     "text": "## Bezpieczeństwo zapisu",
@@ -1037,23 +1047,20 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Compatibility-and-Multiplayer:12": {
-    "text": "Smart! działa w trybie wieloosobowym na dedykowanych serwerach. Każda funkcja Smart! — Skalowanie siatki, Auto-Łączenie (taśmociągi, rurociągi i energia), Schematy Smart, Rozszerzenie, Ulepszanie Smart, Przywracanie Smart i Demontaż Smart — działa, gdy grasz jako klient, z normalnymi kosztami budowy. Wszystko, co umieszcza Smart!, jest standardowym, w pełni replikowanym budynkiem w grze: inni gracze go widzą, mogą z niego korzystać i mogą go zdemontować, tak jakbyś zbudował go ręcznie.",
-    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Compatibility-and-Multiplayer:29": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5"
   },
-  "Compatibility-and-Multiplayer:13": {
-    "text": "- **Serwery dedykowane:** obsługiwane są zarówno Windows, jak i Linux.\n- **Limit rozmiaru Schematów Smart:** pojedyncze rozmieszczenie siatki schematu na serwerze jest ograniczone (około dwóch tysięcy budynków lub kilkuset łączących taśmociągów/rurociągów, w zależności od tego, co nastąpi szybciej). Przekroczenie tego limitu sprawia, że Smart! odrzuca rozmieszczenie — HUD informuje o konieczności budowy w mniejszych sekcjach, a siatka pozostaje aktywna, więc możesz to zrobić. Bezpieczny limit ładunku konstrukcyjnego dotyczy również trybu jednoosobowego i sesji z hostem. Wyłącz [Asystę Smart](Smart-Assistance) i wybierz przepis ponownie, aby normalnie rozmieścić duży schemat z podstawowej wersji gry.\n- **Duże siatki są budowane progresywnie:** zatwierdzenie bardzo dużego skalowanego obiektu buduje go w tle przez chwilę, dzięki czemu serwer pozostaje responsywny, a nikt nie zostaje rozłączony podczas budowy.\n- **Dla administratorów serwera:** zainstaluj tę samą wersję Smart! na serwerze i na każdym kliencie. Menedżer Modów utrzymuje zgodność wersji podczas aktualizacji.\n- **Smart Camera** (mod towarzyszący) również działa w trybie wieloosobowym.",
-    "source_hash": "e0abba477abdd815436da48e2f8957237ec0394c708deea58592e10d20ab9268",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Compatibility-and-Multiplayer:26": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8cb40018690ab6ebe9357b170389232193d08c25eafc1fd5d631dac793751ffe"
   },
-  "Compatibility-and-Multiplayer:14": {
-    "text": "Tryb wieloosobowy jest nowszy niż jednoosobowy, więc jeśli coś zachowuje się inaczej w sesji wieloosobowej niż w jednoosobowej, jest to błąd — zgłoś go na GitHubie lub Discordzie, podając, co budowałeś i czy byłeś hostem, czy klientem.",
-    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Compatibility-and-Multiplayer:30": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9"
   },
   "Compatibility-and-Multiplayer:15": {
     "text": "Przełącznik asysty w sesji każdego gracza wpływa tylko na jego własne narzędzia budowy. Zdalne Rozszerzenie/Przywracanie utrzymuje podgląd i ustawienia hosta lokalnej sesji oddzielone od operacji klienta.",
@@ -1097,11 +1104,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Compatibility-and-Multiplayer:22": {
-    "text": "_Ostatnia aktualizacja: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification; identical English source reuse"
+  "Compatibility-and-Multiplayer:31": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Controller-and-Steam-Deck:0": {
     "text": "# Kontroler i Steam Deck (Eksperymentalne)",
@@ -1637,11 +1643,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Extend:8": {
-    "text": "1. Zbuduj ręcznie jeden działający moduł i wyposaż się w ten sam typ budynku w Materializatorze FICSIT.\n2. Otwórz **K → Rozszerzenie** i naciśnij **Wybierz źródło**.\n3. Kliknij istniejący budynek źródłowy w świecie poza Panelem. Kompatybilne źródła są podświetlane podczas wybierania. **Escape** anuluje wybór; kliknięcia wewnątrz Panelu pozostają w interfejsie.\n4. Sprawdź nazwę źródła, przechwycone obiekty powiązane i liczniki powtórzeń. Użyj **Zmień kierunek** i kontroli rozmieszczania, aby ukształtować podgląd.\n5. Zamknij Panel, sprawdź proponowane kopie i koszty materiałów, a następnie strzel z Materializatora FICSIT, aby zbudować normalnie.",
-    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Extend:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca"
   },
   "Extend:9": {
     "text": "Wybranie źródła niczego nie buduje. Chybienie zachowuje poprzedni podgląd. Zastąpienie źródła lub większego niezbudowanego układu wymaga potwierdzenia przed odrzuceniem podglądu. Wybrane źródło pozostaje przypięte do inspekcji, dopóki rozmieszczenie nie zostanie anulowane, zbudowane lub przepis nie zostanie zmieniony.",
@@ -1685,11 +1690,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Extend:16": {
-    "text": "Zbudowany Piec hutniczy to istniejące źródło. Cyjanowy Piec hutniczy, taśmociągi i podpory to proponowana kopia; HUD wyświetla **Rozszerzenie 1×1**. Jest to niezrealizowany podgląd.",
-    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Extend:50": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc"
   },
   "Extend:17": {
     "text": "## Zmiana kierunku",
@@ -1709,11 +1713,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Extend:20": {
-    "text": "Uruchom jawnie przez **K → Rozszerzenie → Wybierz źródło** lub użyj skrótu po najechaniu. Zakładka Rozszerzenia wykorzystuje kontrole rozmieszczania dla liczników siatki, odstępów i obsługiwanych transformacji. Możesz również używać tych samych kontroli kółka/klawiszy numerycznych co w [Skalowanie siatki](Grid-Scaling). Bez przytrzymanego modyfikatora kółko wybiera kierunek Rozszerzenia. HUD w czasie gry identyfikuje trasę/wiersze i aktywną regulację, abyś mógł sprawdzić, co się zmieni, przed budowaniem.",
-    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Extend:51": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13"
   },
   "Extend:21": {
     "text": "## Rozszerzenie skalowane",
@@ -1751,11 +1754,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Extend:27": {
-    "text": "To samo źródło teraz generuje trzy cyjanowe kopie modułów, w tym ich trasy taśmociągów i podpory. HUD wyświetla **Rozszerzenie 3×1**, a koszty materiałów rosną wraz z kopiami. Istniejący obiekt źródłowy pozostaje na miejscu.",
-    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Extend:52": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7"
   },
   "Extend:28": {
     "text": "## Pompy wodne",
@@ -1805,6 +1807,21 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
+  "Extend:45": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "54e38c7493c79d3f4bc2f71a29b70d8dd6942a4f44bee91a351b6ebd82db6819"
+  },
+  "Extend:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "2fc6ba5d654478f0d36a249ac28472d87d41be4029ae07a4e513561265a5f725"
+  },
+  "Extend:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8d860159ae76958c5e531b7732a1d2bed5e6c39a0cc339d47fa7d866c6ab94e8"
+  },
   "Extend:36": {
     "text": "## Sprawdź przechwycony układ",
     "source_hash": "f1c2f5c6de3f53c619dc7b774e5c42c86b11c0f59d3d150537e145bb3f358680",
@@ -1829,11 +1846,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Extend:40": {
-    "text": "_Ostatnia aktualizacja: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification; identical English source reuse"
+  "Extend:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "FAQ:0": {
     "text": "# Często zadawane pytania",
@@ -3119,17 +3135,26 @@
     "status": "reviewed",
     "review_method": "Retained semantic review plus primary source-by-source review of all30 Home/Lift/Quick-Start units; kept valid original link captions, clarified horizontal belt and base-game direct connections; no native-speaker certification"
   },
+  "Home:18": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1829ed863c572c2dbcafc8f78604d94faa795d58ca1d7e90494d020f49980f60"
+  },
+  "Home:19": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1bd5656d0819ad3a7d1a6861c038f59661e423c6f03bddc8b203ef1a7ffb5c8b"
+  },
   "Home:13": {
     "text": "## Obsługiwana wersja",
     "source_hash": "96ddfc08279c6ae35f38d5139ad21a94f1ac99c7d031fa618cb40edbe35d39a5",
     "status": "reviewed",
     "review_method": "Retained semantic review plus primary source-by-source review of all30 Home/Lift/Quick-Start units; kept valid original link captions, clarified horizontal belt and base-game direct connections; no native-speaker certification"
   },
-  "Home:14": {
-    "text": "To jest lokalny szkic dokumentacji dla **Smart! 35.0.0 i Smart Camera 2.0.0**. Aktualizuj oba mody razem, gdy dostępne będą ich skoordynowane, kompatybilne wydania; nie łącz Camera 2.0 ze starszym pakietem Smart. Te strony szkicowe nie ogłaszają publikacji.",
-    "source_hash": "c29d2ea90b7a486f22022563a690b6049c5d72c5bf1c740518bb20fa5747432d",
-    "status": "reviewed",
-    "review_method": "Retained semantic review plus primary source-by-source review of all30 Home/Lift/Quick-Start units; kept valid original link captions, clarified horizontal belt and base-game direct connections; no native-speaker certification"
+  "Home:20": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6de3b72e72a676036d11c5f3b3679009013b370ca2cb7e8aed2d56252d3addd9"
   },
   "Home:15": {
     "text": "Zacznij od wspólnego [Panelu i HUD](Smart-Panel-and-HUD), [Wznawiania chodzenia](Smart-Walking), [Auto-Connect z podnośnikami](Auto-Connect) i [Połączeń stykowych schematów](Blueprints).",
@@ -3143,11 +3168,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Home:17": {
-    "text": "_Ostatnia aktualizacja: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification; identical English source reuse"
+  "Home:21": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Lift-Assisted-Auto-Connect:0": {
     "text": "# Auto-Connect z podnośnikami",
@@ -3473,11 +3497,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Settings-Reference:2": {
-    "text": "Znajdziesz je w **Menu główne → Mody → Smart!**. Zmiany wprowadzone tutaj **utrzymują się między zapisami i sesjami**. (Przypisania klawiszy są osobne — zobacz [Sterowanie](Controls)).",
-    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Settings-Reference:59": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb"
   },
   "Settings-Reference:3": {
     "text": "## Auto-Connect taśmociągów",
@@ -3533,11 +3556,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Settings-Reference:12": {
-    "text": "- **Auto-Connect Hipertub** — włącz lub wyłącz automatyczne łączenie hipertub. **Włączone domyślnie.** (Dodano w 33.1.0.)\n- Wybierz tryb trasowania hipertub.",
-    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Settings-Reference:60": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29"
   },
   "Settings-Reference:13": {
     "text": "## Auto-łączenie energii",
@@ -3551,11 +3573,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Settings-Reference:15": {
-    "text": "- Włącz lub wyłącz Auto-Connect energii.\n- Wybierz tryb połączenia.\n- Ustaw zasięg połączenia.\n- Rezerwuj połączenia słupów, aby Smart! nie wypełniał każdego slotu.\n- **Łańcuchowe łączenie energii podczas Skalowania** — gdy Ulepszone złącza zasilania są odblokowane, skalowanie fabryki lub generatora wzdłuż osi X Smart łączy każdą kopię bezpośrednio z następną zamiast prowadzić słup do każdej, co odpowiada typowemu układowi rozdzielaczowemu bez osobnego przebiegu Rozszerzenia. Panel Smart może nadpisać to dla bieżącej budowy, a HUD raportuje efektywny wybór. Respektuje dostępną pojemność każdego złącza. **Włączone domyślnie.** (Dodano w 34.2.0.)",
-    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Settings-Reference:61": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb"
   },
   "Settings-Reference:16": {
     "text": "## Auto-Connect Schematów",
@@ -3563,23 +3584,31 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Settings-Reference:17": {
-    "text": "Osobny przełącznik dla styków między skalowanymi kopiami Twoich **własnych** schematów — niezależny od powyższych opcji automatycznego łączenia taśmociągów i rurociągów, dzięki czemu kopie schematów mogą zachować połączenia nawet przy wyłączonym standardowym automatycznym łączeniu.",
-    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Settings-Reference:62": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11"
   },
-  "Settings-Reference:18": {
-    "text": "- **Automatyczne łączenie styków schematów** — włącz lub wyłącz automatyczne łączenie taśmociągów, rurociągów, hipertub, szyn kolejowych, wyznaczonych ścieżek pojazdów oraz kwalifikujących się połączeń energetycznych między skalowanymi kopiami schematów. **Włączone domyślnie.** (Dodano w wersji 34.2.0.)",
-    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Settings-Reference:63": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4"
   },
   "Settings-Reference:19": {
     "text": "Połączenia energetyczne na stykach dodatkowo wymagają włączenia opcji **Automatyczne łączenie energii**. Każdy kabel wykorzystuje pasujące gniazdo słupa energetycznego z dostępną pojemnością; wewnętrzne przewody oraz dwie strony gniazda ściennego liczone są osobno.",
     "source_hash": "f8e43f603399fedc12210a9d21a3d2d8108b47b7c676acc29f4f189f050416ed",
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  },
+  "Settings-Reference:51": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "d30a9c4968359ae455bcba1db55829f233cd9689baac7a41ddda2ee677c671a7"
+  },
+  "Settings-Reference:52": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8d8d2f7ca8e8f5f5ffd32286939d718b5621954e9eb433f316520ac4e84d392b"
   },
   "Settings-Reference:20": {
     "text": "## Domyślne odstępy schematów",
@@ -3605,11 +3634,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Settings-Reference:24": {
-    "text": "- **Zasięg logistyki w pobliżu** — jak daleko rozdzielacze, łączniki, skrzyżowania rurociągów i otwory podłogowe rurociągów sięgają w kierunku portów fabrycznych podczas automatycznego łączenia. Zmniejsz tę wartość, aby zapobiec sięganiu automatycznego łączenia do sąsiednich grup fabrycznych. **Domyślnie 25 m** (poprzednie stałe zachowanie). (Dodano w wersji 34.2.0.)",
-    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Settings-Reference:64": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592"
   },
   "Settings-Reference:25": {
     "text": "## Rozszerzenie",
@@ -3629,11 +3657,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Settings-Reference:28": {
-    "text": "- Automatyczne przytrzymanie po zmianie siatki blokuje hologram po zmodyfikowaniu siatki, aby duży podgląd nie przesuwał się przypadkowo. **Włączone domyślnie** (od wersji 32.1.2) — wyłącz tę opcję tutaj, jeśli wolisz, aby hologram pozostał swobodny do przemieszczania; natywny klawisz Przytrzymaj zwalnia pojedyncze blokady.\n- **Sterowanie względem gracza** — sprawia, że budowanie podąża za kierunkiem, w którym patrzysz, zamiast za stałymi osiami kompasu: kółko myszy zwiększa budowę w kierunku, w którym jesteś zwrócony, a klawiatura numeryczna działa jak kompas (od/do, prawo/lewo, góra/dół). Dotyczy skalowania, odstępu, stopni, przesunięcia i obrotu. **Wyłączone domyślnie** — Twoje klasyczne sterowanie pozostaje niezmienione, dopóki tego nie włączysz, a Panel Smart zawsze pozostaje na stałych osiach X/Y/Z. Zobacz [Sterowanie](Controls), aby poznać pełny opis. (Dodano w wersji 34.1.0.)\n- **Przełącz tryby transformacji tapnięciem** — tapnij klawisz transformacji (Odstęp, Stopnie, Przesunięcie, Obrót lub Przepis w fabryce), aby włączyć ten tryb; tapnij ponownie, aby go wyłączyć; tapnij inny, aby zmienić tryb. Opcja stworzona dla kontrolerów, Steam Decka i ustawień dostępności — menu radialne/dotykowe Steam Input wysyłają szybkie tapnięcia i nie mogą przytrzymywać klawisza. Schowanie narzędzia, zmiana budynku lub otwarcie panelu zawsze zwalniają tryb. **Wyłączone domyślnie** — klasyczne zachowanie przytrzymaj-aby-użyć pozostaje nietknięte, dopóki tego nie włączysz, a ponowne wyłączenie przywraca je natychmiast. Zobacz [Kontroler i Steam Deck](Controller-and-Steam-Deck), aby skonfigurować menu radialne. (Dodano w wersji 34.2.0.)",
-    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Settings-Reference:65": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179"
   },
   "Settings-Reference:29": {
     "text": "## Przyrosty przewijania",
@@ -3647,17 +3674,15 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Settings-Reference:31": {
-    "text": "- **Przyrost odstępu** (m) — metry odstępu dodawane na działkę przewijania (także odstęp Rozszerzenia i postęp segmentu Chodzenia).\n- **Przyrost stopni** (m) — metry stopniowania na działkę (także wzniesienie segmentu Chodzenia).\n- **Przyrost przesunięcia** (m) — metry przesunięcia na działkę (także przesunięcie segmentu Chodzenia).\n- **Przyrost obrotu** (stopnie) — stopnie obrotu na działkę (także skręt segmentu Chodzenia).",
-    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Settings-Reference:66": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e"
   },
-  "Settings-Reference:32": {
-    "text": "Wartości domyślne to 0,5 m i 5°. Przyrosty odległości akceptują zakres 0,1–8 m; obrót akceptuje 0,5–90°.",
-    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Settings-Reference:67": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da"
   },
   "Settings-Reference:33": {
     "text": "## Panel Smart",
@@ -3701,11 +3726,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Settings-Reference:40": {
-    "text": "W **Mody → Smart! Camera** widoki pojawiają się automatycznie pod nazwami modyfikacji i kamer, które je dostarczają, w tym widoki nieaktywne. Wbudowany widok materializatora ma niezależny przełącznik włączania. Pozycja każdego widoku jest znormalizowana w zakresie 0–1, rozdzielczość wynosi 64–2048 pikseli na oś, skala 0,1–2, częstotliwość przechwytywania 5–60/s, a jasność od −3 do +3 EV. Odpowiednie odległości kamer budynkowych wynoszą 5–50 m. Ustawienia kamery są stosowane natychmiast; widoki ukryte przez menu są aktualizowane po wznowieniu gry. Opcja **Wszystkie zapisy** modyfikuje tylko edytowane pole w profilach globalnych i istniejących zapisach dla tej kamery, w tym w bieżącym świecie. Opcja **Ten zapis** zmienia tylko bieżący profil zapisu gry podstawowej. Niezwiązane pola i inne kamery pozostają nienaruszone.",
-    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Settings-Reference:68": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29"
   },
   "Settings-Reference:41": {
     "text": "**Użyj sugestii modyfikacji** w opcji Wszystkie zapisy resetuje tę kamerę we wszystkich zapisach. **Użyj ustawień globalnych** w opcji Ten zapis usuwa tylko bieżące nadpisanie. Reset kadrowania/odległości zmienia tylko te dwa pola. Edycje układu są podglądane do czasu wspólnego przycisku **Gotowe / Zablokuj**; Anuluj odrzuca oczekujące zmiany układu/HUD. Zobacz [Smart Camera](Smart-Camera).",
@@ -3731,11 +3755,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Settings-Reference:45": {
-    "text": "_Ostatnia aktualizacja: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification; identical English source reuse"
+  "Settings-Reference:58": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Smart-Assistance:0": {
     "text": "# Asysta Smart",
@@ -4385,17 +4408,15 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Smart-Restore:1": {
-    "text": "Przywracanie Smart zapisuje Twoją pracę w Smart!, abyś mógł ją później ponownie wykorzystać, udostępnić lub wielokrotnie odtwarzać cały moduł fabryki w ten sam sposób. Otwórz **K → Przywróć** we wspólnym [Panelu Smart](Smart-Panel-and-HUD). Jego dwie podzakładki to **Zestawy siatki** i **Moduły**.",
-    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Smart-Restore:43": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35"
   },
-  "Smart-Restore:2": {
-    "text": "To odpowiedź na pytanie: \"Spędziłem wieki, dopracowując ten układ — jak go odzyskać?\"",
-    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Smart-Restore:44": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2"
   },
   "Smart-Restore:3": {
     "text": "![Zadanie Przywracania z podzakładkami Zestawy siatki i Moduły](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/restore.png)",
@@ -4427,11 +4448,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Smart-Restore:8": {
-    "text": "- **Zapisz z Panelu** — nazwij bieżącą konfigurację panelu i zapisz ją jako zestaw.\n- **Wczytaj do Panelu** — wczytaj zapisany zestaw z powrotem do panelu, aby go dopracować przed budową, lub zastosuj go bez zmian.\n- **Eksportuj kod / Importuj kod** — udostępnij zestaw jako kod lub wczytaj kod udostępniony przez kogoś innego.",
-    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Smart-Restore:45": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40"
   },
   "Smart-Restore:9": {
     "text": "Każdy zestaw wyświetla prostym językiem podsumowanie swojej zawartości (budynek, siatka, transformacje, przepis), dzięki czemu możesz je odróżnić na pierwszy rzut oka.",
@@ -4445,17 +4465,15 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Smart-Restore:11": {
-    "text": "Moduł przechwytuje cały **manifold Rozszerzenia** — połączony przewodem zestaw budynków wraz z ich taśmociągami, rurami, podnośnikami, rozdzielaczami i instalacją energetyczną — który można wielokrotnie odtwarzać.",
-    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Smart-Restore:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b"
   },
-  "Smart-Restore:12": {
-    "text": "- Po podglądzie lub zbudowaniu Smart [Rozszerzenia](Extend), trafia on do **schowka Rozszerzenia** u góry zakładki. **Zapisz jako Moduł** zamienia ten przechwycony układ w nazwany, wielokrotnego użytku Moduł.\n- **Wczytaj Moduł** dla zapisanego Modułu, aby odbudować ten układ: wyposaż się w jego budynek źródłowy, a stanie się on aktywnym podglądem, który możesz **odtwarzać** (strzelać, aby umieścić, wielokrotnie) i **skalować kółkiem myszy** w locie.\n- Ponieważ przywrócony Moduł nie jest zablokowany po jednej stronie tak jak świeże Skalowane Rozszerzenie, możesz **skalować przebieg w obu kierunkach** wzdłuż jego osi przed umieszczeniem — przewijaj w jedną stronę, aby rosnął w jedną, a w drugą, aby rosnął w drugą.\n- **Eksportuj kod / Importuj kod** udostępniają Moduły w ten sam sposób co zestawy.",
-    "source_hash": "37740d4bfda7ca76487c320d49ae9a15e2da89d1f1fe4a31862a2ad8d53f903b",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Smart-Restore:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bec0ec9303e43dd7907dc7dc366c045b75ee549bfcabebb02918f256b044593e"
   },
   "Smart-Restore:13": {
     "text": "Każdy Moduł wyświetla podsumowanie swoich części (ile taśmociągów, rur, rozdzielaczy itp.), abyś wiedział, co odtwarza.",
@@ -4517,11 +4535,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Smart-Restore:21": {
-    "text": "Użyj **K → Przywróć**, aby zapisywać, wybierać, ładować, importować lub eksportować układy. Po załadowaniu użyj Panelu skalowania lub sterowania kółkiem myszy/padem numerycznym, aby dostosować rozmieszczenie; HUD raportuje wynikową siatkę i aktywne dostosowanie. Strzel z materializatora FICSIT, aby zbudować to przy wyświetlonym koszcie.",
-    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Smart-Restore:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c"
   },
   "Smart-Restore:22": {
     "text": "Aby przełączać się między ostatnio zastosowanymi przywróceniami bez ponownego otwierania Panelu, przytrzymaj `U` i naciśnij `Num 9`, aby przejść do następnego ostatniego ustawienia, lub `Num 3`, aby cofnąć się. Zobacz [Sterowanie](Controls).",
@@ -4547,17 +4564,26 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
+  "Smart-Restore:39": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b0724fac56a114aed1905757336fc2bd16f065519872f908a56afc905e5b0d3c"
+  },
+  "Smart-Restore:40": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "81c3c2048752b95069652ecef30608748705b0ecd1930a687c49a0f383a261ad"
+  },
   "Smart-Restore:26": {
     "text": "## Zobacz też",
     "source_hash": "0f2b43836b7db34aeb2ad65d2dc1b19495336b2a8bd81d1a4e6cc10ec180785b",
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Smart-Restore:27": {
-    "text": "- [Rozszerzenie](Extend) — funkcja, której rozgałęzienia przechwytuje zakładka Moduły.\n- [Smart Panel i HUD](Smart-Panel-and-HUD) — gdzie znajduje się zakładka Przywróć.\n- [Skalowanie siatki](Grid-Scaling) i [Transformacje](Transforms) — to, co zapisuje Zestaw siatki.",
-    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Smart-Restore:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264"
   },
   "Smart-Restore:28": {
     "text": "---",
@@ -4565,11 +4591,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Smart-Restore:32": {
-    "text": "_Ostatnia aktualizacja: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
-    "status": "reviewed",
-    "review_method": "Contextual language review with official game terminology; not native-speaker certification."
+  "Smart-Restore:42": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Smart-Upgrade:0": {
     "text": "# Ulepszanie w Smart",
@@ -4607,11 +4632,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Smart-Upgrade:6": {
-    "text": "1. Otwórz **K → Ulepsz** z **wybranym** obsługiwanym budynkiem. Taśmociągi, rurociągi oraz przewody/linie zasilania mogą otworzyć to zadanie bezpośrednio.\n2. Wybierz tryb skanowania.\n3. Zeskanuj pobliskie przedmioty lub połączoną sieć.\n4. Wybierz rodzinę i docelowy poziom — a w przypadku skanowania sieci opcjonalnie pojedynczy poziom źródłowy, aby ulepszyć tylko ten poziom.\n5. Sprawdź koszt materiałów.\n6. Uruchom ulepszanie.",
-    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Smart-Upgrade:38": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08"
   },
   "Smart-Upgrade:7": {
     "text": "Słupy energetyczne i gniazda ścienne nadal otwierają normalny Panel Smart po **wybraniu**, aby można je było skalować. Aby je ulepszyć, otwórz Ulepszanie w Smart z przewodu/linii zasilania lub użyj trybów skanowania.",
@@ -4655,11 +4679,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Smart-Upgrade:14": {
-    "text": "- Kliknij konkretny poziom — na przykład **kl. 2** — aby ulepszyć **tylko** ten poziom do docelowego. Zmień swoje taśmociągi kl. 2 na kl. 3 i zostaw kl. 4 nietknięte.\n- Wybierz **Wszystkie poziomy**, aby zmienić każdy różniący się poziom taśmociągu, podnośnika lub rurociągu na wybrany docelowy. Może to ulepszyć niektóre poziomy i obniżyć inne w tej samej **trasie**.",
-    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Smart-Upgrade:39": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8"
   },
   "Smart-Upgrade:15": {
     "text": "To odpowiada kontroli poziomów, którą skanowanie promienia już posiadało.",
@@ -4727,11 +4750,10 @@
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
   },
-  "Smart-Upgrade:26": {
-    "text": "Duże ulepszenia taśmociągów są skomplikowane, ponieważ Satisfactory wewnętrznie grupuje taśmociągi i podnośniki w obiekty łańcucha transportowego. Smart! zawiera mechanizmy stabilizacji i diagnostyki, ale bardzo duże ulepszenia mogą nadal wymagać zapisania i ponownego wczytania gry, jeśli system zgłosi niestabilny stan łańcucha.",
-    "source_hash": "fed328c054689b599658ab3989621c5b784f7bcaa94b5be404727f05664adba7",
-    "status": "reviewed",
-    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification"
+  "Smart-Upgrade:36": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "30a1ce6a5b6dcbf3cb863b07c5181d63bc781a27d7277f739226c64c0f12936e"
   },
   "Smart-Upgrade:27": {
     "text": "## Przykłady w grze",
@@ -4769,11 +4791,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Smart-Upgrade:33": {
-    "text": "_Ostatnia aktualizacja: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification; identical English source reuse"
+  "Smart-Upgrade:37": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Smart-Walking:0": {
     "text": "# Smart Chodzenie",
@@ -5741,67 +5762,92 @@
     "status": "reviewed",
     "review_method": "Contextual language review with official game terminology; not native-speaker certification."
   },
-  "Auto-Connect:38": {
-    "text": "_Ostatnia aktualizacja: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+  "Blueprints:33": {
+    "text": "_Ostatnia aktualizacja: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
+    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
     "status": "reviewed",
-    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification; identical English source reuse",
+    "review_method": "Contextual language review with official game terminology; not native-speaker certification.",
     "obsolete": true
   },
-  "Smart-Camera:30": {
-    "text": "_Ostatnia aktualizacja: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification; identical English source reuse",
-    "obsolete": true
-  },
-  "Smart-Restore:29": {
-    "text": "_Ostatnia aktualizacja: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification; identical English source reuse",
-    "obsolete": true
-  },
-  "Water-Extractors:14": {
-    "text": "_Ostatnia aktualizacja: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification; identical English source reuse",
-    "obsolete": true
-  },
-  "Feature-Gallery:50": {
-    "text": "_Ostatnia aktualizacja: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification; identical English source reuse",
-    "obsolete": true
-  },
-  "Feature-Gallery:30": {
-    "text": "\n## Ulepszanie",
-    "source_hash": "346a4694e55fb3881d4efb3df370eb4fa70ac8f41333fc51b5d2f136ba5ac387",
+  "Controls:6": {
+    "text": "| Klawisz | Co robi |\n|-----|--------------|\n| `K` | Otwiera lub zamyka wspólne okno Skalowanie / Chodzenie / Ulepsz / Przywróć |\n| `F8` | Edytuje układ HUD; przy zainstalowanym Smart Camera edytuje układy HUD i kamery razem |\n| `Num Decimal` | Przełącza asystę budowania Smart na tę sesję |\n| `Num 8` | Zwiększa aktywną wartość |\n| `Num 5` | Zmniejsza aktywną wartość |\n| `Num 6` | Zwiększa liczbę siatki Y |\n| `Num 4` | Zmniejsza liczbę siatki Y |\n| `Num 9` | Zwiększa liczbę siatki Z |\n| `Num 3` | Zmniejsza liczbę siatki Z |\n| `X` | Przytrzymaj, aby dostosować X za pomocą wspólnych kontrolek lub kółka myszy |\n| `Z` | Przytrzymaj, aby dostosować Y za pomocą wspólnych kontrolek lub kółka myszy |\n| `X + Z` | Przytrzymaj oba, aby dostosować Z za pomocą wspólnych kontrolek lub kółka myszy |\n| `;` | Przytrzymaj tryb Odstęp |\n| `I` | Przytrzymaj tryb Stopnie |\n| `Y` | Przytrzymaj tryb Przesunięcie |\n| `,` | Przytrzymaj tryb Obrót |\n| `Num 0` | Przełącza oś aktywnego trybu |\n| `U` | Wybór receptury w budynkach produkcyjnych; ustawienia połączeń lub podpór znaków dla obsługiwanych obiektów budowlanych |\n| `Num 1` | Przełącza strzałki kierunku |\n| `Mouse Wheel` | Dostosowuje aktywny tryb Smart, lub obraca w standardowy sposób, gdy żaden tryb Smart nie jest aktywny |",
+    "source_hash": "2837292eada81d5f2f7b96ee1fa39689f1d488e0ee8b125d948d5069e407097e",
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
     "obsolete": true
   },
-  "Lift-Assisted-Auto-Connect:11": {
-    "text": "## Przykłady w grze",
-    "source_hash": "5eb2c1c9e3dbc39102a812af339752c7f0fe1e0b95368965e2e069a71b377898",
-    "status": "reviewed",
-    "review_method": "Retained semantic review plus primary source-by-source review of all30 Home/Lift/Quick-Start units; kept valid original link captions, clarified horizontal belt and base-game direct connections; no native-speaker certification",
+  "Compatibility-and-Multiplayer:27": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "2398e8d56840e229a7b387e89a3556aa24edfa217e26cf50db9e5ba6cf6ccf02",
     "obsolete": true
   },
-  "Blueprints:21": {
+  "Settings-Reference:18": {
+    "text": "- **Automatyczne łączenie styków schematów** — włącz lub wyłącz automatyczne łączenie taśmociągów, rurociągów, hipertub, szyn kolejowych, wyznaczonych ścieżek pojazdów oraz kwalifikujących się połączeń energetycznych między skalowanymi kopiami schematów. **Włączone domyślnie.** (Dodano w wersji 34.2.0.)",
+    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:25": {
+    "text": "Auto-Connect hipertub ma **własny przełącznik włączania i tryb trasowania**, niezależny od rurociągów — ustaw je w Panelu Smart, w ustawieniach Auto-Connect podczas budowy (przytrzymaj `U`) lub w konfiguracji moda. Zobacz [Referencja ustawień](Settings-Reference).",
+    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213",
+    "status": "reviewed",
+    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:27": {
+    "text": "- [Rozszerzenie](Extend) — funkcja, której rozgałęzienia przechwytuje zakładka Moduły.\n- [Smart Panel i HUD](Smart-Panel-and-HUD) — gdzie znajduje się zakładka Przywróć.\n- [Skalowanie siatki](Grid-Scaling) i [Transformacje](Transforms) — to, co zapisuje Zestaw siatki.",
+    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:31": {
+    "text": "- **Przyrost odstępu** (m) — metry odstępu dodawane na działkę przewijania (także odstęp Rozszerzenia i postęp segmentu Chodzenia).\n- **Przyrost stopni** (m) — metry stopniowania na działkę (także wzniesienie segmentu Chodzenia).\n- **Przyrost przesunięcia** (m) — metry przesunięcia na działkę (także przesunięcie segmentu Chodzenia).\n- **Przyrost obrotu** (stopnie) — stopnie obrotu na działkę (także skręt segmentu Chodzenia).",
+    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "afb87f859fcc83d5e6b2266d494b6b507374c2527764492de14534b28dbafa51",
+    "obsolete": true
+  },
+  "Auto-Connect:4": {
+    "text": "Otwórz **K → Skalowanie** i użyj odpowiedniej sekcji **Auto-Connect** dla wybranego budynku. W przypadku obsługiwanych budynków logistycznych `U` otwiera ustawienia połączeń. Domyślne ustawienia globalne znajdują się w **Opcje → Ustawienia modów → Smart!**; wybory dla bieżącego podglądu znajdują się w Panelu. Preferencje połączeń są aktualizowane na żywo, niezależnie od opcji **Zastosuj rozmieszczenie natychmiast**.",
+    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b",
+    "status": "reviewed",
+    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "e2b8d0e432743c7bf14b5c35d055dab7c5692be89a336b3b5b8bf2922ba550f7",
+    "obsolete": true
+  },
+  "Settings-Reference:24": {
+    "text": "- **Zasięg logistyki w pobliżu** — jak daleko rozdzielacze, łączniki, skrzyżowania rurociągów i otwory podłogowe rurociągów sięgają w kierunku portów fabrycznych podczas automatycznego łączenia. Zmniejsz tę wartość, aby zapobiec sięganiu automatycznego łączenia do sąsiednich grup fabrycznych. **Domyślnie 25 m** (poprzednie stałe zachowanie). (Dodano w wersji 34.2.0.)",
+    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:13": {
+    "text": "- **Serwery dedykowane:** obsługiwane są zarówno Windows, jak i Linux.\n- **Limit rozmiaru Schematów Smart:** pojedyncze rozmieszczenie siatki schematu na serwerze jest ograniczone (około dwóch tysięcy budynków lub kilkuset łączących taśmociągów/rurociągów, w zależności od tego, co nastąpi szybciej). Przekroczenie tego limitu sprawia, że Smart! odrzuca rozmieszczenie — HUD informuje o konieczności budowy w mniejszych sekcjach, a siatka pozostaje aktywna, więc możesz to zrobić. Bezpieczny limit ładunku konstrukcyjnego dotyczy również trybu jednoosobowego i sesji z hostem. Wyłącz [Asystę Smart](Smart-Assistance) i wybierz przepis ponownie, aby normalnie rozmieścić duży schemat z podstawowej wersji gry.\n- **Duże siatki są budowane progresywnie:** zatwierdzenie bardzo dużego skalowanego obiektu buduje go w tle przez chwilę, dzięki czemu serwer pozostaje responsywny, a nikt nie zostaje rozłączony podczas budowy.\n- **Dla administratorów serwera:** zainstaluj tę samą wersję Smart! na serwerze i na każdym kliencie. Menedżer Modów utrzymuje zgodność wersji podczas aktualizacji.\n- **Smart Camera** (mod towarzyszący) również działa w trybie wieloosobowym.",
+    "source_hash": "e0abba477abdd815436da48e2f8957237ec0394c708deea58592e10d20ab9268",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:45": {
     "text": "_Ostatnia aktualizacja: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
     "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
     "status": "reviewed",
     "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification; identical English source reuse",
-    "obsolete": true
-  },
-  "Lift-Assisted-Auto-Connect:12": {
-    "text": "![Dwa podniesione podglądy rozdzielaczy z widocznymi pionowymi podnośnikami w dół do poziomu połączenia z maszyną, obok sterowań Skalowania.](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/lift-connection-controls.png)",
-    "source_hash": "cc3d5dfc328bad823f169e9cfaa9f3b9faf340768f11bfc85d33f6d73e79b0fc",
-    "status": "reviewed",
-    "review_method": "Retained semantic review plus primary source-by-source review of all30 Home/Lift/Quick-Start units; kept valid original link captions, clarified horizontal belt and base-game direct connections; no native-speaker certification",
     "obsolete": true
   },
   "Screenshot-Checklist:8": {
@@ -5811,25 +5857,89 @@
     "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification; identical English source reuse",
     "obsolete": true
   },
-  "Lift-Assisted-Auto-Connect:15": {
-    "text": "Zbudowana linia wejściowa Producenta z rozdzielaczami przesuniętymi na różnych wysokościach i odległościach.",
-    "source_hash": "3f031fef9aa2b08f029041b38a3ede25923654db3210c0cf2f823345bb155916",
+  "Smart-Upgrade:35": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "fef10fcd052e667d2e0e00e385c7a28cabcf51645e05f4ffe84f7b4be9302924",
+    "obsolete": true
+  },
+  "Settings-Reference:55": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "48890e9ad61621c0f5a145bbfacc031cd10dd0886932dd6ca1718305cc0ded08",
+    "obsolete": true
+  },
+  "Smart-Upgrade:6": {
+    "text": "1. Otwórz **K → Ulepsz** z **wybranym** obsługiwanym budynkiem. Taśmociągi, rurociągi oraz przewody/linie zasilania mogą otworzyć to zadanie bezpośrednio.\n2. Wybierz tryb skanowania.\n3. Zeskanuj pobliskie przedmioty lub połączoną sieć.\n4. Wybierz rodzinę i docelowy poziom — a w przypadku skanowania sieci opcjonalnie pojedynczy poziom źródłowy, aby ulepszyć tylko ten poziom.\n5. Sprawdź koszt materiałów.\n6. Uruchom ulepszanie.",
+    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08",
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
     "obsolete": true
   },
-  "Buildable-Gallery:60": {
+  "Compatibility-and-Multiplayer:28": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "c7aebe8ed6d349fd4710af10aa9e95555d8529fd0728f438c8a84f9ce1b54246",
+    "obsolete": true
+  },
+  "Extend:40": {
     "text": "_Ostatnia aktualizacja: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
     "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
     "status": "reviewed",
     "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification; identical English source reuse",
     "obsolete": true
   },
-  "Blueprints:20": {
-    "text": "\n---",
-    "source_hash": "3d0b188170e8f7ed4b0a730d3fae39933057e60ba9e030bc278c446442cbabc3",
+  "Settings-Reference:12": {
+    "text": "- **Auto-Connect Hipertub** — włącz lub wyłącz automatyczne łączenie hipertub. **Włączone domyślnie.** (Dodano w 33.1.0.)\n- Wybierz tryb trasowania hipertub.",
+    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29",
     "status": "reviewed",
-    "review_method": "Language-neutral Markdown, protected brand or code; no translation required.",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:29": {
+    "text": "_Ostatnia aktualizacja: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification; identical English source reuse",
+    "obsolete": true
+  },
+  "Smart-Restore:41": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6fd578d8f158dba5fa05b36f5f5e607370fc961be65776fbce3a1e7af14d1023",
+    "obsolete": true
+  },
+  "Water-Extractors:14": {
+    "text": "_Ostatnia aktualizacja: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification; identical English source reuse",
+    "obsolete": true
+  },
+  "Smart-Upgrade:33": {
+    "text": "_Ostatnia aktualizacja: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification; identical English source reuse",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:25": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6a23ebe76c6c81c346aa9ada46d9598977d528e278a4ec3eba624c42942cbf0a",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:3": {
+    "text": "Smart! 35.0.0 jest przeznaczony dla **Satisfactory 1.2.4 / CL 502094 lub nowszego** oraz **SML 3.12.x**. Zaktualizuj grę i mod loader przed instalacją. Starsze wersje gry nie są obsługiwane.",
+    "source_hash": "67e479ca52c59b7506d6acd2ace2bb75b701e6c7854e5b2d570aeec46f92d66e",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:35": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4ce78ba0540a46d297f12754ed09f0b5fbd3af284a7f90d4157396c30318a9dc",
     "obsolete": true
   },
   "Lift-Assisted-Auto-Connect:14": {
@@ -5839,11 +5949,24 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
     "obsolete": true
   },
-  "Feature-Gallery:38": {
-    "text": "\n## Grupowy demontaż",
-    "source_hash": "353f26b4f82a6dd84f38739c12578013748425253037044613768c788d0ac22b",
+  "Feature-Gallery:30": {
+    "text": "\n## Ulepszanie",
+    "source_hash": "346a4694e55fb3881d4efb3df370eb4fa70ac8f41333fc51b5d2f136ba5ac387",
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:12": {
+    "text": "- Po podglądzie lub zbudowaniu Smart [Rozszerzenia](Extend), trafia on do **schowka Rozszerzenia** u góry zakładki. **Zapisz jako Moduł** zamienia ten przechwycony układ w nazwany, wielokrotnego użytku Moduł.\n- **Wczytaj Moduł** dla zapisanego Modułu, aby odbudować ten układ: wyposaż się w jego budynek źródłowy, a stanie się on aktywnym podglądem, który możesz **odtwarzać** (strzelać, aby umieścić, wielokrotnie) i **skalować kółkiem myszy** w locie.\n- Ponieważ przywrócony Moduł nie jest zablokowany po jednej stronie tak jak świeże Skalowane Rozszerzenie, możesz **skalować przebieg w obu kierunkach** wzdłuż jego osi przed umieszczeniem — przewijaj w jedną stronę, aby rosnął w jedną, a w drugą, aby rosnął w drugą.\n- **Eksportuj kod / Importuj kod** udostępniają Moduły w ten sam sposób co zestawy.",
+    "source_hash": "37740d4bfda7ca76487c320d49ae9a15e2da89d1f1fe4a31862a2ad8d53f903b",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "54a959ae32a4d9f6576cccd1f8191d529cda45dd8aca777c420560710c5cfa55",
     "obsolete": true
   },
   "Smart-Camera:17": {
@@ -5853,16 +5976,16 @@
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
     "obsolete": true
   },
-  "Lift-Assisted-Auto-Connect:13": {
-    "text": "Pionowe korpusy podnośników i ich dolne końce są widoczne pod oboma rozdzielaczami. Poziome taśmociągi po stronie maszyny są skrócone perspektywicznie w tym widoku; użyj poniższego przykładu zbudowanego Producenta, aby zobaczyć większy układ.",
-    "source_hash": "461c92ebb7d0183d81d0d44c20001dd4c5d42ceaee5dc38fbc02fc6ff22afe85",
+  "Smart-Restore:21": {
+    "text": "Użyj **K → Przywróć**, aby zapisywać, wybierać, ładować, importować lub eksportować układy. Po załadowaniu użyj Panelu skalowania lub sterowania kółkiem myszy/padem numerycznym, aby dostosować rozmieszczenie; HUD raportuje wynikową siatkę i aktywne dostosowanie. Strzel z materializatora FICSIT, aby zbudować to przy wyświetlonym koszcie.",
+    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c",
     "status": "reviewed",
-    "review_method": "Retained semantic review plus primary source-by-source review of all30 Home/Lift/Quick-Start units; kept valid original link captions, clarified horizontal belt and base-game direct connections; no native-speaker certification",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
     "obsolete": true
   },
-  "Controls:6": {
-    "text": "| Klawisz | Co robi |\n|-----|--------------|\n| `K` | Otwiera lub zamyka wspólne okno Skalowanie / Chodzenie / Ulepsz / Przywróć |\n| `F8` | Edytuje układ HUD; przy zainstalowanym Smart Camera edytuje układy HUD i kamery razem |\n| `Num Decimal` | Przełącza asystę budowania Smart na tę sesję |\n| `Num 8` | Zwiększa aktywną wartość |\n| `Num 5` | Zmniejsza aktywną wartość |\n| `Num 6` | Zwiększa liczbę siatki Y |\n| `Num 4` | Zmniejsza liczbę siatki Y |\n| `Num 9` | Zwiększa liczbę siatki Z |\n| `Num 3` | Zmniejsza liczbę siatki Z |\n| `X` | Przytrzymaj, aby dostosować X za pomocą wspólnych kontrolek lub kółka myszy |\n| `Z` | Przytrzymaj, aby dostosować Y za pomocą wspólnych kontrolek lub kółka myszy |\n| `X + Z` | Przytrzymaj oba, aby dostosować Z za pomocą wspólnych kontrolek lub kółka myszy |\n| `;` | Przytrzymaj tryb Odstęp |\n| `I` | Przytrzymaj tryb Stopnie |\n| `Y` | Przytrzymaj tryb Przesunięcie |\n| `,` | Przytrzymaj tryb Obrót |\n| `Num 0` | Przełącza oś aktywnego trybu |\n| `U` | Wybór receptury w budynkach produkcyjnych; ustawienia połączeń lub podpór znaków dla obsługiwanych obiektów budowlanych |\n| `Num 1` | Przełącza strzałki kierunku |\n| `Mouse Wheel` | Dostosowuje aktywny tryb Smart, lub obraca w standardowy sposób, gdy żaden tryb Smart nie jest aktywny |",
-    "source_hash": "2837292eada81d5f2f7b96ee1fa39689f1d488e0ee8b125d948d5069e407097e",
+  "Settings-Reference:2": {
+    "text": "Znajdziesz je w **Menu główne → Mody → Smart!**. Zmiany wprowadzone tutaj **utrzymują się między zapisami i sesjami**. (Przypisania klawiszy są osobne — zobacz [Sterowanie](Controls)).",
+    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb",
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
     "obsolete": true
@@ -5874,11 +5997,403 @@
     "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification; identical English source reuse",
     "obsolete": true
   },
+  "Extend:20": {
+    "text": "Uruchom jawnie przez **K → Rozszerzenie → Wybierz źródło** lub użyj skrótu po najechaniu. Zakładka Rozszerzenia wykorzystuje kontrole rozmieszczania dla liczników siatki, odstępów i obsługiwanych transformacji. Możesz również używać tych samych kontroli kółka/klawiszy numerycznych co w [Skalowanie siatki](Grid-Scaling). Bez przytrzymanego modyfikatora kółko wybiera kierunek Rozszerzenia. HUD w czasie gry identyfikuje trasę/wiersze i aktywną regulację, abyś mógł sprawdzić, co się zmieni, przed budowaniem.",
+    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:56": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bdf042547add168e1b9964198625cab7539af8176045dd68d70f13a619b0b7be",
+    "obsolete": true
+  },
+  "Settings-Reference:28": {
+    "text": "- Automatyczne przytrzymanie po zmianie siatki blokuje hologram po zmodyfikowaniu siatki, aby duży podgląd nie przesuwał się przypadkowo. **Włączone domyślnie** (od wersji 32.1.2) — wyłącz tę opcję tutaj, jeśli wolisz, aby hologram pozostał swobodny do przemieszczania; natywny klawisz Przytrzymaj zwalnia pojedyncze blokady.\n- **Sterowanie względem gracza** — sprawia, że budowanie podąża za kierunkiem, w którym patrzysz, zamiast za stałymi osiami kompasu: kółko myszy zwiększa budowę w kierunku, w którym jesteś zwrócony, a klawiatura numeryczna działa jak kompas (od/do, prawo/lewo, góra/dół). Dotyczy skalowania, odstępu, stopni, przesunięcia i obrotu. **Wyłączone domyślnie** — Twoje klasyczne sterowanie pozostaje niezmienione, dopóki tego nie włączysz, a Panel Smart zawsze pozostaje na stałych osiach X/Y/Z. Zobacz [Sterowanie](Controls), aby poznać pełny opis. (Dodano w wersji 34.1.0.)\n- **Przełącz tryby transformacji tapnięciem** — tapnij klawisz transformacji (Odstęp, Stopnie, Przesunięcie, Obrót lub Przepis w fabryce), aby włączyć ten tryb; tapnij ponownie, aby go wyłączyć; tapnij inny, aby zmienić tryb. Opcja stworzona dla kontrolerów, Steam Decka i ustawień dostępności — menu radialne/dotykowe Steam Input wysyłają szybkie tapnięcia i nie mogą przytrzymywać klawisza. Schowanie narzędzia, zmiana budynku lub otwarcie panelu zawsze zwalniają tryb. **Wyłączone domyślnie** — klasyczne zachowanie przytrzymaj-aby-użyć pozostaje nietknięte, dopóki tego nie włączysz, a ponowne wyłączenie przywraca je natychmiast. Zobacz [Kontroler i Steam Deck](Controller-and-Steam-Deck), aby skonfigurować menu radialne. (Dodano w wersji 34.2.0.)",
+    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:17": {
+    "text": "Osobny przełącznik dla styków między skalowanymi kopiami Twoich **własnych** schematów — niezależny od powyższych opcji automatycznego łączenia taśmociągów i rurociągów, dzięki czemu kopie schematów mogą zachować połączenia nawet przy wyłączonym standardowym automatycznym łączeniu.",
+    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:32": {
+    "text": "_Ostatnia aktualizacja: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
+    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "status": "reviewed",
+    "review_method": "Contextual language review with official game terminology; not native-speaker certification.",
+    "obsolete": true
+  },
+  "Settings-Reference:53": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "f22daf9ba45c58f27cddf5020c4d856e4963c6b4b321e93b90506fe9200725c4",
+    "obsolete": true
+  },
+  "Home:17": {
+    "text": "_Ostatnia aktualizacja: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification; identical English source reuse",
+    "obsolete": true
+  },
+  "Settings-Reference:57": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "c9db8a4c70492425a227c4f600e18e314036c794ee6ecf7b72819e8c1176d985",
+    "obsolete": true
+  },
+  "Buildable-Gallery:60": {
+    "text": "_Ostatnia aktualizacja: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification; identical English source reuse",
+    "obsolete": true
+  },
+  "Auto-Connect:24": {
+    "text": "**Skalowane podpory hipertuby tworzą ciąg hipertuby.** Gdy skalujesz linię Nakładanych podpór hipertuby, Smart! łączy je ciągłą hipertubą między kopiami — tak samo jak skalowana linia Słupów taśmociągu tworzy ciąg taśmociągu lub Podpór rurociągu tworzy ciąg rur. Ciąg podąża za odstępem i wysokością linii i może stromo wspinać się, a własny punkt zaczepienia każdej podpory pozostaje wolny, więc nadal możesz ręcznie podłączyć do niej hipertubę.",
+    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455",
+    "status": "reviewed",
+    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:37": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "89d7ec27427ec2dbeda612d4908225ce4ab17de581eb4e2fc4950c57aaf45e81",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:14": {
+    "text": "Tryb wieloosobowy jest nowszy niż jednoosobowy, więc jeśli coś zachowuje się inaczej w sesji wieloosobowej niż w jednoosobowej, jest to błąd — zgłoś go na GitHubie lub Discordzie, podając, co budowałeś i czy byłeś hostem, czy klientem.",
+    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:8": {
+    "text": "1. Zbuduj ręcznie jeden działający moduł i wyposaż się w ten sam typ budynku w Materializatorze FICSIT.\n2. Otwórz **K → Rozszerzenie** i naciśnij **Wybierz źródło**.\n3. Kliknij istniejący budynek źródłowy w świecie poza Panelem. Kompatybilne źródła są podświetlane podczas wybierania. **Escape** anuluje wybór; kliknięcia wewnątrz Panelu pozostają w interfejsie.\n4. Sprawdź nazwę źródła, przechwycone obiekty powiązane i liczniki powtórzeń. Użyj **Zmień kierunek** i kontroli rozmieszczania, aby ukształtować podgląd.\n5. Zamknij Panel, sprawdź proponowane kopie i koszty materiałów, a następnie strzel z Materializatora FICSIT, aby zbudować normalnie.",
+    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:27": {
+    "text": "Podglądy ściennych wsporników rurociągów i hipertub powtarzają pełny obrót obiektu bazowego. Opcja **Obrót ściany** w Panelu oferuje obsługiwane przez grę **skoki co 45°**, także dla pionowego ciągu. Jest to niezależne od obrotu siatki, który wygina sekwencję kopii.",
+    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce",
+    "status": "reviewed",
+    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:18": {
+    "text": "**Skalowane podpory rurociągu tworzą ciąg rur.** Gdy skalujesz linię Podpór rurociągu lub Ściennych wsporników rurociągu, Smart! łączy je ciągłym rurociągiem między kopiami — tak samo jak skalowana linia Słupów taśmociągu tworzy ciąg taśmociągu. Ciecz przepływa przez cały ciąg, a własny punkt zaczepienia każdej podpory pozostaje wolny, więc nadal możesz ręcznie podłączyć do niej rurę. Wysokość podpory naziemnej i kąt jej górnej części przenoszą się na całą linię, dzięki czemu nachylony ciąg pozostaje spójny.",
+    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01",
+    "status": "reviewed",
+    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:16": {
+    "text": "Zbudowany Piec hutniczy to istniejące źródło. Cyjanowy Piec hutniczy, taśmociągi i podpory to proponowana kopia; HUD wyświetla **Rozszerzenie 1×1**. Jest to niezrealizowany podgląd.",
+    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "0bfbb0f456f389e1d5f74b3927ea2e671cd406c1d43a86691dbaf4cf8466f920",
+    "obsolete": true
+  },
+  "Blueprints:20": {
+    "text": "\n---",
+    "source_hash": "3d0b188170e8f7ed4b0a730d3fae39933057e60ba9e030bc278c446442cbabc3",
+    "status": "reviewed",
+    "review_method": "Language-neutral Markdown, protected brand or code; no translation required.",
+    "obsolete": true
+  },
+  "Smart-Restore:38": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "ec2177c56559237ebd837004fb2b43a250f6a29833da7919279c42a8f1cd7585",
+    "obsolete": true
+  },
+  "Extend:43": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4a4f5c96d35df73910b2887f40ae3bae8ad2bfb9317efd89edeeee8d5cd6a225",
+    "obsolete": true
+  },
+  "Smart-Restore:1": {
+    "text": "Przywracanie Smart zapisuje Twoją pracę w Smart!, abyś mógł ją później ponownie wykorzystać, udostępnić lub wielokrotnie odtwarzać cały moduł fabryki w ten sam sposób. Otwórz **K → Przywróć** we wspólnym [Panelu Smart](Smart-Panel-and-HUD). Jego dwie podzakładki to **Zestawy siatki** i **Moduły**.",
+    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:11": {
+    "text": "Moduł przechwytuje cały **manifold Rozszerzenia** — połączony przewodem zestaw budynków wraz z ich taśmociągami, rurami, podnośnikami, rozdzielaczami i instalacją energetyczną — który można wielokrotnie odtwarzać.",
+    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:34": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4032031e869ee6cf1a85c2c77f17f1a8e1c5fdfb4d6365de941032362c26bd6b",
+    "obsolete": true
+  },
+  "Home:14": {
+    "text": "To jest lokalny szkic dokumentacji dla **Smart! 35.0.0 i Smart Camera 2.0.0**. Aktualizuj oba mody razem, gdy dostępne będą ich skoordynowane, kompatybilne wydania; nie łącz Camera 2.0 ze starszym pakietem Smart. Te strony szkicowe nie ogłaszają publikacji.",
+    "source_hash": "c29d2ea90b7a486f22022563a690b6049c5d72c5bf1c740518bb20fa5747432d",
+    "status": "reviewed",
+    "review_method": "Retained semantic review plus primary source-by-source review of all30 Home/Lift/Quick-Start units; kept valid original link captions, clarified horizontal belt and base-game direct connections; no native-speaker certification",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:15": {
+    "text": "Zbudowana linia wejściowa Producenta z rozdzielaczami przesuniętymi na różnych wysokościach i odległościach.",
+    "source_hash": "3f031fef9aa2b08f029041b38a3ede25923654db3210c0cf2f823345bb155916",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:41": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "994fafc6b93774a2bf26fda7226aa7f32d9e5692801829af09b53ed4e124e1dc",
+    "obsolete": true
+  },
+  "Auto-Connect:53": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "7a7775f3971ba2543d8a862d7cb59673e80d88b7b274872a5f5197d36bd4a8cb",
+    "obsolete": true
+  },
+  "Smart-Upgrade:26": {
+    "text": "Duże ulepszenia taśmociągów są skomplikowane, ponieważ Satisfactory wewnętrznie grupuje taśmociągi i podnośniki w obiekty łańcucha transportowego. Smart! zawiera mechanizmy stabilizacji i diagnostyki, ale bardzo duże ulepszenia mogą nadal wymagać zapisania i ponownego wczytania gry, jeśli system zgłosi niestabilny stan łańcucha.",
+    "source_hash": "fed328c054689b599658ab3989621c5b784f7bcaa94b5be404727f05664adba7",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:13": {
+    "text": "Pionowe korpusy podnośników i ich dolne końce są widoczne pod oboma rozdzielaczami. Poziome taśmociągi po stronie maszyny są skrócone perspektywicznie w tym widoku; użyj poniższego przykładu zbudowanego Producenta, aby zobaczyć większy układ.",
+    "source_hash": "461c92ebb7d0183d81d0d44c20001dd4c5d42ceaee5dc38fbc02fc6ff22afe85",
+    "status": "reviewed",
+    "review_method": "Retained semantic review plus primary source-by-source review of all30 Home/Lift/Quick-Start units; kept valid original link captions, clarified horizontal belt and base-game direct connections; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:52": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "2f3fecc73d967c4184f0913db5a820573f49a433540b53d23d3f4b45143cea26",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:4": {
+    "text": "Smart Camera 2.0 i Smart! 35.0 muszą być aktualizowane jako kompatybilna para, gdy oba są zainstalowane. Kamera działa również samodzielnie; narzędzia budowlane Smart nie wymagają Kamery. Preferencje Kamery i wygląd HUD należą do każdego lokalnego gracza, a nie do wszystkich na serwerze.",
+    "source_hash": "d778ecad7f4a6a4eb530120898db7c258299752b3b3849ab7cb18dce25829247",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Feature-Gallery:50": {
+    "text": "_Ostatnia aktualizacja: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification; identical English source reuse",
+    "obsolete": true
+  },
+  "Extend:42": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "16d59253ca7db5055c785ca688ef4711b48bf61b30eff0f24767d33040495694",
+    "obsolete": true
+  },
+  "Smart-Restore:2": {
+    "text": "To odpowiedź na pytanie: \"Spędziłem wieki, dopracowując ten układ — jak go odzyskać?\"",
+    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Blueprints:17": {
+    "text": "Bezpieczny limit ładunku konstrukcyjnego dotyczy również siatek Schematów. Odrzucone zbyt duże umieszczenie zachowuje podgląd: zmniejsz siatkę i buduj sekcjami. Dla dużego umieszczenia standardowego Schematu wyłącz [Asystę Smart](Smart-Assistance) i wybierz go ponownie.",
+    "source_hash": "540e7f14c64d49d7f11fb6b7090a1475087984b4955b0dccb93ca481787d4236",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:40": {
+    "text": "W **Mody → Smart! Camera** widoki pojawiają się automatycznie pod nazwami modyfikacji i kamer, które je dostarczają, w tym widoki nieaktywne. Wbudowany widok materializatora ma niezależny przełącznik włączania. Pozycja każdego widoku jest znormalizowana w zakresie 0–1, rozdzielczość wynosi 64–2048 pikseli na oś, skala 0,1–2, częstotliwość przechwytywania 5–60/s, a jasność od −3 do +3 EV. Odpowiednie odległości kamer budynkowych wynoszą 5–50 m. Ustawienia kamery są stosowane natychmiast; widoki ukryte przez menu są aktualizowane po wznowieniu gry. Opcja **Wszystkie zapisy** modyfikuje tylko edytowane pole w profilach globalnych i istniejących zapisach dla tej kamery, w tym w bieżącym świecie. Opcja **Ten zapis** zmienia tylko bieżący profil zapisu gry podstawowej. Niezwiązane pola i inne kamery pozostają nienaruszone.",
+    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "a17847f27c9d126c19f4c648fcce148a467279fc4197ecd4e932411db88929df",
+    "obsolete": true
+  },
+  "Smart-Restore:33": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b2e1a293ae99d7ff0946f54edd6939cf17d18547e848ac895c533abe3c2e4560",
+    "obsolete": true
+  },
+  "Feature-Gallery:38": {
+    "text": "\n## Grupowy demontaż",
+    "source_hash": "353f26b4f82a6dd84f38739c12578013748425253037044613768c788d0ac22b",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:36": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4ca209992e5cc98977db86e926e521228b74ac99cbbce1b5f642444df21d447f",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:11": {
+    "text": "## Przykłady w grze",
+    "source_hash": "5eb2c1c9e3dbc39102a812af339752c7f0fe1e0b95368965e2e069a71b377898",
+    "status": "reviewed",
+    "review_method": "Retained semantic review plus primary source-by-source review of all30 Home/Lift/Quick-Start units; kept valid original link captions, clarified horizontal belt and base-game direct connections; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:15": {
+    "text": "- Włącz lub wyłącz Auto-Connect energii.\n- Wybierz tryb połączenia.\n- Ustaw zasięg połączenia.\n- Rezerwuj połączenia słupów, aby Smart! nie wypełniał każdego slotu.\n- **Łańcuchowe łączenie energii podczas Skalowania** — gdy Ulepszone złącza zasilania są odblokowane, skalowanie fabryki lub generatora wzdłuż osi X Smart łączy każdą kopię bezpośrednio z następną zamiast prowadzić słup do każdej, co odpowiada typowemu układowi rozdzielaczowemu bez osobnego przebiegu Rozszerzenia. Panel Smart może nadpisać to dla bieżącej budowy, a HUD raportuje efektywny wybór. Respektuje dostępną pojemność każdego złącza. **Włączone domyślnie.** (Dodano w 34.2.0.)",
+    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:54": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8382fa1196f068239391b97c93d521c0ed3ba46266fa7254f3e6c05c842fa1d2",
+    "obsolete": true
+  },
   "Smart-Assistance:13": {
     "text": "_Ostatnia aktualizacja: 2026-10-06 · Smart! v34.4.0_\n",
     "source_hash": "9ea842bd5dbdd752d3353ddeeeb68a3eff256015d475f2a5eb6d8e17e13b5156",
     "status": "reviewed",
     "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Upgrade:14": {
+    "text": "- Kliknij konkretny poziom — na przykład **kl. 2** — aby ulepszyć **tylko** ten poziom do docelowego. Zmień swoje taśmociągi kl. 2 na kl. 3 i zostaw kl. 4 nietknięte.\n- Wybierz **Wszystkie poziomy**, aby zmienić każdy różniący się poziom taśmociągu, podnośnika lub rurociągu na wybrany docelowy. Może to ulepszyć niektóre poziomy i obniżyć inne w tej samej **trasie**.",
+    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:22": {
+    "text": "_Ostatnia aktualizacja: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification; identical English source reuse",
+    "obsolete": true
+  },
+  "Extend:27": {
+    "text": "To samo źródło teraz generuje trzy cyjanowe kopie modułów, w tym ich trasy taśmociągów i podpory. HUD wyświetla **Rozszerzenie 3×1**, a koszty materiałów rosną wraz z kopiami. Istniejący obiekt źródłowy pozostaje na miejscu.",
+    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:54": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "92242198e922b4bdd9164d865151a7ed36c6f470ad144311ff077b3cb519dd7a",
+    "obsolete": true
+  },
+  "Auto-Connect:45": {
+    "text": "_Ostatnia aktualizacja: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
+    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "status": "reviewed",
+    "review_method": "Contextual language review with official game terminology; not native-speaker certification.",
+    "obsolete": true
+  },
+  "Smart-Upgrade:34": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "e26d8a251fe56b8c46900038254253f78c75d8e69ca22dce9b9e0edc797fe40e",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:12": {
+    "text": "Smart! działa w trybie wieloosobowym na dedykowanych serwerach. Każda funkcja Smart! — Skalowanie siatki, Auto-Łączenie (taśmociągi, rurociągi i energia), Schematy Smart, Rozszerzenie, Ulepszanie Smart, Przywracanie Smart i Demontaż Smart — działa, gdy grasz jako klient, z normalnymi kosztami budowy. Wszystko, co umieszcza Smart!, jest standardowym, w pełni replikowanym budynkiem w grze: inni gracze go widzą, mogą z niego korzystać i mogą go zdemontować, tak jakbyś zbudował go ręcznie.",
+    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:32": {
+    "text": "Wartości domyślne to 0,5 m i 5°. Przyrosty odległości akceptują zakres 0,1–8 m; obrót akceptuje 0,5–90°.",
+    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:38": {
+    "text": "_Ostatnia aktualizacja: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification; identical English source reuse",
+    "obsolete": true
+  },
+  "Extend:44": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6db2053fcc52fc7413a2cac1559df3b88f7c1446d5bc55e82fb5c2b6043c246b",
+    "obsolete": true
+  },
+  "Smart-Camera:30": {
+    "text": "_Ostatnia aktualizacja: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification; identical English source reuse",
+    "obsolete": true
+  },
+  "Settings-Reference:50": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "d3ecb21df5d1ff326acb297239bef36255c199f23e6b6ec35663f3996c38ec2b",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:12": {
+    "text": "![Dwa podniesione podglądy rozdzielaczy z widocznymi pionowymi podnośnikami w dół do poziomu połączenia z maszyną, obok sterowań Skalowania.](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/lift-connection-controls.png)",
+    "source_hash": "cc3d5dfc328bad823f169e9cfaa9f3b9faf340768f11bfc85d33f6d73e79b0fc",
+    "status": "reviewed",
+    "review_method": "Retained semantic review plus primary source-by-source review of all30 Home/Lift/Quick-Start units; kept valid original link captions, clarified horizontal belt and base-game direct connections; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:8": {
+    "text": "- **Zapisz z Panelu** — nazwij bieżącą konfigurację panelu i zapisz ją jako zestaw.\n- **Wczytaj do Panelu** — wczytaj zapisany zestaw z powrotem do panelu, aby go dopracować przed budową, lub zastosuj go bez zmian.\n- **Eksportuj kod / Importuj kod** — udostępnij zestaw jako kod lub wczytaj kod udostępniony przez kogoś innego.",
+    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40",
+    "status": "reviewed",
+    "review_method": "local-model independent semantic pass + structural checks; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b9d7eb1bd49651f9c06691ed5350a0882a0787f099915de792867f8aa4494c27",
+    "obsolete": true
+  },
+  "Blueprints:21": {
+    "text": "_Ostatnia aktualizacja: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (wersja robocza)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Retained independent semantic review plus primary source-by-source check of all35 units; rejected spurious sidebar rewrite ignored, official support terms and direct-connection explanation corrected; no native-speaker certification; identical English source reuse",
     "obsolete": true
   }
 }

@@ -24,6 +24,23 @@ AutoConnect creates preview and child holograms that connect scaled logistics an
 
 AutoConnect for belts and pipes is coordinated through the active hologram and child-hologram system. Power AutoConnect is the exception: it directly spawns `AFGBuildableWire` actors (with its own cable cost deduction) after pole/building construction, so not all AutoConnect output flows through child-hologram construction. See the construction-order migration note (audit F039) before changing these paths for 1.2.
 
+## Regular conveyor pole initialization
+
+The native conveyor-pole mesh and selected height can exist while `SnapOnly0` still sits at the
+actor base. Copying that connector into a selected-height child then routes the first belt preview
+along the ground. A later native height adjustment refreshes the connector, which can hide this
+initialization defect.
+
+`SFSelectedPoleState::GetSelectedMeshes` initializes that native state before measuring or copying
+the selected geometry. During `PHBS_PlacementAndRotation`, an uninitialized height or a snap point
+still at the base triggers native `OnRep_PoleVariationIndex`. Native code supplies the mesh, height,
+and connector position; Smart does not invent an offset. Do not run this refresh during
+`PHBS_AdjustHeight`, where it would interfere with the player's active height drag.
+
+Verified on CL 513885 with a two-pole grid and 55 m spacing: the first preview's two snap points and
+belt endpoints are 100 cm above their bases at variation 0; variation 1 moves both to 300 cm.
+Construction at both heights preserves those belt endpoints and charges the native quoted cost.
+
 ## Configuration Boundaries
 
 Two configuration sections establish separate boundaries:

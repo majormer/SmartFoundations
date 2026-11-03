@@ -73,6 +73,8 @@ public:
     virtual TArray<FItemAmount> GetCost(bool includeChildren) const override;
     UFGFactoryConnectionComponent* GetSelectedFactoryPeer(int32 Index) const;
     bool ValidateNativeConstruction();
+    /** Native routed geometry verdict, without child-preview exemptions or changing existing disqualifiers. */
+    TSubclassOf<class UFGConstructDisqualifier> GetNativeSplineDisqualifier();
     TArray<FItemAmount> GetNativeConstructionCost() const;
 
 

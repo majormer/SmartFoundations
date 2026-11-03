@@ -28,7 +28,7 @@ Each preset shows a plain-language summary of what it holds (building, grid, tra
 A Module captures a whole **Extend manifold** — a wired unit of buildings with their belts, pipes, lifts, distributors, and power — that you can stamp down repeatedly.
 
 - After you preview or build a Smart [Extend](Extend), it lands in the **Extend clipboard** at the top of the tab. **Save as Module** turns that captured layout into a named, reusable Module.
-- **Load Module** for a saved Module to rebuild that layout: equip its source building and it becomes a live preview you can **stamp** (fire to place, repeatedly) and **scroll to scale** on the fly.
+- **Load Module** for a saved Module to rebuild that layout: the build gun can open its source building automatically and display a live preview you can **stamp** (fire to place, repeatedly) and **scroll to scale** on the fly.
 - Because a restored Module isn't locked to one side the way a fresh Scaled Extend is, you can **rescale the run in either direction** along its axis before placing — scroll one way to grow it one way, the other way to grow it the other.
 - **Export Code / Import Code** share Modules the same way presets do.
 
@@ -62,6 +62,10 @@ Shared presets and Modules are checked against your current unlocks before they 
 
 That keeps shared setups honest: importing one never skips progression.
 
+## Conveyor contents and completion
+
+Saved Modules describe construction and settings; they do not duplicate live conveyor cargo. Review the full material quote before placement. If an operation reports incomplete settlement, inspect what was placed before trying again; cancellation does not promise to undo construction already performed.
+
 ## See Also
 
 - [Extend](Extend) — the feature whose manifolds the Modules tab captures.
@@ -70,4 +74,4 @@ That keeps shared setups honest: importing one never skips progression.
 
 ---
 
-_Last updated: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_
+_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0 (release draft)_

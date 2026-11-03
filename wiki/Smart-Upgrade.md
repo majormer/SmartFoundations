@@ -66,7 +66,7 @@ Miners and power/capacity families are upgrade-only. Logistics downgrades remain
 
 ## Conveyor Warning
 
-Large conveyor upgrades are complicated because Satisfactory groups belts and lifts into conveyor chain actors internally. Smart! includes stabilization and diagnostics, but very large upgrades may still need a save/reload if the game reports unsettled chain state afterward.
+Smart! coordinates belt and lift replacement with native conveyor ownership and item transfer. Existing cargo belongs to the replacement operation; it must not be duplicated or discarded. A failed preflight leaves the original untouched. Once construction has started, an incomplete or cancelled operation is not a promise of full rollback. If Smart! reports incomplete settlement, inspect the result and retain the game log before retrying. A save/reload is not a guaranteed repair.
 
 ## In-game examples
 
@@ -80,4 +80,4 @@ Network Upgrade has a selected existing belt and populated scan results. Scannin
 
 ---
 
-_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_
+_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0 (release draft)_

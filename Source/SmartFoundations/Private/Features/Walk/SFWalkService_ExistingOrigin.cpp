@@ -228,12 +228,12 @@ int32 USFWalkService::ReconstructExistingCommit(AFGHologram* Seed, const FSFWalk
             {
                 bool bTooLong = false;
                 const float Limit = Spec.ConveyanceType == ESFWalkConveyanceType::Hypertube
-                    ? USFAutoConnectService::MAX_HYPERTUBE_LENGTH : USFAutoConnectService::MAX_PIPE_LENGTH;
+                    ? USFAutoConnectService::MAX_HYPERTUBE_LENGTH : Pipe->GetMaxSplineLength();
                 if (!Pipe->ValidateCurrentSpline(Limit, bTooLong)) { return Fail(); }
             }
             if (auto* Belt = Cast<ASFConveyorBeltHologram>(Span))
             {
-                if (!Belt->GetSplineComponent() || Belt->GetSplineComponent()->GetSplineLength() > USFAutoConnectService::MAX_PIPE_LENGTH)
+                if (Belt->GetNativeSplineDisqualifier())
                 { return Fail(); }
             }
         }

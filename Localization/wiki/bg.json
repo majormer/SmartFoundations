@@ -77,11 +77,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Auto-Connect:4": {
-    "text": "Отворете **K → Мащабиране** и използвайте приложимия раздел **Авто-свързване** за избраната постройка. При поддържаните логистични постройки `U` отваря настройките за връзките. Общите стойности по подразбиране са в **Опции → Настройки на модове → Smart!**; изборите за текущия преглед са в панела. Предпочитанията за връзки се обновяват веднага, независимо от **Прилагай поставянето веднага**.",
-    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:56": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b"
   },
   "Auto-Connect:5": {
     "text": "Оформете мрежата чрез панела, колелото или цифровия блок; преди строеж проверете създадените връзки и стрелките за посока в света. HUD показва стойностите за поставяне, вместо да предлага друг формуляр за настройки на връзките. Вижте [Управление](Controls) за клавишите по подразбиране и поведението спрямо играча.",
@@ -118,6 +117,16 @@
     "source_hash": "e298b5a94ff81e994527adc768d5e9764cc98d01ecb1dd6ea12f6dca747287fd",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  },
+  "Auto-Connect:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bfcb0d7bcbf0b5b36a80dd16a2dac958a4db4fc0261b34174dd132215ae37e01"
+  },
+  "Auto-Connect:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "59bd907b72a7a1bd727a61b3bb63c228bae6f45d96d4267b1fa73010ed0ca1df"
   },
   "Auto-Connect:11": {
     "text": "### Връзки към машини с конвейерни асансьори",
@@ -173,11 +182,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Auto-Connect:18": {
-    "text": "**Мащабираните опори за тръба изграждат тръбно трасе.** Когато мащабирате ред от Опори за тръба или Стенни опори за тръба, Smart! прокарва свързано тръбно трасе между копията — както мащабиран ред от Опори за лента изгражда трасе за лента. Течността преминава през цялото трасе, а собствената точка за захващане на всяка опора остава свободна, така че все още можете да свържете тръба към нея ръчно. Височината на наземната опора и ъгълът на горната ѝ част се пренасят по целия ред, така че наклоненото трасе остава последователно.",
-    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:57": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01"
   },
   "Auto-Connect:19": {
     "text": "Създадените тръби наследяват боята от свързана изходна тръба. Фитингът наследява боя само когато свързаните му тръби имат еднаква боя; преместването на прегледа към връзка без източник на боя възстановява първоначалната му боя.",
@@ -203,6 +211,16 @@
     "status": "reviewed",
     "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
   },
+  "Auto-Connect:50": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "a731c462366f0c155a14546a1265f77d5e93778036e1ebd4a44e669ff5112e22"
+  },
+  "Auto-Connect:51": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "0a29d3c9b8ec32dedec575d19408d9bb4da0cbb09a58b8d2ed2dc2c0f3f833c7"
+  },
   "Auto-Connect:21": {
     "text": "## Авто-свързване на хипертръби",
     "source_hash": "4bcc46f7a3e328199f2b10ea31239d134d1815f33bf0911b2c5020959c930f54",
@@ -221,17 +239,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Auto-Connect:24": {
-    "text": "**Мащабираните опори за хипертръба изграждат трасе от хипертръби.** Когато мащабирате ред от Стифиращи опори за хипертръба, Smart! прокарва свързано трасе между копията — както мащабиран ред от Опори за лента изгражда трасе за лента, а Опорите за тръба изграждат тръбно трасе. Трасето следва разстоянието и височината на реда и може да се изкачва стръмно, а собствената точка за захващане на всяка опора остава свободна, така че все още можете да свържете хипертръба към нея ръчно.",
-    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:58": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455"
   },
-  "Auto-Connect:25": {
-    "text": "Авто-свързването на хипертръби има **собствен превключвател и режим на маршрутизиране**, независими от тръбите — задайте ги от Smart панела, настройките за Авто-свързване по време на строеж (задръжте `U`) или настройките на мода. Вижте [Справочник с настройки](Settings-Reference).",
-    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:59": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213"
   },
   "Auto-Connect:26": {
     "text": "## Завъртени трасета със стенни опори",
@@ -239,11 +255,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Auto-Connect:27": {
-    "text": "Дъщерните стенни опори за тръби и хипертръби следват пълното завъртане на родителя. **Завъртане на стена** в панела предлага стандартни **стъпки от 45°**, включително вертикално трасе. Това е отделно от Завъртане на мрежата, което огъва последователност от копия.",
-    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:60": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce"
   },
   "Auto-Connect:28": {
     "text": "При управление спрямо сградата Y следва завъртяното стенно трасе. При управление спрямо играча вертикалният вход следва най-вертикалната поддържана посока: при вертикално стенно трасе **X+Z + колело** разраства трасето вертикално, а **Z + колело** го разраства настрани. Панелът запазва колоните X/Y/Z; използвайте стрелките, за да видите тези оси. Стенните конектори за ленти запазват стандартните си ограничения за ориентация и използват асансьори за вертикален транспорт.",
@@ -317,11 +332,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Auto-Connect:45": {
-    "text": "_Последна актуализация: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
-    "status": "reviewed",
-    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
+  "Auto-Connect:55": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Blueprints:0": {
     "text": "# Чертежи в Smart!",
@@ -425,11 +439,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Blueprints:17": {
-    "text": "Ограничението за безопасен размер на строителното съобщение важи и за мрежи от чертежи. Отказаното прекомерно поставяне запазва прегледа: намалете мрежата и строете на части. За поставяне на голям чертеж с основната игра изключете [Smart помощ](Smart-Assistance) и го изберете отново.",
-    "source_hash": "540e7f14c64d49d7f11fb6b7090a1475087984b4955b0dccb93ca481787d4236",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Blueprints:34": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "60707b2c9e66e6d33812f6b75b700b1d1cfafde4fcb92a54f5847b69c82a8ac8"
   },
   "Blueprints:18": {
     "text": "Мултиплейърът използва проверка от сървъра и нормални разходи. Променена крайна точка или недостатъчни ресурси могат да направят невалиден преди това валиден преглед. Вижте [Авто-свързване](Auto-Connect) и [Съвместимост и мултиплейър](Compatibility-and-Multiplayer).",
@@ -509,11 +522,10 @@
     "status": "reviewed",
     "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
   },
-  "Blueprints:33": {
-    "text": "_Последна актуализация: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
-    "status": "reviewed",
-    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
+  "Blueprints:35": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Buildable-Gallery:0": {
     "text": "# Галерия с постройки",
@@ -983,17 +995,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Compatibility-and-Multiplayer:3": {
-    "text": "Smart! 35.0.0 е предназначен за **Satisfactory 1.2.4 / CL 502094 или по-нова** и **SML 3.12.x**. Обновете играта и зареждащата програма за модове преди инсталиране. По-старите версии на играта не се поддържат.",
-    "source_hash": "67e479ca52c59b7506d6acd2ace2bb75b701e6c7854e5b2d570aeec46f92d66e",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:23": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "ddb7f6d3428242b7eb2a16d6468bc1c961f041f29251922f6c6a6922bfa78751"
   },
-  "Compatibility-and-Multiplayer:4": {
-    "text": "Smart Camera 2.0 и Smart! 35.0 трябва да се обновяват като съвместима двойка, когато и двата са инсталирани. Camera работи и самостоятелно; инструментите за строеж на Smart не изискват Camera. Предпочитанията за Camera и външният вид на HUD принадлежат на всеки местен играч, а не на всички в сървъра.",
-    "source_hash": "d778ecad7f4a6a4eb530120898db7c258299752b3b3849ab7cb18dce25829247",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:24": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "52b5e96461ffcb32e45b4e4f8c6a7bb4ae65053d1b8488b28119e6c0efbcaf11"
   },
   "Compatibility-and-Multiplayer:5": {
     "text": "## Безопасност на запазените игри",
@@ -1037,23 +1047,20 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Compatibility-and-Multiplayer:12": {
-    "text": "Smart! работи в мултиплейър на специализирани сървъри. Всяка функция на Smart! — Мащабиране на мрежата, Авто-свързване (ленти, тръби и захранване), Smart чертежи, Разширяване, Smart Надграждане, Smart Възстановяване и Smart Разглобяване — работи, когато играете като клиент, с нормални разходи за строеж. Всичко, което Smart! поставя, е стандартна, напълно репликирана сграда на играта: другите играчи я виждат, могат да я използват и разглобяват, сякаш сте я построили ръчно.",
-    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:29": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5"
   },
-  "Compatibility-and-Multiplayer:13": {
-    "text": "- **Специализирани сървъри:** поддържат се Windows и Linux.\n- **Максимален размер за Smart чертежи:** единично поставяне на мрежа от чертежи на сървър е ограничено (приблизително няколко хиляди сгради или няколкостотин свързващи ленти/тръби, което се достигне първо). Ако надхвърлите ограничението, Smart! отказва поставянето — HUD ви казва да строите на по-малки части, а мрежата остава активна, за да го направите. Ограничението за безопасен размер на строителното съобщение важи и за самостоятелна игра и сесии със сървър при домакина. Изключете [Smart помощ](Smart-Assistance) и изберете рецептата отново, за да поставите нормално голям стандартен чертеж.\n- **Големите мрежи се строят постепенно:** потвърждаването на много голям мащабиран строеж го изгражда във фонов режим за няколко мига, така че сървърът да остане отзивчив и никой да не бъде изключен по време на строежа.\n- **За администратори на сървъри:** инсталирайте една и съща версия на Smart! на сървъра и всеки клиент. Мениджърът на модове ги поддържа еднакви при обновяване.\n- **Smart Camera** (съпътстващият мод) също работи в мултиплейър.",
-    "source_hash": "e0abba477abdd815436da48e2f8957237ec0394c708deea58592e10d20ab9268",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:26": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8cb40018690ab6ebe9357b170389232193d08c25eafc1fd5d631dac793751ffe"
   },
-  "Compatibility-and-Multiplayer:14": {
-    "text": "Мултиплейърът е по-нов от самостоятелната игра, така че ако нещо се държи различно в мултиплейър сесия, това е грешка — докладвайте я в GitHub или Discord и споменете какво сте строили и дали сте били домакин или клиент.",
-    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:30": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9"
   },
   "Compatibility-and-Multiplayer:15": {
     "text": "Превключвателят за помощ в сесията на всеки играч засяга само собствените му инструменти за строеж. Отдалеченото Разширяване/Възстановяване държи прегледа и настройките на домакина отделно от операцията на клиента.",
@@ -1097,11 +1104,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Compatibility-and-Multiplayer:22": {
-    "text": "_Последна актуализация: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:31": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Controller-and-Steam-Deck:0": {
     "text": "# Контролер и Steam Deck (експериментално)",
@@ -1637,11 +1643,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Extend:8": {
-    "text": "1. Постройте ръчно един работещ модул и изберете същия вид сграда в строителния пистолет.\n2. Отворете **K → Разширяване** и натиснете **Избери източник**.\n3. Щракнете върху съществуващата изходна сграда в света извън панела. Съвместимите източници се маркират по време на избора. **Escape** отменя избора; щракванията в панела остават в интерфейса.\n4. Проверете името на източника, заснетите придружаващи обекти и бройките за повторение. Използвайте **Смени посоката** и контролите за поставяне, за да оформите прегледа.\n5. Затворете панела, проверете предложените копия и разхода на материали, след което задействайте строителния пистолет, за да построите нормално.",
-    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca"
   },
   "Extend:9": {
     "text": "Изборът на източник не строи нищо. Пропуснатото щракване запазва предишния преглед. Замяната на източник или съществено непостроено поставяне изисква потвърждение преди изхвърлянето му. Избраният източник остава фиксиран за проверка, докато поставянето бъде отменено, построено или рецептата се смени.",
@@ -1685,11 +1690,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Extend:16": {
-    "text": "Построената Топилня е съществуващият източник. Светлосинята Топилня, ленти и опори са предложеното копие; HUD показва **Разширяване 1×1**. Това е непостроен преглед.",
-    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:50": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc"
   },
   "Extend:17": {
     "text": "## Смяна на посоката",
@@ -1709,11 +1713,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Extend:20": {
-    "text": "Започнете изрично чрез **K → Разширяване → Избери източник** или използвайте прекия път с насочване. Разделът Разширяване използва отново контролите за поставяне за бройки в мрежата, разстояние и поддържани трансформации. Можете също да използвате същите контроли с колело/цифров блок като при [Мащабиране на мрежата](Grid-Scaling). Без задържан модификатор колелото избира посоката на Разширяване. HUD по време на игра показва трасето/редовете и активната настройка, за да проверите какво ще се промени преди строежа.",
-    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:51": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13"
   },
   "Extend:21": {
     "text": "## Мащабирано разширяване",
@@ -1751,11 +1754,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Extend:27": {
-    "text": "Същият източник вече създава три светлосини копия на модула, включително конвейерните им трасета и опори. HUD показва **Разширяване 3×1**, а разходът на материали расте с копията. Построеният източник остава на място.",
-    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:52": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7"
   },
   "Extend:28": {
     "text": "## Екстрактори за вода",
@@ -1805,6 +1807,21 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
+  "Extend:45": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "54e38c7493c79d3f4bc2f71a29b70d8dd6942a4f44bee91a351b6ebd82db6819"
+  },
+  "Extend:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "2fc6ba5d654478f0d36a249ac28472d87d41be4029ae07a4e513561265a5f725"
+  },
+  "Extend:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8d860159ae76958c5e531b7732a1d2bed5e6c39a0cc339d47fa7d866c6ab94e8"
+  },
   "Extend:36": {
     "text": "## Проверете заснетата конфигурация",
     "source_hash": "f1c2f5c6de3f53c619dc7b774e5c42c86b11c0f59d3d150537e145bb3f358680",
@@ -1829,11 +1846,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Extend:40": {
-    "text": "_Последна актуализация: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "FAQ:0": {
     "text": "# Често задавани въпроси",
@@ -3119,17 +3135,26 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
+  "Home:18": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1829ed863c572c2dbcafc8f78604d94faa795d58ca1d7e90494d020f49980f60"
+  },
+  "Home:19": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1bd5656d0819ad3a7d1a6861c038f59661e423c6f03bddc8b203ef1a7ffb5c8b"
+  },
   "Home:13": {
     "text": "## Обхваната версия",
     "source_hash": "96ddfc08279c6ae35f38d5139ad21a94f1ac99c7d031fa618cb40edbe35d39a5",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Home:14": {
-    "text": "Това е местният проект на документацията за **Smart! 35.0.0 и Smart Camera 2.0.0**. Обновете двата мода заедно, когато станат достъпни съгласуваните им съвместими издания; не комбинирайте Camera 2.0 с по-стар пакет Smart. Тези проектни страници не обявяват публикуване.",
-    "source_hash": "c29d2ea90b7a486f22022563a690b6049c5d72c5bf1c740518bb20fa5747432d",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Home:20": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6de3b72e72a676036d11c5f3b3679009013b370ca2cb7e8aed2d56252d3addd9"
   },
   "Home:15": {
     "text": "Започнете със споделените [Панел и HUD](Smart-Panel-and-HUD), [продължаване на Ходене](Smart-Walking), [Авто-свързване с конвейерни асансьори](Auto-Connect) и [връзки между чертежи](Blueprints).",
@@ -3143,11 +3168,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Home:17": {
-    "text": "_Последна актуализация: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Home:21": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Lift-Assisted-Auto-Connect:0": {
     "text": "# Авто-свързване с конвейерни асансьори",
@@ -3473,11 +3497,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:2": {
-    "text": "Намерете ги в **Главно меню → Модове → Smart!**. Промените тук **се запазват между запазени игри и сесии**. (Клавишите са отделно — вижте [Управление](Controls).)",
-    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:59": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb"
   },
   "Settings-Reference:3": {
     "text": "## Авто-свързване на ленти",
@@ -3533,11 +3556,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:12": {
-    "text": "- **Авто-свързване на хипертръби** — включва или изключва автоматичното свързване на хипертръби. **Включено по подразбиране.** (Добавено в 33.1.0.)\n- Избор на режим на маршрутизиране на хипертръби.",
-    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:60": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29"
   },
   "Settings-Reference:13": {
     "text": "## Авто-свързване на захранване",
@@ -3551,11 +3573,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:15": {
-    "text": "- Включване или изключване на Авто-свързване на захранване.\n- Избор на режим на свързване.\n- Задаване на обхват на свързване.\n- Запазване на свободни връзки на стълбовете, за да не запълва Smart! всяко място.\n- **Верижно захранване при мащабиране** — след отключване на „Подобрени захранващи изводи“, мащабирането на фабрика или генератор по оста X на Smart свързва всяко копие директно със следващото, вместо да прокарва стълб до всяко, съответствайки на обикновена колекторна конфигурация без отделно Разширяване. Smart панелът може да го замени за текущия строеж, а HUD показва действащия избор. Спазва наличния капацитет на всеки конектор. **Включено по подразбиране.** (Добавено в 34.2.0.)",
-    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:61": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb"
   },
   "Settings-Reference:16": {
     "text": "## Авто-свързване на чертежи",
@@ -3563,23 +3584,31 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:17": {
-    "text": "Отделен превключвател за връзките между мащабирани копия на **вашите собствени** чертежи — независим от Авто-свързване на ленти и тръби по-горе, така че копията на чертежи могат да продължат да се свързват, дори при изключено обикновено авто-свързване.",
-    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:62": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11"
   },
-  "Settings-Reference:18": {
-    "text": "- **Автоматично свързване на шевовете на шаблони** — включва или изключва автоматичното свързване на ленти, тръби, хипертръби, железопътни линии, насочени маршрути за превозни средства и допустими електрически връзки между мащабирани копия на чертежи. **Включено по подразбиране.** (Добавено в 34.2.0.)",
-    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:63": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4"
   },
   "Settings-Reference:19": {
     "text": "Електрическите връзки между копията допълнително изискват **Авто-свързване на захранване**. Всеки кабел използва съвпадащ контакт на захранващ стълб с наличен капацитет; вътрешните кабели и двете страни на стенен контакт се броят отделно.",
     "source_hash": "f8e43f603399fedc12210a9d21a3d2d8108b47b7c676acc29f4f189f050416ed",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  },
+  "Settings-Reference:51": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "d30a9c4968359ae455bcba1db55829f233cd9689baac7a41ddda2ee677c671a7"
+  },
+  "Settings-Reference:52": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8d8d2f7ca8e8f5f5ffd32286939d718b5621954e9eb433f316520ac4e84d392b"
   },
   "Settings-Reference:20": {
     "text": "## Разстояния по подразбиране за чертежи",
@@ -3605,11 +3634,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:24": {
-    "text": "- **Обхват на близката логистика** — колко далеч разделители, съединители, тръбни разклонения и подови отвори за тръби достигат към портовете на фабрики при автоматично свързване. Намалете го, за да попречите на Авто-свързване да достига съседни фабрични групи. **По подразбиране 25 m** (предишното фиксирано поведение). (Добавено в 34.2.0.)",
-    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:64": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592"
   },
   "Settings-Reference:25": {
     "text": "## Разширяване",
@@ -3629,11 +3657,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:28": {
-    "text": "- Авто-задържане при промяна на мрежата заключва холограмата след промяна на мрежата, за да не се мести случайно голям преглед. **Включено по подразбиране** (от 32.1.2) — изключете го тук, ако предпочитате холограмата да остане свободна за преместване; стандартният клавиш за задържане освобождава всяко отделно заключване.\n- **Управление спрямо играча** — кара строежа да следва посоката, в която гледате, вместо фиксирани компасни оси: колелото на мишката разраства строежа накъдето гледате, а цифровият блок става компас (навън/към вас, надясно/наляво, нагоре/надолу). Прилага се за мащабиране, разстояние, стъпки, изместване и завъртане. **Изключено по подразбиране** — класическото управление не се променя, докато не го включите, а Smart панелът винаги остава на фиксирани X/Y/Z. Вижте [Управление](Controls) за пълно описание. (Добавено в 34.1.0.)\n- **Натисни за превключване на режимите на трансформация** — натиснете клавиш за трансформация (Разстояние, Стъпки, Изместване, Завъртане или Рецепта при фабрика), за да включите режима; натиснете отново, за да го изключите; натиснете друг, за да смените режима. Предназначено за контролери, Steam Deck и конфигурации за достъпност — радиалните/сензорните менюта на Steam Input изпращат кратки натискания и не могат да задържат клавиш. Прибирането на пистолета, смяната на сгради или отварянето на панел винаги освобождава режима. **Изключено по подразбиране** — класическото поведение със задържане остава непроменено, докато не го включите, а повторното изключване го възстановява незабавно. Вижте [Контролер и Steam Deck](Controller-and-Steam-Deck) за конфигурации на радиални менюта. (Добавено в 34.2.0.)",
-    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:65": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179"
   },
   "Settings-Reference:29": {
     "text": "## Стъпки на превъртане",
@@ -3647,17 +3674,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:31": {
-    "text": "- **Стъпка на разстояние** (m) — метри разстояние, добавяни при всяка стъпка на превъртане (също разстоянието при Разширяване и придвижването на сегмент при Ходене).\n- **Стъпка на стъпки** (m) — метри промяна във височината при всяка стъпка (също издигането на сегмент при Ходене).\n- **Стъпка на изместване** (m) — метри изместване при всяка стъпка (също отместването на сегмент при Ходене).\n- **Стъпка на завъртане** (градуси) — градуси на завъртане при всяка стъпка (също завоя на сегмент при Ходене).",
-    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:66": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e"
   },
-  "Settings-Reference:32": {
-    "text": "Стойностите по подразбиране са 0.5 m и 5°. Стъпките за разстояние приемат 0.1–8 m; завъртането приема 0.5–90°.",
-    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:67": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da"
   },
   "Settings-Reference:33": {
     "text": "## Smart панел",
@@ -3701,11 +3726,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:40": {
-    "text": "В **Модове → Smart! Camera** изгледите се появяват автоматично под имената на предоставящия мод и камерата, включително неактивните изгледи. Вграденият изглед на строителния пистолет има независимо включване. Позицията на всеки изглед е нормализирана 0–1, резолюцията е 64–2048 пиксела по ос, мащабът е 0.1–2, честотата на заснемане е 5–60/сек, а яркостта е −3 до +3 EV. Приложимите разстояния на строителната камера са 5–50 m. Настройките на Camera се прилагат веднага; изгледите, скрити от менюта, се обновяват при Продължи. **Всички запазени игри** променя само редактираното поле в общите и съществуващите запазени профили на камерата, включително текущия свят. **Тази запазена игра** променя само текущия стандартен профил на запазената игра. Несвързаните полета и другите камери остават непокътнати.",
-    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:68": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29"
   },
   "Settings-Reference:41": {
     "text": "**Използвай предложенията на мода** във Всички запазени игри нулира камерата във всички запазени игри. **Използвай общите настройки** в Тази запазена игра премахва само текущата замяна. Нулирането на кадриране/разстояние променя само тези две полета. Редакциите на оформлението остават в преглед до споделеното **Готово / Заключване**; Отказ изхвърля чакащите промени на оформлението/HUD. Вижте [Smart Camera](Smart-Camera).",
@@ -3731,11 +3755,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Settings-Reference:45": {
-    "text": "_Последна актуализация: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:58": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Smart-Assistance:0": {
     "text": "# Smart помощ",
@@ -4385,17 +4408,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:1": {
-    "text": "Smart Възстановяване запазва работата ви със Smart!, за да я използвате отново по-късно, да я споделяте или да поставяте цял фабричен модул по един и същ начин всеки път. Отворете **K → Възстановяване** в споделения [Smart панел](Smart-Panel-and-HUD). Двата му подраздела са **Предварителни настройки за мрежа** и **Модули**.",
-    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:43": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35"
   },
-  "Smart-Restore:2": {
-    "text": "То отговаря на въпроса „Настройвах тази конфигурация цяла вечност — как да я върна?“",
-    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:44": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2"
   },
   "Smart-Restore:3": {
     "text": "![Задачата Възстановяване с подраздели Предварителни настройки за мрежа и Модули](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/restore.png)",
@@ -4427,11 +4448,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:8": {
-    "text": "- **Запази от панела** — именувайте текущата конфигурация на панела и я запазете като предварителна настройка.\n- **Зареди в панела** — заредете запазена настройка обратно в панела за фина настройка преди строеж или я приложете както е.\n- **Експортирай код / Импортирай код** — споделете настройка като код или заредете такава, която някой ви е споделил.",
-    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:45": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40"
   },
   "Smart-Restore:9": {
     "text": "Всяка настройка показва разбираемо обобщение на съдържанието си (сграда, мрежа, трансформации, рецепта), за да ги различавате от пръв поглед.",
@@ -4445,17 +4465,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:11": {
-    "text": "Модулът заснема цял **колектор за Разширяване** — свързана единица от сгради с техните ленти, тръби, асансьори, разпределители и захранване — която можете да поставяте многократно.",
-    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b"
   },
-  "Smart-Restore:12": {
-    "text": "- След като прегледате или построите със Smart [Разширяване](Extend), то попада в **клипборда за Разширяване** в горната част на раздела. **Запази като модул** превръща тази заснета конфигурация в именуван Модул за многократна употреба.\n- Използвайте **Зареди модул** за запазен Модул, за да възстановите конфигурацията: изберете изходната му сграда и той става активен преглед, който можете да **поставяте многократно** (задействайте пистолета за поставяне) и да **мащабирате с превъртане** в движение.\n- Тъй като възстановеният Модул не е ограничен до една страна като ново Мащабирано разширяване, можете да **премащабирате реда в двете посоки** по оста му преди поставяне — превъртайте в едната посока, за да расте натам, и в другата, за да расте наобратно.\n- **Експортирай код / Импортирай код** споделя Модули по същия начин като предварителните настройки.",
-    "source_hash": "37740d4bfda7ca76487c320d49ae9a15e2da89d1f1fe4a31862a2ad8d53f903b",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bec0ec9303e43dd7907dc7dc366c045b75ee549bfcabebb02918f256b044593e"
   },
   "Smart-Restore:13": {
     "text": "Всеки Модул показва обобщение на частите си (брой ленти, тръби, разпределители и т.н.), за да знаете какво възстановява.",
@@ -4517,11 +4535,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:21": {
-    "text": "Използвайте **K → Възстановяване** за запазване, избор, зареждане, импортиране или експортиране на конфигурации. След зареждане използвайте панела за Мащабиране или контролите с колело/цифров блок за настройка на поставянето; HUD показва получената мрежа и активната настройка. Задействайте строителния пистолет, за да я построите срещу показания разход.",
-    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c"
   },
   "Smart-Restore:22": {
     "text": "За прелистване на наскоро приложени възстановявания без повторно отваряне на панела задръжте `U` и натиснете `Num 9` за следващата скорошна настройка или `Num 3` за връщане назад. Вижте [Управление](Controls).",
@@ -4547,17 +4564,26 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
+  "Smart-Restore:39": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b0724fac56a114aed1905757336fc2bd16f065519872f908a56afc905e5b0d3c"
+  },
+  "Smart-Restore:40": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "81c3c2048752b95069652ecef30608748705b0ecd1930a687c49a0f383a261ad"
+  },
   "Smart-Restore:26": {
     "text": "## Вижте също",
     "source_hash": "0f2b43836b7db34aeb2ad65d2dc1b19495336b2a8bd81d1a4e6cc10ec180785b",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:27": {
-    "text": "- [Разширяване](Extend) — функцията, чиито колектори заснема разделът Модули.\n- [Smart панел и HUD](Smart-Panel-and-HUD) — мястото на раздела Възстановяване.\n- [Мащабиране на мрежата](Grid-Scaling) и [Трансформации](Transforms) — това, което запазва предварителната настройка за мрежа.",
-    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264"
   },
   "Smart-Restore:28": {
     "text": "---",
@@ -4565,11 +4591,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Smart-Restore:32": {
-    "text": "_Последна актуализация: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
-    "status": "reviewed",
-    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
+  "Smart-Restore:42": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Smart-Upgrade:0": {
     "text": "# Smart Надграждане",
@@ -4607,11 +4632,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Upgrade:6": {
-    "text": "1. Отворете **K → Надграждане** с избрана поддържана сграда. Ленти, тръби и кабели/електрически линии могат да отворят тази задача директно.\n2. Изберете режим на сканиране.\n3. Сканирайте близки обекти или свързана мрежа.\n4. Изберете вида и целевия клас — а при сканиране на мрежа по желание и един изходен клас, за да надградите само него.\n5. Прегледайте разхода на материали.\n6. Стартирайте надграждането.",
-    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Upgrade:38": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08"
   },
   "Smart-Upgrade:7": {
     "text": "Захранващите стълбове и стенните контакти продължават да отварят нормалния Smart панел при избор, за да могат да се мащабират. За да ги надградите, отворете Smart Надграждане от кабел/електрическа линия или използвайте режимите на сканиране.",
@@ -4655,11 +4679,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Upgrade:14": {
-    "text": "- Щракнете върху конкретен клас — например **Mk.2** — за да надградите **само** този клас до целевия. Повишете лентите Mk.2 до Mk.3 и оставете Mk.4 непроменени.\n- Изберете **Всички класове**, за да приведете всеки различен клас ленти, асансьори или тръби до избраната цел. Това може да надгради някои класове и да понижи други в едно изпълнение.",
-    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Upgrade:39": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8"
   },
   "Smart-Upgrade:15": {
     "text": "Това съответства на избора на клас, който сканирането по радиус вече имаше.",
@@ -4727,11 +4750,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Upgrade:26": {
-    "text": "Големите надграждания на конвейери са сложни, защото Satisfactory вътрешно групира лентите и асансьорите в актьори на конвейерни вериги. Smart! включва стабилизация и диагностика, но при много големи надграждания все още може да е нужно запазване/презареждане, ако играта съобщи за неустановено състояние на веригите след това.",
-    "source_hash": "fed328c054689b599658ab3989621c5b784f7bcaa94b5be404727f05664adba7",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Upgrade:36": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "30a1ce6a5b6dcbf3cb863b07c5181d63bc781a27d7277f739226c64c0f12936e"
   },
   "Smart-Upgrade:27": {
     "text": "## Примери от играта",
@@ -4769,11 +4791,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Smart-Upgrade:33": {
-    "text": "_Последна актуализация: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Upgrade:37": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Smart-Walking:0": {
     "text": "# Smart Ходене",
@@ -5741,65 +5762,90 @@
     "status": "reviewed",
     "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
   },
-  "Auto-Connect:38": {
+  "Blueprints:33": {
+    "text": "_Последна актуализация: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
+    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "status": "reviewed",
+    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification.",
+    "obsolete": true
+  },
+  "Controls:6": {
+    "text": "| Клавиш | Какво прави |\n|-----|--------------|\n| `K` | Отваря или затваря споделения прозорец Мащабиране / Ходене / Надграждане / Възстановяване |\n| `F8` | Редактира оформлението на HUD; при инсталиран Smart Camera редактира оформлението на HUD и камерата заедно |\n| `Num Decimal` | Превключва Smart помощта за строеж за тази сесия |\n| `Num 8` | Увеличава активната стойност |\n| `Num 5` | Намалява активната стойност |\n| `Num 6` | Увеличава бройката в мрежата по Y |\n| `Num 4` | Намалява бройката в мрежата по Y |\n| `Num 9` | Увеличава бройката в мрежата по Z |\n| `Num 3` | Намалява бройката в мрежата по Z |\n| `X` | Задръжте, за да настроите X със споделените контроли или колелото на мишката |\n| `Z` | Задръжте, за да настроите Y със споделените контроли или колелото на мишката |\n| `X + Z` | Задръжте и двата, за да настроите Z със споделените контроли или колелото на мишката |\n| `;` | Задържане на режим Разстояние |\n| `I` | Задържане на режим Стъпки |\n| `Y` | Задържане на режим Изместване |\n| `,` | Задържане на режим Завъртане |\n| `Num 0` | Сменя оста на активния режим |\n| `U` | Избор на рецепта при производствени сгради; настройки за връзки или опори на табели при приложими постройки |\n| `Num 1` | Превключва стрелките за посока |\n| `Mouse Wheel` | Настройва активния Smart режим или стандартно завърта, когато няма активен Smart режим |",
+    "source_hash": "2837292eada81d5f2f7b96ee1fa39689f1d488e0ee8b125d948d5069e407097e",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:27": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "2398e8d56840e229a7b387e89a3556aa24edfa217e26cf50db9e5ba6cf6ccf02",
+    "obsolete": true
+  },
+  "Settings-Reference:18": {
+    "text": "- **Автоматично свързване на шевовете на шаблони** — включва или изключва автоматичното свързване на ленти, тръби, хипертръби, железопътни линии, насочени маршрути за превозни средства и допустими електрически връзки между мащабирани копия на чертежи. **Включено по подразбиране.** (Добавено в 34.2.0.)",
+    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:25": {
+    "text": "Авто-свързването на хипертръби има **собствен превключвател и режим на маршрутизиране**, независими от тръбите — задайте ги от Smart панела, настройките за Авто-свързване по време на строеж (задръжте `U`) или настройките на мода. Вижте [Справочник с настройки](Settings-Reference).",
+    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:27": {
+    "text": "- [Разширяване](Extend) — функцията, чиито колектори заснема разделът Модули.\n- [Smart панел и HUD](Smart-Panel-and-HUD) — мястото на раздела Възстановяване.\n- [Мащабиране на мрежата](Grid-Scaling) и [Трансформации](Transforms) — това, което запазва предварителната настройка за мрежа.",
+    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:31": {
+    "text": "- **Стъпка на разстояние** (m) — метри разстояние, добавяни при всяка стъпка на превъртане (също разстоянието при Разширяване и придвижването на сегмент при Ходене).\n- **Стъпка на стъпки** (m) — метри промяна във височината при всяка стъпка (също издигането на сегмент при Ходене).\n- **Стъпка на изместване** (m) — метри изместване при всяка стъпка (също отместването на сегмент при Ходене).\n- **Стъпка на завъртане** (градуси) — градуси на завъртане при всяка стъпка (също завоя на сегмент при Ходене).",
+    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "afb87f859fcc83d5e6b2266d494b6b507374c2527764492de14534b28dbafa51",
+    "obsolete": true
+  },
+  "Auto-Connect:4": {
+    "text": "Отворете **K → Мащабиране** и използвайте приложимия раздел **Авто-свързване** за избраната постройка. При поддържаните логистични постройки `U` отваря настройките за връзките. Общите стойности по подразбиране са в **Опции → Настройки на модове → Smart!**; изборите за текущия преглед са в панела. Предпочитанията за връзки се обновяват веднага, независимо от **Прилагай поставянето веднага**.",
+    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "e2b8d0e432743c7bf14b5c35d055dab7c5692be89a336b3b5b8bf2922ba550f7",
+    "obsolete": true
+  },
+  "Settings-Reference:24": {
+    "text": "- **Обхват на близката логистика** — колко далеч разделители, съединители, тръбни разклонения и подови отвори за тръби достигат към портовете на фабрики при автоматично свързване. Намалете го, за да попречите на Авто-свързване да достига съседни фабрични групи. **По подразбиране 25 m** (предишното фиксирано поведение). (Добавено в 34.2.0.)",
+    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:13": {
+    "text": "- **Специализирани сървъри:** поддържат се Windows и Linux.\n- **Максимален размер за Smart чертежи:** единично поставяне на мрежа от чертежи на сървър е ограничено (приблизително няколко хиляди сгради или няколкостотин свързващи ленти/тръби, което се достигне първо). Ако надхвърлите ограничението, Smart! отказва поставянето — HUD ви казва да строите на по-малки части, а мрежата остава активна, за да го направите. Ограничението за безопасен размер на строителното съобщение важи и за самостоятелна игра и сесии със сървър при домакина. Изключете [Smart помощ](Smart-Assistance) и изберете рецептата отново, за да поставите нормално голям стандартен чертеж.\n- **Големите мрежи се строят постепенно:** потвърждаването на много голям мащабиран строеж го изгражда във фонов режим за няколко мига, така че сървърът да остане отзивчив и никой да не бъде изключен по време на строежа.\n- **За администратори на сървъри:** инсталирайте една и съща версия на Smart! на сървъра и всеки клиент. Мениджърът на модове ги поддържа еднакви при обновяване.\n- **Smart Camera** (съпътстващият мод) също работи в мултиплейър.",
+    "source_hash": "e0abba477abdd815436da48e2f8957237ec0394c708deea58592e10d20ab9268",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:45": {
     "text": "_Последна актуализация: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
     "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Smart-Camera:30": {
-    "text": "_Последна актуализация: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Smart-Restore:29": {
-    "text": "_Последна актуализация: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Water-Extractors:14": {
-    "text": "_Последна актуализация: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Feature-Gallery:50": {
-    "text": "_Последна актуализация: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Feature-Gallery:30": {
-    "text": "\n## Надграждане",
-    "source_hash": "346a4694e55fb3881d4efb3df370eb4fa70ac8f41333fc51b5d2f136ba5ac387",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Lift-Assisted-Auto-Connect:11": {
-    "text": "## Примери от играта",
-    "source_hash": "5eb2c1c9e3dbc39102a812af339752c7f0fe1e0b95368965e2e069a71b377898",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Blueprints:21": {
-    "text": "_Последна актуализация: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Lift-Assisted-Auto-Connect:12": {
-    "text": "![Два повдигнати прегледа на разделители с видими вертикални асансьори надолу до нивото на връзката на машината, до контролите за Мащабиране.](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/lift-connection-controls.png)",
-    "source_hash": "cc3d5dfc328bad823f169e9cfaa9f3b9faf340768f11bfc85d33f6d73e79b0fc",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
@@ -5811,25 +5857,89 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Lift-Assisted-Auto-Connect:15": {
-    "text": "Построена входна линия за Производители с разпределители, изместени на различни височини и разстояния.",
-    "source_hash": "3f031fef9aa2b08f029041b38a3ede25923654db3210c0cf2f823345bb155916",
+  "Smart-Upgrade:35": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "fef10fcd052e667d2e0e00e385c7a28cabcf51645e05f4ffe84f7b4be9302924",
+    "obsolete": true
+  },
+  "Settings-Reference:55": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "48890e9ad61621c0f5a145bbfacc031cd10dd0886932dd6ca1718305cc0ded08",
+    "obsolete": true
+  },
+  "Smart-Upgrade:6": {
+    "text": "1. Отворете **K → Надграждане** с избрана поддържана сграда. Ленти, тръби и кабели/електрически линии могат да отворят тази задача директно.\n2. Изберете режим на сканиране.\n3. Сканирайте близки обекти или свързана мрежа.\n4. Изберете вида и целевия клас — а при сканиране на мрежа по желание и един изходен клас, за да надградите само него.\n5. Прегледайте разхода на материали.\n6. Стартирайте надграждането.",
+    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Buildable-Gallery:60": {
+  "Compatibility-and-Multiplayer:28": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "c7aebe8ed6d349fd4710af10aa9e95555d8529fd0728f438c8a84f9ce1b54246",
+    "obsolete": true
+  },
+  "Extend:40": {
     "text": "_Последна актуализация: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
     "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Blueprints:20": {
-    "text": "\n---",
-    "source_hash": "3d0b188170e8f7ed4b0a730d3fae39933057e60ba9e030bc278c446442cbabc3",
+  "Settings-Reference:12": {
+    "text": "- **Авто-свързване на хипертръби** — включва или изключва автоматичното свързване на хипертръби. **Включено по подразбиране.** (Добавено в 33.1.0.)\n- Избор на режим на маршрутизиране на хипертръби.",
+    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29",
     "status": "reviewed",
-    "review_method": "Language-neutral Markdown, protected brand or code; no translation required.",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:29": {
+    "text": "_Последна актуализация: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:41": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6fd578d8f158dba5fa05b36f5f5e607370fc961be65776fbce3a1e7af14d1023",
+    "obsolete": true
+  },
+  "Water-Extractors:14": {
+    "text": "_Последна актуализация: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Upgrade:33": {
+    "text": "_Последна актуализация: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:25": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6a23ebe76c6c81c346aa9ada46d9598977d528e278a4ec3eba624c42942cbf0a",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:3": {
+    "text": "Smart! 35.0.0 е предназначен за **Satisfactory 1.2.4 / CL 502094 или по-нова** и **SML 3.12.x**. Обновете играта и зареждащата програма за модове преди инсталиране. По-старите версии на играта не се поддържат.",
+    "source_hash": "67e479ca52c59b7506d6acd2ace2bb75b701e6c7854e5b2d570aeec46f92d66e",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:35": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4ce78ba0540a46d297f12754ed09f0b5fbd3af284a7f90d4157396c30318a9dc",
     "obsolete": true
   },
   "Lift-Assisted-Auto-Connect:14": {
@@ -5839,11 +5949,24 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Feature-Gallery:38": {
-    "text": "\n## Групово разглобяване",
-    "source_hash": "353f26b4f82a6dd84f38739c12578013748425253037044613768c788d0ac22b",
+  "Feature-Gallery:30": {
+    "text": "\n## Надграждане",
+    "source_hash": "346a4694e55fb3881d4efb3df370eb4fa70ac8f41333fc51b5d2f136ba5ac387",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:12": {
+    "text": "- След като прегледате или построите със Smart [Разширяване](Extend), то попада в **клипборда за Разширяване** в горната част на раздела. **Запази като модул** превръща тази заснета конфигурация в именуван Модул за многократна употреба.\n- Използвайте **Зареди модул** за запазен Модул, за да възстановите конфигурацията: изберете изходната му сграда и той става активен преглед, който можете да **поставяте многократно** (задействайте пистолета за поставяне) и да **мащабирате с превъртане** в движение.\n- Тъй като възстановеният Модул не е ограничен до една страна като ново Мащабирано разширяване, можете да **премащабирате реда в двете посоки** по оста му преди поставяне — превъртайте в едната посока, за да расте натам, и в другата, за да расте наобратно.\n- **Експортирай код / Импортирай код** споделя Модули по същия начин като предварителните настройки.",
+    "source_hash": "37740d4bfda7ca76487c320d49ae9a15e2da89d1f1fe4a31862a2ad8d53f903b",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "54a959ae32a4d9f6576cccd1f8191d529cda45dd8aca777c420560710c5cfa55",
     "obsolete": true
   },
   "Smart-Camera:17": {
@@ -5853,16 +5976,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Lift-Assisted-Auto-Connect:13": {
-    "text": "Вертикалните тела и долните краища на асансьорите се виждат под двата разделителя. Хоризонталните ленти от страната на машините изглеждат скъсени в този изглед; използвайте примера с построени Производители по-долу, за да видите по-голямата конфигурация.",
-    "source_hash": "461c92ebb7d0183d81d0d44c20001dd4c5d42ceaee5dc38fbc02fc6ff22afe85",
+  "Smart-Restore:21": {
+    "text": "Използвайте **K → Възстановяване** за запазване, избор, зареждане, импортиране или експортиране на конфигурации. След зареждане използвайте панела за Мащабиране или контролите с колело/цифров блок за настройка на поставянето; HUD показва получената мрежа и активната настройка. Задействайте строителния пистолет, за да я построите срещу показания разход.",
+    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Controls:6": {
-    "text": "| Клавиш | Какво прави |\n|-----|--------------|\n| `K` | Отваря или затваря споделения прозорец Мащабиране / Ходене / Надграждане / Възстановяване |\n| `F8` | Редактира оформлението на HUD; при инсталиран Smart Camera редактира оформлението на HUD и камерата заедно |\n| `Num Decimal` | Превключва Smart помощта за строеж за тази сесия |\n| `Num 8` | Увеличава активната стойност |\n| `Num 5` | Намалява активната стойност |\n| `Num 6` | Увеличава бройката в мрежата по Y |\n| `Num 4` | Намалява бройката в мрежата по Y |\n| `Num 9` | Увеличава бройката в мрежата по Z |\n| `Num 3` | Намалява бройката в мрежата по Z |\n| `X` | Задръжте, за да настроите X със споделените контроли или колелото на мишката |\n| `Z` | Задръжте, за да настроите Y със споделените контроли или колелото на мишката |\n| `X + Z` | Задръжте и двата, за да настроите Z със споделените контроли или колелото на мишката |\n| `;` | Задържане на режим Разстояние |\n| `I` | Задържане на режим Стъпки |\n| `Y` | Задържане на режим Изместване |\n| `,` | Задържане на режим Завъртане |\n| `Num 0` | Сменя оста на активния режим |\n| `U` | Избор на рецепта при производствени сгради; настройки за връзки или опори на табели при приложими постройки |\n| `Num 1` | Превключва стрелките за посока |\n| `Mouse Wheel` | Настройва активния Smart режим или стандартно завърта, когато няма активен Smart режим |",
-    "source_hash": "2837292eada81d5f2f7b96ee1fa39689f1d488e0ee8b125d948d5069e407097e",
+  "Settings-Reference:2": {
+    "text": "Намерете ги в **Главно меню → Модове → Smart!**. Промените тук **се запазват между запазени игри и сесии**. (Клавишите са отделно — вижте [Управление](Controls).)",
+    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
@@ -5874,9 +5997,401 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
+  "Extend:20": {
+    "text": "Започнете изрично чрез **K → Разширяване → Избери източник** или използвайте прекия път с насочване. Разделът Разширяване използва отново контролите за поставяне за бройки в мрежата, разстояние и поддържани трансформации. Можете също да използвате същите контроли с колело/цифров блок като при [Мащабиране на мрежата](Grid-Scaling). Без задържан модификатор колелото избира посоката на Разширяване. HUD по време на игра показва трасето/редовете и активната настройка, за да проверите какво ще се промени преди строежа.",
+    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:56": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bdf042547add168e1b9964198625cab7539af8176045dd68d70f13a619b0b7be",
+    "obsolete": true
+  },
+  "Settings-Reference:28": {
+    "text": "- Авто-задържане при промяна на мрежата заключва холограмата след промяна на мрежата, за да не се мести случайно голям преглед. **Включено по подразбиране** (от 32.1.2) — изключете го тук, ако предпочитате холограмата да остане свободна за преместване; стандартният клавиш за задържане освобождава всяко отделно заключване.\n- **Управление спрямо играча** — кара строежа да следва посоката, в която гледате, вместо фиксирани компасни оси: колелото на мишката разраства строежа накъдето гледате, а цифровият блок става компас (навън/към вас, надясно/наляво, нагоре/надолу). Прилага се за мащабиране, разстояние, стъпки, изместване и завъртане. **Изключено по подразбиране** — класическото управление не се променя, докато не го включите, а Smart панелът винаги остава на фиксирани X/Y/Z. Вижте [Управление](Controls) за пълно описание. (Добавено в 34.1.0.)\n- **Натисни за превключване на режимите на трансформация** — натиснете клавиш за трансформация (Разстояние, Стъпки, Изместване, Завъртане или Рецепта при фабрика), за да включите режима; натиснете отново, за да го изключите; натиснете друг, за да смените режима. Предназначено за контролери, Steam Deck и конфигурации за достъпност — радиалните/сензорните менюта на Steam Input изпращат кратки натискания и не могат да задържат клавиш. Прибирането на пистолета, смяната на сгради или отварянето на панел винаги освобождава режима. **Изключено по подразбиране** — класическото поведение със задържане остава непроменено, докато не го включите, а повторното изключване го възстановява незабавно. Вижте [Контролер и Steam Deck](Controller-and-Steam-Deck) за конфигурации на радиални менюта. (Добавено в 34.2.0.)",
+    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:17": {
+    "text": "Отделен превключвател за връзките между мащабирани копия на **вашите собствени** чертежи — независим от Авто-свързване на ленти и тръби по-горе, така че копията на чертежи могат да продължат да се свързват, дори при изключено обикновено авто-свързване.",
+    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:32": {
+    "text": "_Последна актуализация: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
+    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "status": "reviewed",
+    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification.",
+    "obsolete": true
+  },
+  "Settings-Reference:53": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "f22daf9ba45c58f27cddf5020c4d856e4963c6b4b321e93b90506fe9200725c4",
+    "obsolete": true
+  },
+  "Home:17": {
+    "text": "_Последна актуализация: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:57": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "c9db8a4c70492425a227c4f600e18e314036c794ee6ecf7b72819e8c1176d985",
+    "obsolete": true
+  },
+  "Buildable-Gallery:60": {
+    "text": "_Последна актуализация: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:24": {
+    "text": "**Мащабираните опори за хипертръба изграждат трасе от хипертръби.** Когато мащабирате ред от Стифиращи опори за хипертръба, Smart! прокарва свързано трасе между копията — както мащабиран ред от Опори за лента изгражда трасе за лента, а Опорите за тръба изграждат тръбно трасе. Трасето следва разстоянието и височината на реда и може да се изкачва стръмно, а собствената точка за захващане на всяка опора остава свободна, така че все още можете да свържете хипертръба към нея ръчно.",
+    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:37": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "89d7ec27427ec2dbeda612d4908225ce4ab17de581eb4e2fc4950c57aaf45e81",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:14": {
+    "text": "Мултиплейърът е по-нов от самостоятелната игра, така че ако нещо се държи различно в мултиплейър сесия, това е грешка — докладвайте я в GitHub или Discord и споменете какво сте строили и дали сте били домакин или клиент.",
+    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:8": {
+    "text": "1. Постройте ръчно един работещ модул и изберете същия вид сграда в строителния пистолет.\n2. Отворете **K → Разширяване** и натиснете **Избери източник**.\n3. Щракнете върху съществуващата изходна сграда в света извън панела. Съвместимите източници се маркират по време на избора. **Escape** отменя избора; щракванията в панела остават в интерфейса.\n4. Проверете името на източника, заснетите придружаващи обекти и бройките за повторение. Използвайте **Смени посоката** и контролите за поставяне, за да оформите прегледа.\n5. Затворете панела, проверете предложените копия и разхода на материали, след което задействайте строителния пистолет, за да построите нормално.",
+    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:27": {
+    "text": "Дъщерните стенни опори за тръби и хипертръби следват пълното завъртане на родителя. **Завъртане на стена** в панела предлага стандартни **стъпки от 45°**, включително вертикално трасе. Това е отделно от Завъртане на мрежата, което огъва последователност от копия.",
+    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:18": {
+    "text": "**Мащабираните опори за тръба изграждат тръбно трасе.** Когато мащабирате ред от Опори за тръба или Стенни опори за тръба, Smart! прокарва свързано тръбно трасе между копията — както мащабиран ред от Опори за лента изгражда трасе за лента. Течността преминава през цялото трасе, а собствената точка за захващане на всяка опора остава свободна, така че все още можете да свържете тръба към нея ръчно. Височината на наземната опора и ъгълът на горната ѝ част се пренасят по целия ред, така че наклоненото трасе остава последователно.",
+    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:16": {
+    "text": "Построената Топилня е съществуващият източник. Светлосинята Топилня, ленти и опори са предложеното копие; HUD показва **Разширяване 1×1**. Това е непостроен преглед.",
+    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "0bfbb0f456f389e1d5f74b3927ea2e671cd406c1d43a86691dbaf4cf8466f920",
+    "obsolete": true
+  },
+  "Blueprints:20": {
+    "text": "\n---",
+    "source_hash": "3d0b188170e8f7ed4b0a730d3fae39933057e60ba9e030bc278c446442cbabc3",
+    "status": "reviewed",
+    "review_method": "Language-neutral Markdown, protected brand or code; no translation required.",
+    "obsolete": true
+  },
+  "Smart-Restore:38": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "ec2177c56559237ebd837004fb2b43a250f6a29833da7919279c42a8f1cd7585",
+    "obsolete": true
+  },
+  "Extend:43": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4a4f5c96d35df73910b2887f40ae3bae8ad2bfb9317efd89edeeee8d5cd6a225",
+    "obsolete": true
+  },
+  "Smart-Restore:1": {
+    "text": "Smart Възстановяване запазва работата ви със Smart!, за да я използвате отново по-късно, да я споделяте или да поставяте цял фабричен модул по един и същ начин всеки път. Отворете **K → Възстановяване** в споделения [Smart панел](Smart-Panel-and-HUD). Двата му подраздела са **Предварителни настройки за мрежа** и **Модули**.",
+    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:11": {
+    "text": "Модулът заснема цял **колектор за Разширяване** — свързана единица от сгради с техните ленти, тръби, асансьори, разпределители и захранване — която можете да поставяте многократно.",
+    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:34": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4032031e869ee6cf1a85c2c77f17f1a8e1c5fdfb4d6365de941032362c26bd6b",
+    "obsolete": true
+  },
+  "Home:14": {
+    "text": "Това е местният проект на документацията за **Smart! 35.0.0 и Smart Camera 2.0.0**. Обновете двата мода заедно, когато станат достъпни съгласуваните им съвместими издания; не комбинирайте Camera 2.0 с по-стар пакет Smart. Тези проектни страници не обявяват публикуване.",
+    "source_hash": "c29d2ea90b7a486f22022563a690b6049c5d72c5bf1c740518bb20fa5747432d",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:15": {
+    "text": "Построена входна линия за Производители с разпределители, изместени на различни височини и разстояния.",
+    "source_hash": "3f031fef9aa2b08f029041b38a3ede25923654db3210c0cf2f823345bb155916",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:41": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "994fafc6b93774a2bf26fda7226aa7f32d9e5692801829af09b53ed4e124e1dc",
+    "obsolete": true
+  },
+  "Auto-Connect:53": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "7a7775f3971ba2543d8a862d7cb59673e80d88b7b274872a5f5197d36bd4a8cb",
+    "obsolete": true
+  },
+  "Smart-Upgrade:26": {
+    "text": "Големите надграждания на конвейери са сложни, защото Satisfactory вътрешно групира лентите и асансьорите в актьори на конвейерни вериги. Smart! включва стабилизация и диагностика, но при много големи надграждания все още може да е нужно запазване/презареждане, ако играта съобщи за неустановено състояние на веригите след това.",
+    "source_hash": "fed328c054689b599658ab3989621c5b784f7bcaa94b5be404727f05664adba7",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:13": {
+    "text": "Вертикалните тела и долните краища на асансьорите се виждат под двата разделителя. Хоризонталните ленти от страната на машините изглеждат скъсени в този изглед; използвайте примера с построени Производители по-долу, за да видите по-голямата конфигурация.",
+    "source_hash": "461c92ebb7d0183d81d0d44c20001dd4c5d42ceaee5dc38fbc02fc6ff22afe85",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:52": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "2f3fecc73d967c4184f0913db5a820573f49a433540b53d23d3f4b45143cea26",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:4": {
+    "text": "Smart Camera 2.0 и Smart! 35.0 трябва да се обновяват като съвместима двойка, когато и двата са инсталирани. Camera работи и самостоятелно; инструментите за строеж на Smart не изискват Camera. Предпочитанията за Camera и външният вид на HUD принадлежат на всеки местен играч, а не на всички в сървъра.",
+    "source_hash": "d778ecad7f4a6a4eb530120898db7c258299752b3b3849ab7cb18dce25829247",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Feature-Gallery:50": {
+    "text": "_Последна актуализация: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:42": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "16d59253ca7db5055c785ca688ef4711b48bf61b30eff0f24767d33040495694",
+    "obsolete": true
+  },
+  "Smart-Restore:2": {
+    "text": "То отговаря на въпроса „Настройвах тази конфигурация цяла вечност — как да я върна?“",
+    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Blueprints:17": {
+    "text": "Ограничението за безопасен размер на строителното съобщение важи и за мрежи от чертежи. Отказаното прекомерно поставяне запазва прегледа: намалете мрежата и строете на части. За поставяне на голям чертеж с основната игра изключете [Smart помощ](Smart-Assistance) и го изберете отново.",
+    "source_hash": "540e7f14c64d49d7f11fb6b7090a1475087984b4955b0dccb93ca481787d4236",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:40": {
+    "text": "В **Модове → Smart! Camera** изгледите се появяват автоматично под имената на предоставящия мод и камерата, включително неактивните изгледи. Вграденият изглед на строителния пистолет има независимо включване. Позицията на всеки изглед е нормализирана 0–1, резолюцията е 64–2048 пиксела по ос, мащабът е 0.1–2, честотата на заснемане е 5–60/сек, а яркостта е −3 до +3 EV. Приложимите разстояния на строителната камера са 5–50 m. Настройките на Camera се прилагат веднага; изгледите, скрити от менюта, се обновяват при Продължи. **Всички запазени игри** променя само редактираното поле в общите и съществуващите запазени профили на камерата, включително текущия свят. **Тази запазена игра** променя само текущия стандартен профил на запазената игра. Несвързаните полета и другите камери остават непокътнати.",
+    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "a17847f27c9d126c19f4c648fcce148a467279fc4197ecd4e932411db88929df",
+    "obsolete": true
+  },
+  "Smart-Restore:33": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b2e1a293ae99d7ff0946f54edd6939cf17d18547e848ac895c533abe3c2e4560",
+    "obsolete": true
+  },
+  "Feature-Gallery:38": {
+    "text": "\n## Групово разглобяване",
+    "source_hash": "353f26b4f82a6dd84f38739c12578013748425253037044613768c788d0ac22b",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:36": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4ca209992e5cc98977db86e926e521228b74ac99cbbce1b5f642444df21d447f",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:11": {
+    "text": "## Примери от играта",
+    "source_hash": "5eb2c1c9e3dbc39102a812af339752c7f0fe1e0b95368965e2e069a71b377898",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:15": {
+    "text": "- Включване или изключване на Авто-свързване на захранване.\n- Избор на режим на свързване.\n- Задаване на обхват на свързване.\n- Запазване на свободни връзки на стълбовете, за да не запълва Smart! всяко място.\n- **Верижно захранване при мащабиране** — след отключване на „Подобрени захранващи изводи“, мащабирането на фабрика или генератор по оста X на Smart свързва всяко копие директно със следващото, вместо да прокарва стълб до всяко, съответствайки на обикновена колекторна конфигурация без отделно Разширяване. Smart панелът може да го замени за текущия строеж, а HUD показва действащия избор. Спазва наличния капацитет на всеки конектор. **Включено по подразбиране.** (Добавено в 34.2.0.)",
+    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:54": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8382fa1196f068239391b97c93d521c0ed3ba46266fa7254f3e6c05c842fa1d2",
+    "obsolete": true
+  },
   "Smart-Assistance:13": {
     "text": "_Последна актуализация: 2026-10-06 · Smart! v34.4.0_\n",
     "source_hash": "9ea842bd5dbdd752d3353ddeeeb68a3eff256015d475f2a5eb6d8e17e13b5156",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Upgrade:14": {
+    "text": "- Щракнете върху конкретен клас — например **Mk.2** — за да надградите **само** този клас до целевия. Повишете лентите Mk.2 до Mk.3 и оставете Mk.4 непроменени.\n- Изберете **Всички класове**, за да приведете всеки различен клас ленти, асансьори или тръби до избраната цел. Това може да надгради някои класове и да понижи други в едно изпълнение.",
+    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:22": {
+    "text": "_Последна актуализация: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:27": {
+    "text": "Същият източник вече създава три светлосини копия на модула, включително конвейерните им трасета и опори. HUD показва **Разширяване 3×1**, а разходът на материали расте с копията. Построеният източник остава на място.",
+    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:54": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "92242198e922b4bdd9164d865151a7ed36c6f470ad144311ff077b3cb519dd7a",
+    "obsolete": true
+  },
+  "Auto-Connect:45": {
+    "text": "_Последна актуализация: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
+    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "status": "reviewed",
+    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification.",
+    "obsolete": true
+  },
+  "Smart-Upgrade:34": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "e26d8a251fe56b8c46900038254253f78c75d8e69ca22dce9b9e0edc797fe40e",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:12": {
+    "text": "Smart! работи в мултиплейър на специализирани сървъри. Всяка функция на Smart! — Мащабиране на мрежата, Авто-свързване (ленти, тръби и захранване), Smart чертежи, Разширяване, Smart Надграждане, Smart Възстановяване и Smart Разглобяване — работи, когато играете като клиент, с нормални разходи за строеж. Всичко, което Smart! поставя, е стандартна, напълно репликирана сграда на играта: другите играчи я виждат, могат да я използват и разглобяват, сякаш сте я построили ръчно.",
+    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:32": {
+    "text": "Стойностите по подразбиране са 0.5 m и 5°. Стъпките за разстояние приемат 0.1–8 m; завъртането приема 0.5–90°.",
+    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:38": {
+    "text": "_Последна актуализация: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:44": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6db2053fcc52fc7413a2cac1559df3b88f7c1446d5bc55e82fb5c2b6043c246b",
+    "obsolete": true
+  },
+  "Smart-Camera:30": {
+    "text": "_Последна актуализация: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:50": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "d3ecb21df5d1ff326acb297239bef36255c199f23e6b6ec35663f3996c38ec2b",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:12": {
+    "text": "![Два повдигнати прегледа на разделители с видими вертикални асансьори надолу до нивото на връзката на машината, до контролите за Мащабиране.](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/lift-connection-controls.png)",
+    "source_hash": "cc3d5dfc328bad823f169e9cfaa9f3b9faf340768f11bfc85d33f6d73e79b0fc",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:8": {
+    "text": "- **Запази от панела** — именувайте текущата конфигурация на панела и я запазете като предварителна настройка.\n- **Зареди в панела** — заредете запазена настройка обратно в панела за фина настройка преди строеж или я приложете както е.\n- **Експортирай код / Импортирай код** — споделете настройка като код или заредете такава, която някой ви е споделил.",
+    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b9d7eb1bd49651f9c06691ed5350a0882a0787f099915de792867f8aa4494c27",
+    "obsolete": true
+  },
+  "Blueprints:21": {
+    "text": "_Последна актуализация: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (проект за издание)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true

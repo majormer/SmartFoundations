@@ -13,7 +13,8 @@
 
 bool FSFExtendPipeCompatibilityReceipt::Verify(const FSFCloneTopology& Plan,
     const TMap<FString, FObjectKey>& Built, const TMap<FString, FObjectKey>& Sources,
-    const TSet<FObjectKey>& ActualOutputs, USFConstructionOperationCoordinator& Owner,
+    const TSet<FObjectKey>& ActualOutputs, const TMap<FString, FSFSplineData>& PreparedSplines,
+    USFConstructionOperationCoordinator& Owner,
     const FSFConstructionOperationKey& Key, FString& Reason)
 {
     auto Fail = [&](const TCHAR* Why) { Reason = Why; return false; };
@@ -63,11 +64,13 @@ bool FSFExtendPipeCompatibilityReceipt::Verify(const FSFCloneTopology& Plan,
             auto* Pipe = Cast<AFGBuildablePipeline>(Actor);
             auto* Spline = Pipe ? Cast<IFGSplineBuildableInterface>(Pipe) : nullptr;
             auto* Component = Spline ? Spline->GetSplineComponent() : nullptr;
-            if (!Component || !Child.bHasSplineData || Component->GetNumberOfSplinePoints() != Child.SplineData.Points.Num())
+            const auto* Prepared = PreparedSplines.Find(Child.HologramId);
+            if (!Component || !Prepared || Prepared->Points.Num() < 2
+                || Component->GetNumberOfSplinePoints() != Prepared->Points.Num())
                 return Fail(TEXT("pipe_sibling_spline_shape_mismatch"));
-            for (int32 Index = 0; Index < Child.SplineData.Points.Num(); ++Index)
+            for (int32 Index = 0; Index < Prepared->Points.Num(); ++Index)
             {
-                const auto& Point = Child.SplineData.Points[Index];
+                const auto& Point = Prepared->Points[Index];
                 if (!Component->GetLocationAtSplinePoint(Index, ESplineCoordinateSpace::Local).Equals(Point.Local.ToFVector(), 0.1f)
                     || !Component->GetArriveTangentAtSplinePoint(Index, ESplineCoordinateSpace::Local).Equals(Point.ArriveTangent.ToFVector(), 0.1f)
                     || !Component->GetLeaveTangentAtSplinePoint(Index, ESplineCoordinateSpace::Local).Equals(Point.LeaveTangent.ToFVector(), 0.1f))

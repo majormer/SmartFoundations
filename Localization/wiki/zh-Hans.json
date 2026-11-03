@@ -77,11 +77,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Auto-Connect:4": {
-    "text": "打开 **K → 缩放**，使用当前手持建筑对应的**自动连接**区域。对于支持的物流建筑，`U` 可打开连接设置。全局默认值位于**选项 → 模组设置 → Smart!**；当前预览的选项位于面板中。连接偏好会实时更新，不受**立即应用放置**影响。",
-    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:56": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b"
   },
   "Auto-Connect:5": {
     "text": "使用面板、滚轮或数字键盘调整网格；建造前在世界中检查生成的连接和方向箭头。HUD 显示放置数值，并不提供另一个连接设置表单。默认按键及相对于玩家的控制方式请参阅[控制](Controls)。",
@@ -118,6 +117,16 @@
     "source_hash": "e298b5a94ff81e994527adc768d5e9764cc98d01ecb1dd6ea12f6dca747287fd",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  },
+  "Auto-Connect:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bfcb0d7bcbf0b5b36a80dd16a2dac958a4db4fc0261b34174dd132215ae37e01"
+  },
+  "Auto-Connect:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "59bd907b72a7a1bd727a61b3bb63c228bae6f45d96d4267b1fa73010ed0ca1df"
   },
   "Auto-Connect:11": {
     "text": "### 垂直传送带辅助机器连接",
@@ -173,11 +182,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Auto-Connect:18": {
-    "text": "**缩放管道支架会建成连续管路。**缩放一排管道立架或管道壁架时，Smart! 会在各副本之间铺设相连的管道，就像缩放一排传送带立架会生成连续传送带一样。液体可流经整条管路，各支架本身的吸附点仍保持空闲，方便手动连接管道。地面支架的高度和顶部角度会应用到整排，使倾斜管路保持一致。",
-    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:57": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01"
   },
   "Auto-Connect:19": {
     "text": "生成的管道继承相连源管道的涂装。只有相连管道的涂装一致时，管件才会继承涂装；将预览移到没有涂装来源的连接处会恢复原来的涂装。",
@@ -203,6 +211,16 @@
     "status": "reviewed",
     "review_method": "Contextual multilingual review with official game terminology; no native-speaker certification."
   },
+  "Auto-Connect:50": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "a731c462366f0c155a14546a1265f77d5e93778036e1ebd4a44e669ff5112e22"
+  },
+  "Auto-Connect:51": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "0a29d3c9b8ec32dedec575d19408d9bb4da0cbb09a58b8d2ed2dc2c0f3f833c7"
+  },
   "Auto-Connect:21": {
     "text": "## 超级管道自动连接",
     "source_hash": "4bcc46f7a3e328199f2b10ea31239d134d1815f33bf0911b2c5020959c930f54",
@@ -221,17 +239,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Auto-Connect:24": {
-    "text": "**缩放超级管道支架会建成连续超级管路。**缩放一排堆叠式超级管道立架时，Smart! 会在各副本之间铺设相连的超级管道，就像缩放一排传送带立架会生成传送带、缩放管道立架会生成管道一样。管路遵循该行的间距和高度，能够大幅爬升。各支架本身的吸附点保持空闲，方便手动连接超级管道。",
-    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:58": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455"
   },
-  "Auto-Connect:25": {
-    "text": "超级管道自动连接具有独立于管道的**启用开关和路由模式**，可从 Smart 面板、建造中的自动连接设置（按住 `U`）或模组配置中设置。请参阅[设置参考](Settings-Reference)。",
-    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:59": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213"
   },
   "Auto-Connect:26": {
     "text": "## 旋转后的壁架管路",
@@ -239,11 +255,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Auto-Connect:27": {
-    "text": "管道和超级管道壁架的子项完整跟随父项旋转。面板中的**墙面旋转**提供原版的 **45° 步进**，包括垂直管路。它与使一串副本弯曲的网格旋转不同。",
-    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:60": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce"
   },
   "Auto-Connect:28": {
     "text": "在相对于建筑的控制方式中，Y 轴沿旋转后的墙面管路方向。在相对于玩家的控制方式中，垂直输入沿支持方向中最接近垂直的方向：对于垂直墙面管路，**X+Z + 滚轮**纵向增加管路，**Z + 滚轮**则横向增加。面板保留 X/Y/Z 列；可通过箭头查看这些轴。传送带墙面接口保留原版朝向限制，使用垂直传送带进行垂直运输。",
@@ -317,11 +332,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Auto-Connect:45": {
-    "text": "_最后更新：2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
-    "status": "reviewed",
-    "review_method": "Reviewed existing footer with mechanical source date update."
+  "Auto-Connect:55": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Blueprints:0": {
     "text": "# Smart! 蓝图",
@@ -425,11 +439,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Blueprints:17": {
-    "text": "安全建造数据量限制也适用于蓝图网格。拒绝过大的放置操作时会保留预览：缩小网格并分段建造。若要放置大型原版蓝图，请关闭 [Smart 辅助](Smart-Assistance)并重新选择蓝图。",
-    "source_hash": "540e7f14c64d49d7f11fb6b7090a1475087984b4955b0dccb93ca481787d4236",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Blueprints:34": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "60707b2c9e66e6d33812f6b75b700b1d1cfafde4fcb92a54f5847b69c82a8ac8"
   },
   "Blueprints:18": {
     "text": "多人游戏采用服务器权威验证，并按正常成本建造。端点变化或资源不足可能使原先有效的预览失效。请参阅[自动连接](Auto-Connect)和[兼容性与多人游戏](Compatibility-and-Multiplayer)。",
@@ -509,11 +522,10 @@
     "status": "reviewed",
     "review_method": "Contextual multilingual review with official game terminology; no native-speaker certification."
   },
-  "Blueprints:33": {
-    "text": "_最后更新：2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
-    "status": "reviewed",
-    "review_method": "Reviewed existing footer with mechanical source date update."
+  "Blueprints:35": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Buildable-Gallery:0": {
     "text": "# 建筑图集",
@@ -983,17 +995,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Compatibility-and-Multiplayer:3": {
-    "text": "Smart! 35.0.0 面向 **Satisfactory 1.2.4 / CL 502094 或更新版本**以及 **SML 3.12.x**。安装前请更新游戏和模组加载器。不支持较旧的游戏版本。",
-    "source_hash": "67e479ca52c59b7506d6acd2ace2bb75b701e6c7854e5b2d570aeec46f92d66e",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:23": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "ddb7f6d3428242b7eb2a16d6468bc1c961f041f29251922f6c6a6922bfa78751"
   },
-  "Compatibility-and-Multiplayer:4": {
-    "text": "同时安装 Smart Camera 2.0 与 Smart! 35.0 时，必须成对更新至兼容版本。Camera 也可单独使用；Smart 的建造工具不依赖 Camera。镜头偏好和 HUD 外观属于各个本地玩家，不会作用于服务器上的所有人。",
-    "source_hash": "d778ecad7f4a6a4eb530120898db7c258299752b3b3849ab7cb18dce25829247",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:24": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "52b5e96461ffcb32e45b4e4f8c6a7bb4ae65053d1b8488b28119e6c0efbcaf11"
   },
   "Compatibility-and-Multiplayer:5": {
     "text": "## 存档安全",
@@ -1037,23 +1047,20 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Compatibility-and-Multiplayer:12": {
-    "text": "Smart! 可在专用服务器的多人游戏中使用。所有 Smart! 功能——网格缩放、自动连接（传送带、管道和电力）、Smart 蓝图、延伸、Smart 升级、Smart 恢复和 Smart 拆除——均可在客户端使用，并按正常成本建造。Smart! 放置的一切都是标准且完整同步的游戏建筑：其他玩家能看到、使用和拆除它们，与手动建造的建筑一样。",
-    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:29": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5"
   },
-  "Compatibility-and-Multiplayer:13": {
-    "text": "- **专用服务器：**同时支持 Windows 和 Linux。\n- **Smart 蓝图大小上限：**服务器上单次蓝图网格放置有上限（约数千座建筑，或数百条连接传送带/管道，以先达到者为准）。超限时 Smart! 会拒绝放置，HUD 会提示分段建造，网格保持可编辑以便调整。安全建造数据量限制同样适用于单人和监听服务器会话。关闭 [Smart 辅助](Smart-Assistance)并重新选择配方，即可正常放置大型原版蓝图。\n- **大型网格渐进建造：**确认大型缩放建造后，会在后台用短暂时间逐步完成，确保服务器仍能响应且不会有人因建造而断线。\n- **服务器管理员注意：**请在服务器和所有客户端安装相同的 Smart! 版本。模组管理器会在更新时保持版本一致。\n- **Smart Camera**（配套模组）也支持多人游戏。",
-    "source_hash": "e0abba477abdd815436da48e2f8957237ec0394c708deea58592e10d20ab9268",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:26": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8cb40018690ab6ebe9357b170389232193d08c25eafc1fd5d631dac793751ffe"
   },
-  "Compatibility-and-Multiplayer:14": {
-    "text": "多人游戏支持比单人游戏更新，因此如果某项功能在多人会话中的表现与单人不同，那就是缺陷。请在 GitHub 或 Discord 报告，并说明建造内容以及你是主机还是客户端。",
-    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:30": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9"
   },
   "Compatibility-and-Multiplayer:15": {
     "text": "每位玩家的会话辅助开关只影响自己的建造工具。远程延伸/恢复会将监听服务器主机的预览和设置与客户端操作分开处理。",
@@ -1097,11 +1104,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Compatibility-and-Multiplayer:22": {
-    "text": "_最后更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:31": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Controller-and-Steam-Deck:0": {
     "text": "# 手柄与 Steam Deck（实验性）",
@@ -1637,11 +1643,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Extend:8": {
-    "text": "1. 手动建造一个可用模块，并在建造枪中装备相同建筑类型。\n2. 打开 **K → 延伸**并按**选择来源**。\n3. 在面板之外点击世界中的现有来源建筑。选择期间，兼容来源会高亮。**Escape** 取消选择；面板内点击仍操作界面。\n4. 检查来源名称、捕获的附属对象和重复数量。用**更改方向**及放置控制调整预览。\n5. 关闭面板，检查拟建副本与材料报价，然后使用建造枪正常建造。",
-    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca"
   },
   "Extend:9": {
     "text": "选择来源不会建造任何东西。未命中时保留之前的预览。替换来源或较复杂的未建造布局时，丢弃前会要求确认。所选来源保持固定以便检查，直到取消放置、完成建造或更换配方。",
@@ -1685,11 +1690,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Extend:16": {
-    "text": "实体冶炼站是现有来源。青色冶炼站、传送带和支架为拟建副本；HUD 显示**延伸 1×1**。这是尚未建造的预览。",
-    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:50": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc"
   },
   "Extend:17": {
     "text": "## 更改方向",
@@ -1709,11 +1713,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Extend:20": {
-    "text": "通过 **K → 延伸 → 选择来源**明确启动，或使用悬停快捷方式。延伸标签页复用放置控制来调整网格数量、间距和支持的变换。也可使用与[网格缩放](Grid-Scaling)相同的滚轮／数字键盘控制。未按住修饰键时，滚轮选择延伸方向。运行时 HUD 标明长度／行数和当前调整项，便于建造前确认将发生的变化。",
-    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:51": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13"
   },
   "Extend:21": {
     "text": "## 缩放延伸",
@@ -1751,11 +1754,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Extend:27": {
-    "text": "同一来源现在生成三个青色模块副本，包含其传送路线和支架。HUD 显示**延伸 3×1**，材料报价随副本数增加。实体来源保持原位。",
-    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:52": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7"
   },
   "Extend:28": {
     "text": "## 抽水站",
@@ -1805,6 +1807,21 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
+  "Extend:45": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "54e38c7493c79d3f4bc2f71a29b70d8dd6942a4f44bee91a351b6ebd82db6819"
+  },
+  "Extend:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "2fc6ba5d654478f0d36a249ac28472d87d41be4029ae07a4e513561265a5f725"
+  },
+  "Extend:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8d860159ae76958c5e531b7732a1d2bed5e6c39a0cc339d47fa7d866c6ab94e8"
+  },
   "Extend:36": {
     "text": "## 检查捕获的布局",
     "source_hash": "f1c2f5c6de3f53c619dc7b774e5c42c86b11c0f59d3d150537e145bb3f358680",
@@ -1829,11 +1846,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Extend:40": {
-    "text": "_最后更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "FAQ:0": {
     "text": "# 常见问题",
@@ -3119,17 +3135,26 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
+  "Home:18": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1829ed863c572c2dbcafc8f78604d94faa795d58ca1d7e90494d020f49980f60"
+  },
+  "Home:19": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1bd5656d0819ad3a7d1a6861c038f59661e423c6f03bddc8b203ef1a7ffb5c8b"
+  },
   "Home:13": {
     "text": "## 文档对应版本",
     "source_hash": "96ddfc08279c6ae35f38d5139ad21a94f1ac99c7d031fa618cb40edbe35d39a5",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Home:14": {
-    "text": "这是 **Smart! 35.0.0 与 Smart Camera 2.0.0** 的本地文档草稿。协调兼容的版本发布后请同时更新两个模组；不要将 Camera 2.0 与旧 Smart 包搭配。这些草稿页不代表发布公告。",
-    "source_hash": "c29d2ea90b7a486f22022563a690b6049c5d72c5bf1c740518bb20fa5747432d",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Home:20": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6de3b72e72a676036d11c5f3b3679009013b370ca2cb7e8aed2d56252d3addd9"
   },
   "Home:15": {
     "text": "先了解共用[面板与 HUD](Smart-Panel-and-HUD)、[继续行走](Smart-Walking)、[垂直传送带辅助自动连接](Auto-Connect)和[蓝图接缝连接](Blueprints)。",
@@ -3143,11 +3168,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Home:17": {
-    "text": "_最后更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Home:21": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Lift-Assisted-Auto-Connect:0": {
     "text": "# 垂直传送带辅助自动连接",
@@ -3473,11 +3497,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:2": {
-    "text": "从**主菜单 → 模组 → Smart!** 查找。此处的更改会**跨存档、跨会话保留**。（按键绑定单独设置，见[控制](Controls)。）",
-    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:59": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb"
   },
   "Settings-Reference:3": {
     "text": "## 传送带自动连接",
@@ -3533,11 +3556,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:12": {
-    "text": "- **超级管道自动连接**——启用或禁用超级管道自动连接。**默认开启。**（于 33.1.0 加入。）\n- 选择超级管道路由模式。",
-    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:60": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29"
   },
   "Settings-Reference:13": {
     "text": "## 电力自动连接",
@@ -3551,11 +3573,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:15": {
-    "text": "- 启用或禁用电力自动连接。\n- 选择连接模式。\n- 设置连接范围。\n- 预留电线杆接口，避免 Smart! 占满所有插槽。\n- **缩放时电力链式连接**——解锁升级版电源连接器后，沿 Smart X 轴缩放工厂或发电机时，直接将相邻副本连接，而非逐个连接电线杆，无需单独延伸即可匹配常见汇流布局。Smart 面板可覆盖当前建造设置，HUD 显示实际选项。遵守各接口可用容量。**默认开启。**（于 34.2.0 加入。）",
-    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:61": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb"
   },
   "Settings-Reference:16": {
     "text": "## 蓝图自动连接",
@@ -3563,23 +3584,31 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:17": {
-    "text": "针对**自己的**蓝图缩放副本之间接缝的独立开关，与上述传送带和管道自动连接独立，因此关闭普通自动连接后，蓝图副本仍可互相连接。",
-    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:62": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11"
   },
-  "Settings-Reference:18": {
-    "text": "- **蓝图接缝自动连接**——启用或禁用缩放蓝图副本间的传送带、管道、超级管道、铁轨、有向载具路径及符合条件的电力连接。**默认开启。**（于 34.2.0 加入。）",
-    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:63": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4"
   },
   "Settings-Reference:19": {
     "text": "电力接缝连接还要求启用**电力自动连接**。每条电线使用匹配且仍有容量的电线杆接口；内部电线和墙壁接电桩的两个表面分别计数。",
     "source_hash": "f8e43f603399fedc12210a9d21a3d2d8108b47b7c676acc29f4f189f050416ed",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  },
+  "Settings-Reference:51": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "d30a9c4968359ae455bcba1db55829f233cd9689baac7a41ddda2ee677c671a7"
+  },
+  "Settings-Reference:52": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8d8d2f7ca8e8f5f5ffd32286939d718b5621954e9eb433f316520ac4e84d392b"
   },
   "Settings-Reference:20": {
     "text": "## 蓝图默认间距",
@@ -3605,11 +3634,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:24": {
-    "text": "- **附近物流范围**——自动连接时，分离器、合并器、管道交叉接头和管道地板孔寻找工厂端口的距离。降低可防止自动连接伸入相邻工厂组。**默认 25 m**（先前的固定行为）。（于 34.2.0 加入。）",
-    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:64": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592"
   },
   "Settings-Reference:25": {
     "text": "## 延伸",
@@ -3629,11 +3657,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:28": {
-    "text": "- 网格改变时自动锁定会在修改网格后锁住全息预览，防止大型预览意外移动。**默认开启**（自 32.1.2 起）；若希望预览保持自由定位，可在此关闭。原版锁定键可解除单次锁定。\n- **相对于玩家的控制**——使建造跟随视线而非固定方位轴：鼠标滚轮朝你面对的方向扩展，数字键盘成为方位控制（远离／靠近、右／左、上／下）。适用于缩放、间距、台阶、交错和旋转。**默认关闭**；开启前经典控制不变，Smart 面板始终保留固定 X/Y/Z。完整说明见[控制](Controls)。（于 34.1.0 加入。）\n- **点按切换变换模式**——点按变换键（间距、台阶、交错、旋转或工厂配方）开启模式，再次点按关闭，点按另一键切换模式。面向手柄、Steam Deck 和无障碍配置：Steam Input 径向／触摸菜单只能快速点按，无法保持按键。收起建造枪、切换建筑或打开面板总会释放模式。**默认关闭**；开启前经典按住行为不变，关闭即刻恢复。径向菜单设置见[手柄与 Steam Deck](Controller-and-Steam-Deck)。（于 34.2.0 加入。）",
-    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:65": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179"
   },
   "Settings-Reference:29": {
     "text": "## 滚轮步长",
@@ -3647,17 +3674,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:31": {
-    "text": "- **间距步长**（m）——每格增加的间距米数（也用于延伸间距和行走区段前进量）。\n- **台阶步长**（m）——每格增加的高度偏移米数（也用于行走区段抬升量）。\n- **交错步长**（m）——每格增加的交错米数（也用于行走区段偏移量）。\n- **旋转步长**（度）——每格增加的旋转角度（也用于行走区段转弯）。",
-    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:66": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e"
   },
-  "Settings-Reference:32": {
-    "text": "默认为 0.5 m 和 5°。距离步长接受 0.1–8 m；旋转接受 0.5–90°。",
-    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:67": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da"
   },
   "Settings-Reference:33": {
     "text": "## Smart 面板",
@@ -3701,11 +3726,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:40": {
-    "text": "在**模组 → Smart! Camera** 中，视图自动显示在提供它们的模组和镜头名称下，包括未激活的视图。内置建造枪视图有独立启用控制。各视图位置采用 0–1 归一化坐标，每轴分辨率为 64–2048 像素，缩放为 0.1–2，采集频率为每秒 5–60 次，亮度为 −3 至 +3 EV。适用的建造镜头距离为 5–50 m。镜头设置立即生效；被菜单隐藏的视图在继续游戏时更新。**所有存档**只更新该镜头全局和现有已存配置中的所编辑字段，包括当前世界。**此存档**只修改当前原版存档配置。无关字段和其他镜头保持不变。",
-    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:68": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29"
   },
   "Settings-Reference:41": {
     "text": "在所有存档中选择**使用模组建议**会跨存档重置该镜头。在此存档中选择**使用全局设置**只移除当前覆盖。取景／距离重置仅修改这两个字段。布局编辑会预览到共用的**完成／锁定**；取消会丢弃未提交布局／HUD 更改。见 [Smart Camera](Smart-Camera)。",
@@ -3731,11 +3755,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Settings-Reference:45": {
-    "text": "_最后更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:58": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Smart-Assistance:0": {
     "text": "# Smart 辅助",
@@ -4385,17 +4408,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:1": {
-    "text": "Smart 恢复保存你的 Smart! 设置，供以后复用、分享，或每次以相同方式再次放置整套工厂模块。在共用的 [Smart 面板](Smart-Panel-and-HUD)中打开 **K → 恢复**。其两个子标签为**网格预设**和**模块**。",
-    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:43": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35"
   },
-  "Smart-Restore:2": {
-    "text": "它回答了“我花了很久调好这个布局，怎么找回来？”这个问题。",
-    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:44": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2"
   },
   "Smart-Restore:3": {
     "text": "![恢复任务中的网格预设和模块子标签](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/restore.png)",
@@ -4427,11 +4448,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:8": {
-    "text": "- **从面板保存**——为当前面板设置命名并保存为预设。\n- **加载到面板**——把已保存预设加载回面板，建造前微调或直接应用。\n- **导出代码／导入代码**——以代码形式分享预设，或加载别人分享的预设。",
-    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:45": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40"
   },
   "Smart-Restore:9": {
     "text": "每个预设都显示易懂的内容摘要（建筑、网格、变换、配方），方便一眼区分。",
@@ -4445,17 +4465,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:11": {
-    "text": "模块捕获整个**延伸汇流布局**：一套相连的建筑及其传送带、管道、垂直传送带、分配器和电力，可重复放置。",
-    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b"
   },
-  "Smart-Restore:12": {
-    "text": "- 预览或建造 Smart [延伸](Extend)后，它会进入标签顶部的**延伸剪贴板**。**另存为模块**将捕获布局保存为有名称的可复用模块。\n- 对已保存模块选择**加载模块**可重建该布局：装备来源建筑后，它成为实时预览，可反复**盖印放置**（开火放置），并随时**滚动缩放**。\n- 恢复模块不像新建缩放延伸那样锁定在一侧，因此放置前可沿轴**向任一方向重新缩放长度**：向一边滚动就向一边扩展，反向滚动就向另一边扩展。\n- **导出代码／导入代码**以与预设相同的方式分享模块。",
-    "source_hash": "37740d4bfda7ca76487c320d49ae9a15e2da89d1f1fe4a31862a2ad8d53f903b",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bec0ec9303e43dd7907dc7dc366c045b75ee549bfcabebb02918f256b044593e"
   },
   "Smart-Restore:13": {
     "text": "每个模块显示部件摘要（传送带、管道、分配器等数量），让你了解将重建什么。",
@@ -4517,11 +4535,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:21": {
-    "text": "使用 **K → 恢复**保存、选择、加载、导入或导出布局。加载后，用缩放面板或滚轮／数字键盘控制调整放置；HUD 显示结果网格与当前调整项。使用建造枪按显示成本建造。",
-    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c"
   },
   "Smart-Restore:22": {
     "text": "若不重新打开面板就切换最近应用的恢复项，请按住 `U`，按 `Num 9` 选择下一个最近预设，或按 `Num 3` 返回。参阅[控制](Controls)。",
@@ -4547,17 +4564,26 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
+  "Smart-Restore:39": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b0724fac56a114aed1905757336fc2bd16f065519872f908a56afc905e5b0d3c"
+  },
+  "Smart-Restore:40": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "81c3c2048752b95069652ecef30608748705b0ecd1930a687c49a0f383a261ad"
+  },
   "Smart-Restore:26": {
     "text": "## 另请参阅",
     "source_hash": "0f2b43836b7db34aeb2ad65d2dc1b19495336b2a8bd81d1a4e6cc10ec180785b",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:27": {
-    "text": "- [延伸](Extend)——模块标签捕获其汇流布局的功能。\n- [Smart 面板与 HUD](Smart-Panel-and-HUD)——恢复标签所在位置。\n- [网格缩放](Grid-Scaling)与[变换](Transforms)——网格预设保存的内容。",
-    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264"
   },
   "Smart-Restore:28": {
     "text": "---",
@@ -4565,11 +4591,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Smart-Restore:32": {
-    "text": "_最后更新：2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
-    "status": "reviewed",
-    "review_method": "Reviewed existing footer with mechanical source date update."
+  "Smart-Restore:42": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Smart-Upgrade:0": {
     "text": "# Smart 升级",
@@ -4607,11 +4632,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Upgrade:6": {
-    "text": "1. 手持支持的建筑打开 **K → 升级**。传送带、管道和电线可直接打开此任务。\n2. 选择扫描模式。\n3. 扫描附近物体或相连网络。\n4. 选择类别和目标等级；网络扫描时还可选择单一来源等级，只升级该等级。\n5. 检查材料成本。\n6. 执行升级。",
-    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Upgrade:38": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08"
   },
   "Smart-Upgrade:7": {
     "text": "手持电线杆和墙壁接电桩仍打开普通 Smart 面板，以便缩放。升级它们时，请手持电线打开 Smart 升级，或使用扫描模式。",
@@ -4655,11 +4679,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Upgrade:14": {
-    "text": "- 点击具体等级，例如 **Mk.2**，只将**该等级**升级到目标。可把 Mk.2 传送带升为 Mk.3，而不动 Mk.4。\n- 选择**所有等级**，将所有与目标不同的传送带、垂直传送带或管道变为所选等级。这可在同一线路中同时升级某些等级并降级另一些等级。",
-    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Upgrade:39": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8"
   },
   "Smart-Upgrade:15": {
     "text": "这与半径扫描已有的等级控制一致。",
@@ -4727,11 +4750,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Upgrade:26": {
-    "text": "大型传送系统升级较复杂，因为 Satisfactory 内部将传送带和垂直传送带归入传送链实体。Smart! 包含稳定性改进和诊断，但若游戏在超大升级后报告传送链状态尚未稳定，仍可能需要保存／重新加载。",
-    "source_hash": "fed328c054689b599658ab3989621c5b784f7bcaa94b5be404727f05664adba7",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Upgrade:36": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "30a1ce6a5b6dcbf3cb863b07c5181d63bc781a27d7277f739226c64c0f12936e"
   },
   "Smart-Upgrade:27": {
     "text": "## 游戏内示例",
@@ -4769,11 +4791,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Smart-Upgrade:33": {
-    "text": "_最后更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Upgrade:37": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Smart-Walking:0": {
     "text": "# Smart 行走",
@@ -5741,65 +5762,90 @@
     "status": "reviewed",
     "review_method": "Reviewed existing footer with mechanical source date update."
   },
-  "Auto-Connect:38": {
+  "Blueprints:33": {
+    "text": "_最后更新：2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
+    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "status": "reviewed",
+    "review_method": "Reviewed existing footer with mechanical source date update.",
+    "obsolete": true
+  },
+  "Controls:6": {
+    "text": "| 按键 | 作用 |\n|-----|--------------|\n| `K` | 打开或关闭共用的缩放／行走／升级／恢复窗口 |\n| `F8` | 编辑 HUD 布局；安装 Smart Camera 后可同时编辑 HUD 和镜头布局 |\n| `Num Decimal` | 切换本次会话的 Smart 建造辅助 |\n| `Num 8` | 增大当前数值 |\n| `Num 5` | 减小当前数值 |\n| `Num 6` | 增加 Y 网格数量 |\n| `Num 4` | 减少 Y 网格数量 |\n| `Num 9` | 增加 Z 网格数量 |\n| `Num 3` | 减少 Z 网格数量 |\n| `X` | 按住后用共用控制或鼠标滚轮调整 X |\n| `Z` | 按住后用共用控制或鼠标滚轮调整 Y |\n| `X + Z` | 同时按住后用共用控制或鼠标滚轮调整 Z |\n| `;` | 按住进入间距模式 |\n| `I` | 按住进入台阶模式 |\n| `Y` | 按住进入交错模式 |\n| `,` | 按住进入旋转模式 |\n| `Num 0` | 切换当前模式的轴 |\n| `U` | 在生产建筑上选择配方；在适用建筑上设置连接或标志牌支架 |\n| `Num 1` | 切换方向箭头 |\n| `Mouse Wheel` | 调整当前 Smart 模式；没有 Smart 模式时执行原版旋转 |",
+    "source_hash": "2837292eada81d5f2f7b96ee1fa39689f1d488e0ee8b125d948d5069e407097e",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:27": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "2398e8d56840e229a7b387e89a3556aa24edfa217e26cf50db9e5ba6cf6ccf02",
+    "obsolete": true
+  },
+  "Settings-Reference:18": {
+    "text": "- **蓝图接缝自动连接**——启用或禁用缩放蓝图副本间的传送带、管道、超级管道、铁轨、有向载具路径及符合条件的电力连接。**默认开启。**（于 34.2.0 加入。）",
+    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:25": {
+    "text": "超级管道自动连接具有独立于管道的**启用开关和路由模式**，可从 Smart 面板、建造中的自动连接设置（按住 `U`）或模组配置中设置。请参阅[设置参考](Settings-Reference)。",
+    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:27": {
+    "text": "- [延伸](Extend)——模块标签捕获其汇流布局的功能。\n- [Smart 面板与 HUD](Smart-Panel-and-HUD)——恢复标签所在位置。\n- [网格缩放](Grid-Scaling)与[变换](Transforms)——网格预设保存的内容。",
+    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:31": {
+    "text": "- **间距步长**（m）——每格增加的间距米数（也用于延伸间距和行走区段前进量）。\n- **台阶步长**（m）——每格增加的高度偏移米数（也用于行走区段抬升量）。\n- **交错步长**（m）——每格增加的交错米数（也用于行走区段偏移量）。\n- **旋转步长**（度）——每格增加的旋转角度（也用于行走区段转弯）。",
+    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "afb87f859fcc83d5e6b2266d494b6b507374c2527764492de14534b28dbafa51",
+    "obsolete": true
+  },
+  "Auto-Connect:4": {
+    "text": "打开 **K → 缩放**，使用当前手持建筑对应的**自动连接**区域。对于支持的物流建筑，`U` 可打开连接设置。全局默认值位于**选项 → 模组设置 → Smart!**；当前预览的选项位于面板中。连接偏好会实时更新，不受**立即应用放置**影响。",
+    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "e2b8d0e432743c7bf14b5c35d055dab7c5692be89a336b3b5b8bf2922ba550f7",
+    "obsolete": true
+  },
+  "Settings-Reference:24": {
+    "text": "- **附近物流范围**——自动连接时，分离器、合并器、管道交叉接头和管道地板孔寻找工厂端口的距离。降低可防止自动连接伸入相邻工厂组。**默认 25 m**（先前的固定行为）。（于 34.2.0 加入。）",
+    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:13": {
+    "text": "- **专用服务器：**同时支持 Windows 和 Linux。\n- **Smart 蓝图大小上限：**服务器上单次蓝图网格放置有上限（约数千座建筑，或数百条连接传送带/管道，以先达到者为准）。超限时 Smart! 会拒绝放置，HUD 会提示分段建造，网格保持可编辑以便调整。安全建造数据量限制同样适用于单人和监听服务器会话。关闭 [Smart 辅助](Smart-Assistance)并重新选择配方，即可正常放置大型原版蓝图。\n- **大型网格渐进建造：**确认大型缩放建造后，会在后台用短暂时间逐步完成，确保服务器仍能响应且不会有人因建造而断线。\n- **服务器管理员注意：**请在服务器和所有客户端安装相同的 Smart! 版本。模组管理器会在更新时保持版本一致。\n- **Smart Camera**（配套模组）也支持多人游戏。",
+    "source_hash": "e0abba477abdd815436da48e2f8957237ec0394c708deea58592e10d20ab9268",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:45": {
     "text": "_最后更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
     "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Smart-Camera:30": {
-    "text": "_最后更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Smart-Restore:29": {
-    "text": "_最后更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Water-Extractors:14": {
-    "text": "_最后更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Feature-Gallery:50": {
-    "text": "_最后更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Feature-Gallery:30": {
-    "text": "\n## 升级",
-    "source_hash": "346a4694e55fb3881d4efb3df370eb4fa70ac8f41333fc51b5d2f136ba5ac387",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Lift-Assisted-Auto-Connect:11": {
-    "text": "## 游戏内示例",
-    "source_hash": "5eb2c1c9e3dbc39102a812af339752c7f0fe1e0b95368965e2e069a71b377898",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Blueprints:21": {
-    "text": "_最后更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Lift-Assisted-Auto-Connect:12": {
-    "text": "![两个抬高的分离器预览，清晰可见向下连接到机器接口高度的垂直传送带，旁边显示缩放控制。](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/lift-connection-controls.png)",
-    "source_hash": "cc3d5dfc328bad823f169e9cfaa9f3b9faf340768f11bfc85d33f6d73e79b0fc",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
@@ -5811,25 +5857,89 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Lift-Assisted-Auto-Connect:15": {
-    "text": "已建成的制造站输入线，分配器在不同高度和距离交错布置。",
-    "source_hash": "3f031fef9aa2b08f029041b38a3ede25923654db3210c0cf2f823345bb155916",
+  "Smart-Upgrade:35": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "fef10fcd052e667d2e0e00e385c7a28cabcf51645e05f4ffe84f7b4be9302924",
+    "obsolete": true
+  },
+  "Settings-Reference:55": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "48890e9ad61621c0f5a145bbfacc031cd10dd0886932dd6ca1718305cc0ded08",
+    "obsolete": true
+  },
+  "Smart-Upgrade:6": {
+    "text": "1. 手持支持的建筑打开 **K → 升级**。传送带、管道和电线可直接打开此任务。\n2. 选择扫描模式。\n3. 扫描附近物体或相连网络。\n4. 选择类别和目标等级；网络扫描时还可选择单一来源等级，只升级该等级。\n5. 检查材料成本。\n6. 执行升级。",
+    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Buildable-Gallery:60": {
+  "Compatibility-and-Multiplayer:28": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "c7aebe8ed6d349fd4710af10aa9e95555d8529fd0728f438c8a84f9ce1b54246",
+    "obsolete": true
+  },
+  "Extend:40": {
     "text": "_最后更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
     "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Blueprints:20": {
-    "text": "\n---",
-    "source_hash": "3d0b188170e8f7ed4b0a730d3fae39933057e60ba9e030bc278c446442cbabc3",
+  "Settings-Reference:12": {
+    "text": "- **超级管道自动连接**——启用或禁用超级管道自动连接。**默认开启。**（于 33.1.0 加入。）\n- 选择超级管道路由模式。",
+    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29",
     "status": "reviewed",
-    "review_method": "Language-neutral Markdown, protected brand or code; no translation required.",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:29": {
+    "text": "_最后更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:41": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6fd578d8f158dba5fa05b36f5f5e607370fc961be65776fbce3a1e7af14d1023",
+    "obsolete": true
+  },
+  "Water-Extractors:14": {
+    "text": "_最后更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Upgrade:33": {
+    "text": "_最后更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:25": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6a23ebe76c6c81c346aa9ada46d9598977d528e278a4ec3eba624c42942cbf0a",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:3": {
+    "text": "Smart! 35.0.0 面向 **Satisfactory 1.2.4 / CL 502094 或更新版本**以及 **SML 3.12.x**。安装前请更新游戏和模组加载器。不支持较旧的游戏版本。",
+    "source_hash": "67e479ca52c59b7506d6acd2ace2bb75b701e6c7854e5b2d570aeec46f92d66e",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:35": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4ce78ba0540a46d297f12754ed09f0b5fbd3af284a7f90d4157396c30318a9dc",
     "obsolete": true
   },
   "Lift-Assisted-Auto-Connect:14": {
@@ -5839,11 +5949,24 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Feature-Gallery:38": {
-    "text": "\n## 成组拆除",
-    "source_hash": "353f26b4f82a6dd84f38739c12578013748425253037044613768c788d0ac22b",
+  "Feature-Gallery:30": {
+    "text": "\n## 升级",
+    "source_hash": "346a4694e55fb3881d4efb3df370eb4fa70ac8f41333fc51b5d2f136ba5ac387",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:12": {
+    "text": "- 预览或建造 Smart [延伸](Extend)后，它会进入标签顶部的**延伸剪贴板**。**另存为模块**将捕获布局保存为有名称的可复用模块。\n- 对已保存模块选择**加载模块**可重建该布局：装备来源建筑后，它成为实时预览，可反复**盖印放置**（开火放置），并随时**滚动缩放**。\n- 恢复模块不像新建缩放延伸那样锁定在一侧，因此放置前可沿轴**向任一方向重新缩放长度**：向一边滚动就向一边扩展，反向滚动就向另一边扩展。\n- **导出代码／导入代码**以与预设相同的方式分享模块。",
+    "source_hash": "37740d4bfda7ca76487c320d49ae9a15e2da89d1f1fe4a31862a2ad8d53f903b",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "54a959ae32a4d9f6576cccd1f8191d529cda45dd8aca777c420560710c5cfa55",
     "obsolete": true
   },
   "Smart-Camera:17": {
@@ -5853,16 +5976,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Lift-Assisted-Auto-Connect:13": {
-    "text": "两个分离器下方均可看见垂直传送带本体和下端。此视角使机器侧水平传送带显得较短；较完整的布局见下方已建成的制造站示例。",
-    "source_hash": "461c92ebb7d0183d81d0d44c20001dd4c5d42ceaee5dc38fbc02fc6ff22afe85",
+  "Smart-Restore:21": {
+    "text": "使用 **K → 恢复**保存、选择、加载、导入或导出布局。加载后，用缩放面板或滚轮／数字键盘控制调整放置；HUD 显示结果网格与当前调整项。使用建造枪按显示成本建造。",
+    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Controls:6": {
-    "text": "| 按键 | 作用 |\n|-----|--------------|\n| `K` | 打开或关闭共用的缩放／行走／升级／恢复窗口 |\n| `F8` | 编辑 HUD 布局；安装 Smart Camera 后可同时编辑 HUD 和镜头布局 |\n| `Num Decimal` | 切换本次会话的 Smart 建造辅助 |\n| `Num 8` | 增大当前数值 |\n| `Num 5` | 减小当前数值 |\n| `Num 6` | 增加 Y 网格数量 |\n| `Num 4` | 减少 Y 网格数量 |\n| `Num 9` | 增加 Z 网格数量 |\n| `Num 3` | 减少 Z 网格数量 |\n| `X` | 按住后用共用控制或鼠标滚轮调整 X |\n| `Z` | 按住后用共用控制或鼠标滚轮调整 Y |\n| `X + Z` | 同时按住后用共用控制或鼠标滚轮调整 Z |\n| `;` | 按住进入间距模式 |\n| `I` | 按住进入台阶模式 |\n| `Y` | 按住进入交错模式 |\n| `,` | 按住进入旋转模式 |\n| `Num 0` | 切换当前模式的轴 |\n| `U` | 在生产建筑上选择配方；在适用建筑上设置连接或标志牌支架 |\n| `Num 1` | 切换方向箭头 |\n| `Mouse Wheel` | 调整当前 Smart 模式；没有 Smart 模式时执行原版旋转 |",
-    "source_hash": "2837292eada81d5f2f7b96ee1fa39689f1d488e0ee8b125d948d5069e407097e",
+  "Settings-Reference:2": {
+    "text": "从**主菜单 → 模组 → Smart!** 查找。此处的更改会**跨存档、跨会话保留**。（按键绑定单独设置，见[控制](Controls)。）",
+    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
@@ -5874,9 +5997,401 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
+  "Extend:20": {
+    "text": "通过 **K → 延伸 → 选择来源**明确启动，或使用悬停快捷方式。延伸标签页复用放置控制来调整网格数量、间距和支持的变换。也可使用与[网格缩放](Grid-Scaling)相同的滚轮／数字键盘控制。未按住修饰键时，滚轮选择延伸方向。运行时 HUD 标明长度／行数和当前调整项，便于建造前确认将发生的变化。",
+    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:56": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bdf042547add168e1b9964198625cab7539af8176045dd68d70f13a619b0b7be",
+    "obsolete": true
+  },
+  "Settings-Reference:28": {
+    "text": "- 网格改变时自动锁定会在修改网格后锁住全息预览，防止大型预览意外移动。**默认开启**（自 32.1.2 起）；若希望预览保持自由定位，可在此关闭。原版锁定键可解除单次锁定。\n- **相对于玩家的控制**——使建造跟随视线而非固定方位轴：鼠标滚轮朝你面对的方向扩展，数字键盘成为方位控制（远离／靠近、右／左、上／下）。适用于缩放、间距、台阶、交错和旋转。**默认关闭**；开启前经典控制不变，Smart 面板始终保留固定 X/Y/Z。完整说明见[控制](Controls)。（于 34.1.0 加入。）\n- **点按切换变换模式**——点按变换键（间距、台阶、交错、旋转或工厂配方）开启模式，再次点按关闭，点按另一键切换模式。面向手柄、Steam Deck 和无障碍配置：Steam Input 径向／触摸菜单只能快速点按，无法保持按键。收起建造枪、切换建筑或打开面板总会释放模式。**默认关闭**；开启前经典按住行为不变，关闭即刻恢复。径向菜单设置见[手柄与 Steam Deck](Controller-and-Steam-Deck)。（于 34.2.0 加入。）",
+    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:17": {
+    "text": "针对**自己的**蓝图缩放副本之间接缝的独立开关，与上述传送带和管道自动连接独立，因此关闭普通自动连接后，蓝图副本仍可互相连接。",
+    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:32": {
+    "text": "_最后更新：2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
+    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "status": "reviewed",
+    "review_method": "Reviewed existing footer with mechanical source date update.",
+    "obsolete": true
+  },
+  "Settings-Reference:53": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "f22daf9ba45c58f27cddf5020c4d856e4963c6b4b321e93b90506fe9200725c4",
+    "obsolete": true
+  },
+  "Home:17": {
+    "text": "_最后更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:57": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "c9db8a4c70492425a227c4f600e18e314036c794ee6ecf7b72819e8c1176d985",
+    "obsolete": true
+  },
+  "Buildable-Gallery:60": {
+    "text": "_最后更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:24": {
+    "text": "**缩放超级管道支架会建成连续超级管路。**缩放一排堆叠式超级管道立架时，Smart! 会在各副本之间铺设相连的超级管道，就像缩放一排传送带立架会生成传送带、缩放管道立架会生成管道一样。管路遵循该行的间距和高度，能够大幅爬升。各支架本身的吸附点保持空闲，方便手动连接超级管道。",
+    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:37": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "89d7ec27427ec2dbeda612d4908225ce4ab17de581eb4e2fc4950c57aaf45e81",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:14": {
+    "text": "多人游戏支持比单人游戏更新，因此如果某项功能在多人会话中的表现与单人不同，那就是缺陷。请在 GitHub 或 Discord 报告，并说明建造内容以及你是主机还是客户端。",
+    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:8": {
+    "text": "1. 手动建造一个可用模块，并在建造枪中装备相同建筑类型。\n2. 打开 **K → 延伸**并按**选择来源**。\n3. 在面板之外点击世界中的现有来源建筑。选择期间，兼容来源会高亮。**Escape** 取消选择；面板内点击仍操作界面。\n4. 检查来源名称、捕获的附属对象和重复数量。用**更改方向**及放置控制调整预览。\n5. 关闭面板，检查拟建副本与材料报价，然后使用建造枪正常建造。",
+    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:27": {
+    "text": "管道和超级管道壁架的子项完整跟随父项旋转。面板中的**墙面旋转**提供原版的 **45° 步进**，包括垂直管路。它与使一串副本弯曲的网格旋转不同。",
+    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:18": {
+    "text": "**缩放管道支架会建成连续管路。**缩放一排管道立架或管道壁架时，Smart! 会在各副本之间铺设相连的管道，就像缩放一排传送带立架会生成连续传送带一样。液体可流经整条管路，各支架本身的吸附点仍保持空闲，方便手动连接管道。地面支架的高度和顶部角度会应用到整排，使倾斜管路保持一致。",
+    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:16": {
+    "text": "实体冶炼站是现有来源。青色冶炼站、传送带和支架为拟建副本；HUD 显示**延伸 1×1**。这是尚未建造的预览。",
+    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "0bfbb0f456f389e1d5f74b3927ea2e671cd406c1d43a86691dbaf4cf8466f920",
+    "obsolete": true
+  },
+  "Blueprints:20": {
+    "text": "\n---",
+    "source_hash": "3d0b188170e8f7ed4b0a730d3fae39933057e60ba9e030bc278c446442cbabc3",
+    "status": "reviewed",
+    "review_method": "Language-neutral Markdown, protected brand or code; no translation required.",
+    "obsolete": true
+  },
+  "Smart-Restore:38": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "ec2177c56559237ebd837004fb2b43a250f6a29833da7919279c42a8f1cd7585",
+    "obsolete": true
+  },
+  "Extend:43": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4a4f5c96d35df73910b2887f40ae3bae8ad2bfb9317efd89edeeee8d5cd6a225",
+    "obsolete": true
+  },
+  "Smart-Restore:1": {
+    "text": "Smart 恢复保存你的 Smart! 设置，供以后复用、分享，或每次以相同方式再次放置整套工厂模块。在共用的 [Smart 面板](Smart-Panel-and-HUD)中打开 **K → 恢复**。其两个子标签为**网格预设**和**模块**。",
+    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:11": {
+    "text": "模块捕获整个**延伸汇流布局**：一套相连的建筑及其传送带、管道、垂直传送带、分配器和电力，可重复放置。",
+    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:34": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4032031e869ee6cf1a85c2c77f17f1a8e1c5fdfb4d6365de941032362c26bd6b",
+    "obsolete": true
+  },
+  "Home:14": {
+    "text": "这是 **Smart! 35.0.0 与 Smart Camera 2.0.0** 的本地文档草稿。协调兼容的版本发布后请同时更新两个模组；不要将 Camera 2.0 与旧 Smart 包搭配。这些草稿页不代表发布公告。",
+    "source_hash": "c29d2ea90b7a486f22022563a690b6049c5d72c5bf1c740518bb20fa5747432d",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:15": {
+    "text": "已建成的制造站输入线，分配器在不同高度和距离交错布置。",
+    "source_hash": "3f031fef9aa2b08f029041b38a3ede25923654db3210c0cf2f823345bb155916",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:41": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "994fafc6b93774a2bf26fda7226aa7f32d9e5692801829af09b53ed4e124e1dc",
+    "obsolete": true
+  },
+  "Auto-Connect:53": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "7a7775f3971ba2543d8a862d7cb59673e80d88b7b274872a5f5197d36bd4a8cb",
+    "obsolete": true
+  },
+  "Smart-Upgrade:26": {
+    "text": "大型传送系统升级较复杂，因为 Satisfactory 内部将传送带和垂直传送带归入传送链实体。Smart! 包含稳定性改进和诊断，但若游戏在超大升级后报告传送链状态尚未稳定，仍可能需要保存／重新加载。",
+    "source_hash": "fed328c054689b599658ab3989621c5b784f7bcaa94b5be404727f05664adba7",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:13": {
+    "text": "两个分离器下方均可看见垂直传送带本体和下端。此视角使机器侧水平传送带显得较短；较完整的布局见下方已建成的制造站示例。",
+    "source_hash": "461c92ebb7d0183d81d0d44c20001dd4c5d42ceaee5dc38fbc02fc6ff22afe85",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:52": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "2f3fecc73d967c4184f0913db5a820573f49a433540b53d23d3f4b45143cea26",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:4": {
+    "text": "同时安装 Smart Camera 2.0 与 Smart! 35.0 时，必须成对更新至兼容版本。Camera 也可单独使用；Smart 的建造工具不依赖 Camera。镜头偏好和 HUD 外观属于各个本地玩家，不会作用于服务器上的所有人。",
+    "source_hash": "d778ecad7f4a6a4eb530120898db7c258299752b3b3849ab7cb18dce25829247",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Feature-Gallery:50": {
+    "text": "_最后更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:42": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "16d59253ca7db5055c785ca688ef4711b48bf61b30eff0f24767d33040495694",
+    "obsolete": true
+  },
+  "Smart-Restore:2": {
+    "text": "它回答了“我花了很久调好这个布局，怎么找回来？”这个问题。",
+    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Blueprints:17": {
+    "text": "安全建造数据量限制也适用于蓝图网格。拒绝过大的放置操作时会保留预览：缩小网格并分段建造。若要放置大型原版蓝图，请关闭 [Smart 辅助](Smart-Assistance)并重新选择蓝图。",
+    "source_hash": "540e7f14c64d49d7f11fb6b7090a1475087984b4955b0dccb93ca481787d4236",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:40": {
+    "text": "在**模组 → Smart! Camera** 中，视图自动显示在提供它们的模组和镜头名称下，包括未激活的视图。内置建造枪视图有独立启用控制。各视图位置采用 0–1 归一化坐标，每轴分辨率为 64–2048 像素，缩放为 0.1–2，采集频率为每秒 5–60 次，亮度为 −3 至 +3 EV。适用的建造镜头距离为 5–50 m。镜头设置立即生效；被菜单隐藏的视图在继续游戏时更新。**所有存档**只更新该镜头全局和现有已存配置中的所编辑字段，包括当前世界。**此存档**只修改当前原版存档配置。无关字段和其他镜头保持不变。",
+    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "a17847f27c9d126c19f4c648fcce148a467279fc4197ecd4e932411db88929df",
+    "obsolete": true
+  },
+  "Smart-Restore:33": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b2e1a293ae99d7ff0946f54edd6939cf17d18547e848ac895c533abe3c2e4560",
+    "obsolete": true
+  },
+  "Feature-Gallery:38": {
+    "text": "\n## 成组拆除",
+    "source_hash": "353f26b4f82a6dd84f38739c12578013748425253037044613768c788d0ac22b",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:36": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4ca209992e5cc98977db86e926e521228b74ac99cbbce1b5f642444df21d447f",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:11": {
+    "text": "## 游戏内示例",
+    "source_hash": "5eb2c1c9e3dbc39102a812af339752c7f0fe1e0b95368965e2e069a71b377898",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:15": {
+    "text": "- 启用或禁用电力自动连接。\n- 选择连接模式。\n- 设置连接范围。\n- 预留电线杆接口，避免 Smart! 占满所有插槽。\n- **缩放时电力链式连接**——解锁升级版电源连接器后，沿 Smart X 轴缩放工厂或发电机时，直接将相邻副本连接，而非逐个连接电线杆，无需单独延伸即可匹配常见汇流布局。Smart 面板可覆盖当前建造设置，HUD 显示实际选项。遵守各接口可用容量。**默认开启。**（于 34.2.0 加入。）",
+    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:54": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8382fa1196f068239391b97c93d521c0ed3ba46266fa7254f3e6c05c842fa1d2",
+    "obsolete": true
+  },
   "Smart-Assistance:13": {
     "text": "_最后更新：2026-10-06 · Smart! v34.4.0_\n",
     "source_hash": "9ea842bd5dbdd752d3353ddeeeb68a3eff256015d475f2a5eb6d8e17e13b5156",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Upgrade:14": {
+    "text": "- 点击具体等级，例如 **Mk.2**，只将**该等级**升级到目标。可把 Mk.2 传送带升为 Mk.3，而不动 Mk.4。\n- 选择**所有等级**，将所有与目标不同的传送带、垂直传送带或管道变为所选等级。这可在同一线路中同时升级某些等级并降级另一些等级。",
+    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:22": {
+    "text": "_最后更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:27": {
+    "text": "同一来源现在生成三个青色模块副本，包含其传送路线和支架。HUD 显示**延伸 3×1**，材料报价随副本数增加。实体来源保持原位。",
+    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:54": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "92242198e922b4bdd9164d865151a7ed36c6f470ad144311ff077b3cb519dd7a",
+    "obsolete": true
+  },
+  "Auto-Connect:45": {
+    "text": "_最后更新：2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
+    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "status": "reviewed",
+    "review_method": "Reviewed existing footer with mechanical source date update.",
+    "obsolete": true
+  },
+  "Smart-Upgrade:34": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "e26d8a251fe56b8c46900038254253f78c75d8e69ca22dce9b9e0edc797fe40e",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:12": {
+    "text": "Smart! 可在专用服务器的多人游戏中使用。所有 Smart! 功能——网格缩放、自动连接（传送带、管道和电力）、Smart 蓝图、延伸、Smart 升级、Smart 恢复和 Smart 拆除——均可在客户端使用，并按正常成本建造。Smart! 放置的一切都是标准且完整同步的游戏建筑：其他玩家能看到、使用和拆除它们，与手动建造的建筑一样。",
+    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:32": {
+    "text": "默认为 0.5 m 和 5°。距离步长接受 0.1–8 m；旋转接受 0.5–90°。",
+    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:38": {
+    "text": "_最后更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:44": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6db2053fcc52fc7413a2cac1559df3b88f7c1446d5bc55e82fb5c2b6043c246b",
+    "obsolete": true
+  },
+  "Smart-Camera:30": {
+    "text": "_最后更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:50": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "d3ecb21df5d1ff326acb297239bef36255c199f23e6b6ec35663f3996c38ec2b",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:12": {
+    "text": "![两个抬高的分离器预览，清晰可见向下连接到机器接口高度的垂直传送带，旁边显示缩放控制。](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/lift-connection-controls.png)",
+    "source_hash": "cc3d5dfc328bad823f169e9cfaa9f3b9faf340768f11bfc85d33f6d73e79b0fc",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:8": {
+    "text": "- **从面板保存**——为当前面板设置命名并保存为预设。\n- **加载到面板**——把已保存预设加载回面板，建造前微调或直接应用。\n- **导出代码／导入代码**——以代码形式分享预设，或加载别人分享的预设。",
+    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b9d7eb1bd49651f9c06691ed5350a0882a0787f099915de792867f8aa4494c27",
+    "obsolete": true
+  },
+  "Blueprints:21": {
+    "text": "_最后更新：2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0（发布草稿）_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true

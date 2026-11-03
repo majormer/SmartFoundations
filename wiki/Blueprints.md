@@ -42,7 +42,7 @@ Under **Building Behavior**, set separate **Blueprint Default X/Y/Z Spacing (m)*
 
 Each copy stays independently dismantlable. Within a native Designer, permitted Smart construction belongs to that Designer; Smart does not grant permission to place a building the Designer rejects.
 
-The safe construction-payload limit also applies to Blueprint grids. A refused oversized placement keeps its preview: reduce the grid and build in sections. For a large vanilla Blueprint placement, disable [Smart Assistance](Smart-Assistance) and select it again.
+**Blueprint Placement Safety Limit** under Building Behavior is enabled by default. For a remote multiplayer client, it blocks a Blueprint grid estimated above 2,000 buildings, counting the original and all copies. You can disable this setting live to attempt a larger placement, with increased freeze, disconnect and failure risk. Normal material, placement and construction-payload checks still apply. Build in smaller sections if a placement is refused.
 
 Multiplayer uses authoritative validation and normal costs. A changed endpoint or insufficient resources can invalidate a previously valid preview. See [Auto-Connect](Auto-Connect) and [Compatibility and Multiplayer](Compatibility-and-Multiplayer).
 
@@ -71,4 +71,4 @@ Equip a Vehicle Path to see its direction arrows. Join a departing end to a comp
 
 ---
 
-_Last updated: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_
+_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0 (release draft)_

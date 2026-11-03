@@ -6,6 +6,28 @@
 #include "Features/Extend/SFExtendControlFrame.h"
 #include "Features/Extend/SFExtendCloneTopology.h"
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSFScaledExtendLoopbackTest, "SmartFoundations.Extend.RepeatedModulePose",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FSFScaledExtendLoopbackTest::RunTest(const FString& Parameters)
+{
+    SFScaledExtendGrid::FPlacementReservations Placements;
+    // Captured 15-degree Assembler arc: copy 25 repeats the held first copy.
+    const FTransform First(FRotator(0, -174.9999994, 0), FVector(298415.5967199, -259287.4633297, 19200.0078125));
+    const FTransform Repeated(FRotator(0, -174.9999994, 0), FVector(298415.5971213, -259287.4631836, 19200.0078125));
+    TestTrue(TEXT("First module accepted"), Placements.TryAdd(First));
+    TestFalse(TEXT("Captured full-circle repeat rejected despite numerical drift"), Placements.TryAdd(Repeated));
+    FTransform Helix = Repeated;
+    Helix.AddToTranslation(FVector(0, 0, 400));
+    TestTrue(TEXT("A later turn at a distinct height remains possible"), Placements.TryAdd(Helix));
+    TestTrue(TEXT("Next distinct arc copy remains possible"), Placements.TryAdd(FTransform(
+        FRotator(0, 170.0000006, 0), FVector(299312.1746175, -259326.6089920, 19200.0078125))));
+    SFScaledExtendGrid::FPlacementReservations Boundary;
+    TestTrue(TEXT("Bucket boundary baseline"), Boundary.TryAdd(FTransform(FVector(99.999, 0, 0))));
+    TestFalse(TEXT("Coincidence across neighboring buckets rejected"), Boundary.TryAdd(FTransform(FVector(100.001, 0, 0))));
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSFScaledExtendGridTest, "SmartFoundations.Extend.Grid3D",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 

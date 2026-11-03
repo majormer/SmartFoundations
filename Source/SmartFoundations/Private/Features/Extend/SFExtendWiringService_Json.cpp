@@ -21,8 +21,6 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
     if (!WiringTopology) WiringTopology = ExtendService->StoredCloneTopology.Get();
     const auto* CapturedActors = ExtendService->GetCapturedWiringActors();
     const auto& WiringActors = CapturedActors ? *CapturedActors : ExtendService->JsonBuiltActors;
-    const auto* CapturedScaled = ExtendService->GetCapturedScaledWiringPlans();
-    const auto& WiringScaledPlans = CapturedScaled ? *CapturedScaled : ExtendService->ScaledExtendClones;
     ExtendService->bRestoredScaledWiringDeferred = false;
 
     if (!NewFactory)
@@ -181,103 +179,9 @@ int32 USFExtendWiringService::GenerateAndExecuteWiring(AFGBuildableFactory* NewF
 
     UClass* WireClass = LoadClass<AFGBuildableWire>(nullptr, SFAssetPaths::PowerLineBuildClass);
 
-    // ==================== Scaled Extend: Additional Clone Wiring (Issue #265) ====================
-    // Process wiring for each additional clone set beyond clone 1
-    int32 ScaledExtendWiredCount = 0;
-    // [EXTEND-MP] Display level while MP Extend validates (Verbose is stripped on the dedi).
-    UE_LOG(LogSmartFoundations, Verbose,
-        TEXT("[EXTEND-MP] Scaled clone wiring: %d clone set(s), jsonBuilt=%d, sourceTarget=%s."),
-        WiringScaledPlans.Num(), WiringActors.Num(),
-        *GetNameSafe(ExtendService->CurrentExtendTarget.Get()));
-    for (int32 CloneIdx = 0; CloneIdx < WiringScaledPlans.Num(); CloneIdx++)
-    {
-        const FSFScaledExtendClone& Clone = WiringScaledPlans[CloneIdx];
-        if (!Clone.CloneTopology.IsValid() || Clone.CloneTopology->ChildHolograms.Num() == 0)
-        {
-            UE_LOG(LogSmartFoundations, Verbose,
-                TEXT("[EXTEND-MP] Scaled clone wiring: Clone[%d] SKIPPED - topology %s."),
-                CloneIdx, Clone.CloneTopology.IsValid() ? TEXT("empty") : TEXT("null"));
-            continue;
-        }
-
-        // Find ExtendService clone's factory building from built actors
-        // The factory hologram was registered as "factory" in the clone's SpawnedHolograms
-        // But we need to find the BUILT factory, not the hologram
-        const FString CellPrefix = SFScaledExtendGrid::Prefix(Clone.GridX, Clone.GridY, Clone.GridZ);
-        const TObjectPtr<AActor>* Registered = WiringActors.Find(CellPrefix + TEXT("factory"));
-        AFGBuildableFactory* CloneFactory = Registered ? Cast<AFGBuildableFactory>(*Registered) : nullptr;
-        if (!IsValid(CloneFactory)) CloneFactory = nullptr;
-
-        if (!CloneFactory)
-        {
-            UE_LOG(LogSmartExtend, Warning, TEXT("Extend wiring has no constructed factory for %s; no nearby actor substituted."),
-                *CellPrefix);
-            continue;
-        }
-
-        // Per-clone actor map with PREFIXED keys (scopes chain/network rebuilds to this clone).
-        TMap<FString, AActor*> CloneBuiltActors;
-        FString ClonePrefix = SFScaledExtendGrid::Prefix(Clone.GridX, Clone.GridY, Clone.GridZ);
-        for (const auto& Pair : WiringActors)
-        {
-            if (Pair.Key.StartsWith(ClonePrefix) && IsValid(Pair.Value))
-            {
-                CloneBuiltActors.Add(Pair.Key, Pair.Value);
-            }
-        }
-        CloneBuiltActors.Add(ClonePrefix + TEXT("factory"), CloneFactory);
-        // Share the exact constructed owner with later cells and the power plan.
-        CloneIdToBuildable.Add(ClonePrefix + TEXT("factory"), CloneFactory);
-
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ SCALED EXTEND Wire: Clone[%d] - %d built actors mapped (factory=%s)"),
-            CloneIdx, CloneBuiltActors.Num(), *CloneFactory->GetName());
-
-        // Generate the clone's manifest from its PREFIXED topology against the GLOBAL id map.
-        // The spawn-time prefix pass rewrites every connection TARGET into the prefixed
-        // namespace ("parent" -> "sc{i}_factory", internal refs -> "sc{i}_X", lane source-sides
-        // -> "sc{i-1}_X" or the parent set's UNPREFIXED ids). The old code stripped prefixes
-        // from the map keys and hologram ids but NEVER from the targets, so every lookup missed
-        // and the per-clone manifests came out empty (live 2026-06-10: manifestBelts=0 for every
-        // clone, with clone-0's lanes mis-resolving into its own namespace). The global map
-        // resolves all of it: parent-set ids, every prefixed clone id, and the parent factory.
-        TMap<FString, AActor*> CloneGenMap = CloneIdToBuildable;
-        for (const auto& Pair : CloneBuiltActors)
-        {
-            CloneGenMap.Add(Pair.Key, Pair.Value);
-        }
-
-        FSFWiringManifest CloneManifest = FSFWiringManifest::Generate(
-            *Clone.CloneTopology, CloneGenMap, CloneFactory);
-
-        if (bOwnedConveyors) CloneManifest.BeltConnections.Reset();
-        int32 CloneWired = CloneManifest.ExecuteWiring(GetWorld());
-        const int32 CloneChains = 0; // No independent chain creation backend.
-        int32 ClonePipes = CloneManifest.RebuildPipeNetworks(GetWorld(), CloneBuiltActors);
-
-        // [EXTEND-MP] Display level while MP Extend validates.
-        UE_LOG(LogSmartFoundations, Verbose,
-            TEXT("[EXTEND-MP] Scaled clone wiring: Clone[%d] factory=%s mapped=%d manifestBelts=%d manifestPipes=%d wired=%d chains=%d."),
-            CloneIdx, *CloneFactory->GetName(), CloneBuiltActors.Num(),
-            CloneManifest.BeltConnections.Num(), CloneManifest.PipeConnections.Num(), CloneWired, CloneChains);
-
-        // Lift-hole bindings are native construction inputs, verified from exact clone roles.
-        SFExtendPassthroughLinks::Apply(*Clone.CloneTopology, CloneBuiltActors);
-
-        // Power is materialized once, from the merged priced endpoint plan below.
-        const int32 ClonePowerWired = 0;
-
-        ScaledExtendWiredCount += CloneWired + ClonePowerWired;
-
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Log, TEXT("⚡ SCALED EXTEND Wire: Clone[%d] - %d belt/pipe, %d power, %d chains, %d pipe networks%s"),
-            CloneIdx, CloneWired, ClonePowerWired, CloneChains, ClonePipes, Clone.bIsSeed ? TEXT(" [SEED]") : TEXT(""));
-    }
-
-    if (ScaledExtendWiredCount > 0)
-    {
-        SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Display, TEXT("⚡ SCALED EXTEND Wire: Total %d additional connections across %d clones"),
-            ScaledExtendWiredCount, WiringScaledPlans.Num());
-        WiredCount += ScaledExtendWiredCount;
-    }
+    // The captured wiring plan contains every unique scaled role. Pipe links,
+    // network rebuilds and passthrough links above already covered all copies.
+    // Do not execute per-copy manifests again after the merged manifest.
 
     // [MP-AUTH] Consume the same named endpoint plan as preview/cost. Live server
     // reconstruction has no client-only PowerPoleWiringData; this also covers it.

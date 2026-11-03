@@ -77,11 +77,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Auto-Connect:4": {
-    "text": "เปิด **K → การปรับขนาดกริด** แล้วใช้ส่วน**เชื่อมต่ออัตโนมัติ**ของสิ่งปลูกสร้างที่ถืออยู่ `U` เปิดการตั้งค่าการเชื่อมต่อบนอุปกรณ์ขนส่งที่รองรับ ค่าเริ่มต้นส่วนกลางอยู่ที่**ตัวเลือก → ตั้งค่าม็อด → Smart!** ส่วนตัวเลือกของตัวอย่างปัจจุบันอยู่ในแผง การเชื่อมต่ออัปเดตทันที ไม่ขึ้นกับ**ใช้ตำแหน่งทันที**",
-    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:56": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b"
   },
   "Auto-Connect:5": {
     "text": "ใช้แผง ล้อเมาส์ หรือแป้นตัวเลขจัดรูปกริด ตรวจเส้นเชื่อมและลูกศรในโลกก่อนสร้าง HUD รายงานค่าตำแหน่ง ไม่ใช่แบบฟอร์มตั้งค่าการเชื่อมต่ออีกชุด ดู[การควบคุม](Controls)สำหรับปุ่มเริ่มต้นและการควบคุมสัมพันธ์กับผู้เล่น",
@@ -118,6 +117,16 @@
     "source_hash": "e298b5a94ff81e994527adc768d5e9764cc98d01ecb1dd6ea12f6dca747287fd",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  },
+  "Auto-Connect:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bfcb0d7bcbf0b5b36a80dd16a2dac958a4db4fc0261b34174dd132215ae37e01"
+  },
+  "Auto-Connect:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "59bd907b72a7a1bd727a61b3bb63c228bae6f45d96d4267b1fa73010ed0ca1df"
   },
   "Auto-Connect:11": {
     "text": "### เชื่อมเครื่องจักรด้วยลิฟต์ลำเลียง",
@@ -173,11 +182,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Auto-Connect:18": {
-    "text": "**ขยายเสารองท่อจะสร้างแนวท่อด้วย** เมื่อขยายแถวเสารองท่อบนพื้นหรือผนัง Smart! จะวางท่อเชื่อมสำเนา เช่นเดียวกับแถวเสารับสายพานที่สร้างแนวสายพาน ของเหลวไหลได้ตลอดแนว จุดยึดของแต่ละฐานยังว่างให้ต่อเองได้ ความสูงและมุมหัวฐานบนพื้นส่งต่อไปทั้งแถวเพื่อให้แนวลาดต่อเนื่อง",
-    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:57": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01"
   },
   "Auto-Connect:19": {
     "text": "ท่อที่สร้างสืบทอดสีจากท่อต้นทางที่เชื่อม ข้อต่อสืบทอดสีเฉพาะเมื่อท่อที่ต่ออยู่มีสีตรงกัน ย้ายตัวอย่างไปจุดที่ไม่มีสีต้นทางจะคืนสีเดิม",
@@ -203,6 +211,16 @@
     "status": "reviewed",
     "review_method": "Contextual multilingual review with official game terminology; no native-speaker certification."
   },
+  "Auto-Connect:50": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "a731c462366f0c155a14546a1265f77d5e93778036e1ebd4a44e669ff5112e22"
+  },
+  "Auto-Connect:51": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "0a29d3c9b8ec32dedec575d19408d9bb4da0cbb09a58b8d2ed2dc2c0f3f833c7"
+  },
   "Auto-Connect:21": {
     "text": "## เชื่อมอุโมงค์เดินทางอัตโนมัติ",
     "source_hash": "4bcc46f7a3e328199f2b10ea31239d134d1815f33bf0911b2c5020959c930f54",
@@ -221,17 +239,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Auto-Connect:24": {
-    "text": "**ขยายฐานอุโมงค์จะสร้างแนวอุโมงค์ด้วย** เมื่อขยายแถวบันไดเสริมอุโมงค์แบบซ้อนได้ Smart! วางอุโมงค์เชื่อมระหว่างสำเนา เช่นเดียวกับเสารับสายพานหรือฐานท่อ แนวเดินตามระยะและความสูงของแถว และไต่ชันได้ จุดยึดแต่ละฐานยังว่างให้ต่ออุโมงค์เอง",
-    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:58": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455"
   },
-  "Auto-Connect:25": {
-    "text": "การเชื่อมอุโมงค์มี**สวิตช์เปิดและโหมดแนวเดินของตัวเอง** แยกจากท่อ ตั้งในแผง Smart การตั้งค่าระหว่างสร้าง (กด `U` ค้าง) หรือค่าม็อด ดู[อ้างอิงการตั้งค่า](Settings-Reference)",
-    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:59": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213"
   },
   "Auto-Connect:26": {
     "text": "## แนวฐานผนังที่หมุน",
@@ -239,11 +255,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Auto-Connect:27": {
-    "text": "ฐานท่อและอุโมงค์ลูกหมุนตามต้นแบบครบทุกแกน **หมุนผนัง**ในแผงมี**ขั้น 45°**ตามเกมเดิม รวมแนวดิ่ง แยกจากการหมุนกริดที่ทำให้ชุดสำเนาโค้ง",
-    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:60": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce"
   },
   "Auto-Connect:28": {
     "text": "แบบสัมพันธ์กับอาคาร Y ตามแนวผนังที่หมุน แบบสัมพันธ์กับผู้เล่น คำสั่งแนวดิ่งตามทิศที่ตั้งตรงที่สุดที่รองรับ: แนวผนังตั้งใช้ **X+Z + ล้อเมาส์**เพิ่มแนวดิ่ง และ **Z + ล้อเมาส์**เพิ่มด้านข้าง แผงยังมีคอลัมน์ X/Y/Z ดูลูกศรเพื่อทราบแกน จุดต่อสายพานบนผนังยังจำกัดทิศตามเกมเดิม และใช้ลิฟต์ขนส่งแนวดิ่ง",
@@ -317,11 +332,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Auto-Connect:45": {
-    "text": "_อัปเดตล่าสุด: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
-    "status": "reviewed",
-    "review_method": "Reviewed existing footer with mechanical source date update."
+  "Auto-Connect:55": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Blueprints:0": {
     "text": "# พิมพ์เขียว Smart!",
@@ -425,11 +439,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Blueprints:17": {
-    "text": "กริดพิมพ์เขียวก็มีขีดจำกัดข้อมูลสร้างที่ปลอดภัย การวางใหญ่เกินถูกปฏิเสธแต่เก็บตัวอย่างไว้: ลดกริดแล้วแบ่งสร้าง หากจะวางพิมพ์เขียวเกมเดิมขนาดใหญ่ ปิด[ตัวช่วย Smart](Smart-Assistance)แล้วเลือกใหม่",
-    "source_hash": "540e7f14c64d49d7f11fb6b7090a1475087984b4955b0dccb93ca481787d4236",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Blueprints:34": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "60707b2c9e66e6d33812f6b75b700b1d1cfafde4fcb92a54f5847b69c82a8ac8"
   },
   "Blueprints:18": {
     "text": "ผู้เล่นหลายคนใช้การตรวจจากฝั่งหลักและวัสดุปกติ ปลายที่เปลี่ยนหรือทรัพยากรไม่พอทำให้ตัวอย่างเดิมใช้ไม่ได้ ดู[เชื่อมต่ออัตโนมัติ](Auto-Connect)และ[ความเข้ากันได้และผู้เล่นหลายคน](Compatibility-and-Multiplayer)",
@@ -509,11 +522,10 @@
     "status": "reviewed",
     "review_method": "Contextual multilingual review with official game terminology; no native-speaker certification."
   },
-  "Blueprints:33": {
-    "text": "_อัปเดตล่าสุด: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
-    "status": "reviewed",
-    "review_method": "Reviewed existing footer with mechanical source date update."
+  "Blueprints:35": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Buildable-Gallery:0": {
     "text": "# แกลเลอรีสิ่งปลูกสร้าง",
@@ -983,17 +995,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Compatibility-and-Multiplayer:3": {
-    "text": "Smart! 35.0.0 ใช้กับ **Satisfactory 1.2.4 / CL 502094 หรือใหม่กว่า** และ **SML 3.12.x** อัปเดตเกมและตัวโหลดม็อดก่อนติดตั้ง ไม่รองรับเกมเก่า",
-    "source_hash": "67e479ca52c59b7506d6acd2ace2bb75b701e6c7854e5b2d570aeec46f92d66e",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:23": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "ddb7f6d3428242b7eb2a16d6468bc1c961f041f29251922f6c6a6922bfa78751"
   },
-  "Compatibility-and-Multiplayer:4": {
-    "text": "เมื่อติดตั้งทั้งคู่ ต้องอัปเดต Smart Camera 2.0 และ Smart! 35.0 ให้เข้ากัน Camera ใช้เดี่ยวได้ เครื่องมือสร้าง Smart ไม่ต้องมี Camera ค่ากล้องและหน้าตา HUD เป็นของผู้เล่นในเครื่อง ไม่ใช่ทุกคนบนเซิร์ฟเวอร์",
-    "source_hash": "d778ecad7f4a6a4eb530120898db7c258299752b3b3849ab7cb18dce25829247",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:24": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "52b5e96461ffcb32e45b4e4f8c6a7bb4ae65053d1b8488b28119e6c0efbcaf11"
   },
   "Compatibility-and-Multiplayer:5": {
     "text": "## ความปลอดภัยของเซฟ",
@@ -1037,23 +1047,20 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Compatibility-and-Multiplayer:12": {
-    "text": "Smart! ทำงานหลายคนบนเซิร์ฟเวอร์เฉพาะ ทุกคุณสมบัติ Smart! — ขยายกริด เชื่อมอัตโนมัติ (สายพาน ท่อ ไฟฟ้า) พิมพ์เขียว Smart ต่อขยาย อัปเกรด Smart กู้คืน Smart และรื้อถอน Smart — ใช้ในฐานะไคลเอนต์ด้วยวัสดุปกติ ทุกสิ่งที่ Smart! วางเป็นอาคารมาตรฐานที่ซิงค์ครบ คนอื่นเห็น ใช้ และรื้อได้เหมือนสร้างด้วยมือ",
-    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:29": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5"
   },
-  "Compatibility-and-Multiplayer:13": {
-    "text": "- **เซิร์ฟเวอร์เฉพาะ:** รองรับ Windows และ Linux\n- **ขนาดสูงสุดพิมพ์เขียว Smart:** การวางกริดครั้งเดียวมีเพดาน (ราวสองสามพันอาคาร หรือหลายร้อยสายพาน/ท่อ แล้วแต่อย่างใดถึงก่อน) หากเกิน Smart! จะปฏิเสธ HUD แจ้งให้แบ่งส่วน และกริดยังปรับได้ ขีดจำกัดข้อมูลปลอดภัยใช้กับเล่นคนเดียวและโฮสต์ร่วมด้วย ปิด[ตัวช่วย Smart](Smart-Assistance)แล้วเลือกสูตรใหม่เพื่อวางพิมพ์เขียวเกมเดิมขนาดใหญ่ตามปกติ\n- **กริดใหญ่สร้างทีละส่วน:** ยืนยันงานใหญ่แล้วสร้างเบื้องหลังช่วงสั้น ๆ เพื่อเซิร์ฟเวอร์ยังตอบสนองและไม่มีคนหลุด\n- **ผู้ดูแลเซิร์ฟเวอร์:** ใช้ Smart! รุ่นเดียวทั้งเซิร์ฟเวอร์และไคลเอนต์ ตัวจัดการม็อดรักษารุ่นตรงกันเมื่ออัปเดต\n- **Smart Camera** ม็อดคู่กันก็ใช้หลายคนได้",
-    "source_hash": "e0abba477abdd815436da48e2f8957237ec0394c708deea58592e10d20ab9268",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:26": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8cb40018690ab6ebe9357b170389232193d08c25eafc1fd5d631dac793751ffe"
   },
-  "Compatibility-and-Multiplayer:14": {
-    "text": "ระบบหลายคนใหม่กว่าเล่นคนเดียว หากพฤติกรรมต่างกันถือเป็นบั๊ก โปรดแจ้ง GitHub หรือ Discord พร้อมสิ่งที่สร้างและบทบาทโฮสต์หรือไคลเอนต์",
-    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:30": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9"
   },
   "Compatibility-and-Multiplayer:15": {
     "text": "สวิตช์ช่วยในเซสชันของแต่ละคนมีผลเฉพาะเครื่องมือของตน ต่อขยาย/กู้คืนระยะไกลแยกตัวอย่างและค่าของโฮสต์ออกจากงานไคลเอนต์",
@@ -1097,11 +1104,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Compatibility-and-Multiplayer:22": {
-    "text": "_อัปเดตล่าสุด: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:31": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Controller-and-Steam-Deck:0": {
     "text": "# คอนโทรลเลอร์และ Steam Deck (ทดลอง)",
@@ -1637,11 +1643,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Extend:8": {
-    "text": "1. สร้างโมดูลที่ใช้ได้ด้วยมือ แล้วถืออาคารชนิดเดียวกัน\n2. เปิด **K → Extend** กด**เลือกต้นทาง**\n3. คลิกอาคารต้นทางในโลกนอกแผง ต้นทางที่เข้ากันได้จะสว่าง **Escape**ยกเลิกเลือก คลิกในแผงยังเป็นปุ่มหน้าจอ\n4. ตรวจชื่อ ชิ้นส่วนที่เก็บ และจำนวนซ้ำ ใช้**เปลี่ยนทิศ**กับปุ่มวางจัดตัวอย่าง\n5. ปิดแผง ตรวจสำเนาและวัสดุ แล้วยิงปืนสร้างตามปกติ",
-    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca"
   },
   "Extend:9": {
     "text": "เลือกต้นทางไม่สร้างอะไร คลิกพลาดรักษาตัวอย่างเดิม เปลี่ยนต้นทางหรืองานที่ยังไม่สร้างซึ่งมีรายละเอียดจะถามก่อนทิ้ง ต้นทางตรึงให้ตรวจจนยกเลิก สร้าง หรือเปลี่ยนสูตร",
@@ -1685,11 +1690,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Extend:16": {
-    "text": "เครื่องหลอมทึบคือต้นทางเดิม เครื่องหลอม สายพาน และฐานสีฟ้าเป็นสำเนาที่จะสร้าง HUD แสดง**ต่อขยาย 1×1** ยังเป็นตัวอย่างไม่สร้าง",
-    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:50": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc"
   },
   "Extend:17": {
     "text": "## เปลี่ยนทิศ",
@@ -1709,11 +1713,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Extend:20": {
-    "text": "เริ่มผ่าน **K → Extend → เลือกต้นทาง** หรือใช้ทางลัดเล็ง แท็บใช้ปุ่มจำนวนกริด ระยะ และรูปแบบร่วม ใช้ล้อ/แป้นเลขเหมือน[ขยายกริด](Grid-Scaling)ได้ ล้อที่ไม่ค้างปุ่มเสริมเลือกทิศ HUD ระบุแนวยาว/แถวและสิ่งที่กำลังปรับให้ตรวจก่อนสร้าง",
-    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:51": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13"
   },
   "Extend:21": {
     "text": "## ต่อขยายแบบกริด",
@@ -1751,11 +1754,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Extend:27": {
-    "text": "ต้นทางเดิมสร้างสามโมดูลสีฟ้ารวมแนวสายพานและฐาน HUD แสดง**ต่อขยาย 3×1** วัสดุเพิ่มตามสำเนา ต้นทางทึบอยู่เดิม",
-    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:52": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7"
   },
   "Extend:28": {
     "text": "## เครื่องสูบน้ำ",
@@ -1805,6 +1807,21 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
+  "Extend:45": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "54e38c7493c79d3f4bc2f71a29b70d8dd6942a4f44bee91a351b6ebd82db6819"
+  },
+  "Extend:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "2fc6ba5d654478f0d36a249ac28472d87d41be4029ae07a4e513561265a5f725"
+  },
+  "Extend:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8d860159ae76958c5e531b7732a1d2bed5e6c39a0cc339d47fa7d866c6ab94e8"
+  },
   "Extend:36": {
     "text": "## ตรวจผังที่เก็บไว้",
     "source_hash": "f1c2f5c6de3f53c619dc7b774e5c42c86b11c0f59d3d150537e145bb3f358680",
@@ -1829,11 +1846,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Extend:40": {
-    "text": "_อัปเดตล่าสุด: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "FAQ:0": {
     "text": "# คำถามที่พบบ่อย",
@@ -3119,17 +3135,26 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
+  "Home:18": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1829ed863c572c2dbcafc8f78604d94faa795d58ca1d7e90494d020f49980f60"
+  },
+  "Home:19": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1bd5656d0819ad3a7d1a6861c038f59661e423c6f03bddc8b203ef1a7ffb5c8b"
+  },
   "Home:13": {
     "text": "## รุ่นที่ครอบคลุม",
     "source_hash": "96ddfc08279c6ae35f38d5139ad21a94f1ac99c7d031fa618cb40edbe35d39a5",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Home:14": {
-    "text": "นี่คือร่างเอกสารในเครื่องสำหรับ **Smart! 35.0.0 และ Smart Camera 2.0.0** อัปเดตทั้งคู่เมื่อรุ่นที่เข้ากันออก อย่าจับ Camera 2.0 กับ Smart เก่า หน้าร่างนี้ไม่ใช่ประกาศเผยแพร่",
-    "source_hash": "c29d2ea90b7a486f22022563a690b6049c5d72c5bf1c740518bb20fa5747432d",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Home:20": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6de3b72e72a676036d11c5f3b3679009013b370ca2cb7e8aed2d56252d3addd9"
   },
   "Home:15": {
     "text": "เริ่มจาก[แผงและ HUD](Smart-Panel-and-HUD)ร่วม [ต่อแนวเดิน](Smart-Walking) [เชื่อมด้วยลิฟต์](Auto-Connect) และ[รอยต่อพิมพ์เขียว](Blueprints)",
@@ -3143,11 +3168,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Home:17": {
-    "text": "_อัปเดตล่าสุด: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Home:21": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Lift-Assisted-Auto-Connect:0": {
     "text": "# เชื่อมต่ออัตโนมัติด้วยลิฟต์ลำเลียง",
@@ -3473,11 +3497,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:2": {
-    "text": "หาได้ที่**เมนูหลัก → ม็อด → Smart!** ค่าเปลี่ยนที่นี่**คงอยู่ข้ามเซฟและเซสชัน** ปุ่มตั้งแยก ดู[การควบคุม](Controls)",
-    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:59": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb"
   },
   "Settings-Reference:3": {
     "text": "## เชื่อมสายพานอัตโนมัติ",
@@ -3533,11 +3556,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:12": {
-    "text": "- **เชื่อมอุโมงค์อัตโนมัติ**เปิด/ปิดการต่ออุโมงค์ **เปิดเริ่มต้น** (เพิ่ม 33.1.0)\n- เลือกโหมดแนวอุโมงค์",
-    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:60": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29"
   },
   "Settings-Reference:13": {
     "text": "## เชื่อมไฟฟ้าอัตโนมัติ",
@@ -3551,11 +3573,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:15": {
-    "text": "- เปิด/ปิดเชื่อมไฟอัตโนมัติ\n- เลือกโหมดเชื่อม\n- ตั้งระยะเชื่อม\n- กันช่องเสาไว้ไม่ให้ Smart! ใช้หมด\n- **เชื่อมไฟแบบโซ่เมื่อขยาย** เมื่อปลดขั้วต่อไฟที่ได้รับการปรับปรุงแล้วแล้ว การขยายเครื่องหรือเครื่องกำเนิดตาม X ของ Smart ต่อสำเนาตรงถึงกันแทนเสาแต่ละตัว ให้ผังแนวรวมโดยไม่ต้องต่อขยายแยก แผง Smart ทับค่าเฉพาะครั้งนี้ได้ HUD แสดงค่าจริง เคารพช่องว่างแต่ละจุด **เปิดเริ่มต้น** (เพิ่ม 34.2.0)",
-    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:61": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb"
   },
   "Settings-Reference:16": {
     "text": "## เชื่อมพิมพ์เขียวอัตโนมัติ",
@@ -3563,23 +3584,31 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:17": {
-    "text": "สวิตช์แยกรอยต่อสำเนา**พิมพ์เขียวของคุณ** ไม่ขึ้นกับสายพานและท่อด้านบน จึงต่อสำเนาได้แม้ปิดเชื่อมทั่วไป",
-    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:62": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11"
   },
-  "Settings-Reference:18": {
-    "text": "- **เชื่อมรอยต่อพิมพ์เขียวอัตโนมัติ** เปิด/ปิดสายพาน ท่อ อุโมงค์ ราง เส้นทางรถมีทิศ และไฟฟ้าที่เหมาะสมระหว่างสำเนา **เปิดเริ่มต้น** (เพิ่ม 34.2.0)",
-    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:63": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4"
   },
   "Settings-Reference:19": {
     "text": "รอยต่อไฟต้องเปิด**เชื่อมไฟฟ้าอัตโนมัติ**ด้วย แต่ละสายใช้ช่องเสาที่ตรงกันและว่าง นับสายภายในและหน้าเต้ารับทั้งสองแยกกัน",
     "source_hash": "f8e43f603399fedc12210a9d21a3d2d8108b47b7c676acc29f4f189f050416ed",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  },
+  "Settings-Reference:51": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "d30a9c4968359ae455bcba1db55829f233cd9689baac7a41ddda2ee677c671a7"
+  },
+  "Settings-Reference:52": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8d8d2f7ca8e8f5f5ffd32286939d718b5621954e9eb433f316520ac4e84d392b"
   },
   "Settings-Reference:20": {
     "text": "## ระยะเริ่มต้นพิมพ์เขียว",
@@ -3605,11 +3634,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:24": {
-    "text": "- **ระยะโลจิสติกส์ใกล้เคียง** ระยะที่เครื่องแยก รวม ข้อต่อท่อ และช่องท่อพื้นค้นหาช่องโรงงาน ลดค่าไม่ให้เชื่อมถึงกลุ่มข้าง ๆ **เริ่มต้น 25 m**เท่าค่าคงที่เก่า (เพิ่ม 34.2.0)",
-    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:64": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592"
   },
   "Settings-Reference:25": {
     "text": "## ต่อขยาย",
@@ -3629,11 +3657,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:28": {
-    "text": "- ล็อกเมื่อกริดเปลี่ยนช่วยไม่ให้ตัวอย่างใหญ่ขยับพลาด **เปิดเริ่มต้น**ตั้งแต่ 32.1.2 ปิดหากอยากจัดตำแหน่งอิสระ ปุ่มล็อกเกมเดิมปล่อยแต่ละครั้งได้\n- **ควบคุมสัมพันธ์ผู้เล่น** สร้างตามทิศมองแทนเข็มทิศ ล้อขยายไปด้านที่มอง แป้นเลขเป็นไกล/ใกล้ ขวา/ซ้าย ขึ้น/ลง ใช้กับขยาย ระยะ ระยะสูง สลับ หมุน **ปิดเริ่มต้น** ปุ่มเดิมไม่เปลี่ยนจนเปิด แผง Smart ยัง X/Y/Z ดู[การควบคุม](Controls) (เพิ่ม 34.1.0)\n- **แตะเพื่อสลับโหมดแปลงรูปแบบ** แตะปุ่มระยะ ระยะสูง สลับ หมุน หรือสูตรบนโรงงานเพื่อเปิด แตะซ้ำปิด แตะอื่นเปลี่ยนโหมด สำหรับคอนโทรลเลอร์ Steam Deck และการเข้าถึง เพราะเมนู Steam Input ส่งแตะไม่ค้าง เก็บปืน เปลี่ยนอาคาร เปิดแผงปล่อยโหมดเสมอ **ปิดเริ่มต้น** ปิดกลับคืนพฤติกรรมค้างทันที ดู[คอนโทรลเลอร์และ Steam Deck](Controller-and-Steam-Deck) (เพิ่ม 34.2.0)",
-    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:65": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179"
   },
   "Settings-Reference:29": {
     "text": "## ขั้นล้อเมาส์",
@@ -3647,17 +3674,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:31": {
-    "text": "- **ขั้นระยะ** (m) ระยะเพิ่มต่อขั้น รวมระยะต่อขยายและเดินหน้าช่วง\n- **ขั้นระยะสูง** (m) ความสูงต่อขั้น รวมยกช่วงเดินแนว\n- **ขั้นสลับ** (m) ระยะเลื่อนต่อขั้น รวมเลื่อนช่วงเดินแนว\n- **ขั้นหมุน** (องศา) มุมต่อขั้น รวมเลี้ยวช่วงเดินแนว",
-    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:66": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e"
   },
-  "Settings-Reference:32": {
-    "text": "เริ่มต้น 0.5 m และ 5° ระยะรับ 0.1–8 m มุมรับ 0.5–90°",
-    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:67": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da"
   },
   "Settings-Reference:33": {
     "text": "## แผง Smart",
@@ -3701,11 +3726,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:40": {
-    "text": "ใน**ม็อด → Smart! Camera** มุมภาพปรากฏใต้ชื่อม็อดและกล้องผู้ให้ รวมมุมที่ไม่ทำงาน ภาพปืนสร้างในตัวมีสวิตช์แยก ตำแหน่ง 0–1 ความละเอียด 64–2048 พิกเซลต่อแกน ขนาด 0.1–2 อัตราจับ 5–60/วินาที ความสว่าง −3 ถึง +3 EV กล้องสร้างที่ใช้ได้มีระยะ 5–50 m ค่ามีผลทันที ภาพซ่อนใต้เมนูอัปเดตเมื่อเล่นต่อ **ทุกเซฟ**แก้เฉพาะช่องที่เปลี่ยนในค่าส่วนกลางและโปรไฟล์กล้องที่บันทึก รวมโลกนี้ **เซฟนี้**เปลี่ยนเฉพาะโปรไฟล์โลกปัจจุบัน ช่องอื่นและกล้องอื่นไม่เปลี่ยน",
-    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:68": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29"
   },
   "Settings-Reference:41": {
     "text": "**ใช้คำแนะนำม็อด**ในทุกเซฟรีเซ็ตกล้องนั้นทุกเซฟ **ใช้ค่าส่วนกลาง**ในเซฟนี้ลบเฉพาะค่าทับปัจจุบัน คืนกรอบ/ระยะเปลี่ยนแค่สองช่องนั้น ผังเป็นตัวอย่างจนกด**เสร็จสิ้น / ล็อก**ร่วม ยกเลิกทิ้งงานผัง/HUD ที่รอ ดู [Smart Camera](Smart-Camera)",
@@ -3731,11 +3755,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Settings-Reference:45": {
-    "text": "_อัปเดตล่าสุด: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:58": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Smart-Assistance:0": {
     "text": "# ตัวช่วย Smart",
@@ -4385,17 +4408,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:1": {
-    "text": "กู้คืน Smart บันทึกงาน Smart! ไว้ใช้ซ้ำ แชร์ หรือประทับทั้งโมดูลเหมือนเดิม เปิด **K → กู้คืน**ใน[แผง Smart](Smart-Panel-and-HUD)ร่วม มีแท็บย่อย**พรีเซ็ตกริด**และ**โมดูล**",
-    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:43": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35"
   },
-  "Smart-Restore:2": {
-    "text": "ตอบคำถามว่า “ปรับผังนี้นานมาก จะเรียกกลับอย่างไร?”",
-    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:44": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2"
   },
   "Smart-Restore:3": {
     "text": "![งานกู้คืนพร้อมแท็บพรีเซ็ตกริดและโมดูล](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/restore.png)",
@@ -4427,11 +4448,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:8": {
-    "text": "- **บันทึกจากแผง** ตั้งชื่อค่าปัจจุบันและบันทึก\n- **โหลดเข้าแผง** โหลดกลับเพื่อปรับก่อนสร้างหรือใช้เดิม\n- **ส่งออกรหัส / นำเข้ารหัส** แชร์พรีเซ็ตหรือโหลดจากผู้อื่น",
-    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:45": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40"
   },
   "Smart-Restore:9": {
     "text": "ทุกพรีเซ็ตมีสรุปอ่านง่ายเรื่องอาคาร กริด รูปแบบ สูตร ให้แยกได้ทันที",
@@ -4445,17 +4465,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:11": {
-    "text": "โมดูลเก็บ**ชุดแนวรวมต่อขยาย**ทั้งหมด ได้แก่ อาคาร สายพาน ท่อ ลิฟต์ อุปกรณ์กระจาย และไฟฟ้าที่เชื่อม ให้ประทับซ้ำ",
-    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b"
   },
-  "Smart-Restore:12": {
-    "text": "- หลังดูตัวอย่างหรือสร้าง Smart [ต่อขยาย](Extend) จะเข้าที่**คลิปบอร์ดต่อขยาย**บนแท็บ **บันทึกเป็นโมดูล**เปลี่ยนเป็นชุดมีชื่อใช้ซ้ำ\n- **โหลดโมดูล**คืนผัง ถืออาคารต้นทางแล้วได้ตัวอย่างสด สามารถ**ประทับ**ด้วยยิงซ้ำ และ**หมุนล้อขยาย**ระหว่างใช้\n- โมดูลกู้คืนไม่ล็อกด้านเดียวเหมือนต่อขยายใหม่ จึง**ขยายย้อนได้ทั้งสองทิศ**ตามแกนก่อนวาง หมุนแต่ละทางเพื่อเพิ่มด้านนั้น\n- **ส่งออกรหัส / นำเข้ารหัส**แชร์เหมือนพรีเซ็ต",
-    "source_hash": "37740d4bfda7ca76487c320d49ae9a15e2da89d1f1fe4a31862a2ad8d53f903b",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bec0ec9303e43dd7907dc7dc366c045b75ee549bfcabebb02918f256b044593e"
   },
   "Smart-Restore:13": {
     "text": "แต่ละโมดูลสรุปจำนวนสายพาน ท่อ อุปกรณ์กระจาย และอื่น ๆ ให้รู้ว่าจะสร้างอะไร",
@@ -4517,11 +4535,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:21": {
-    "text": "ใช้ **K → กู้คืน**บันทึก เลือก โหลด นำเข้า ส่งออก หลังโหลดใช้แผงขยายหรือล้อ/เลขปรับ HUD แสดงผลกริดและค่าปัจจุบัน ยิงปืนสร้างตามราคาที่เห็น",
-    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c"
   },
   "Smart-Restore:22": {
     "text": "ค้าง `U` กด `Num 9` เลือกพรีเซ็ตที่ใช้ล่าสุดถัดไป หรือ `Num 3` ย้อนโดยไม่เปิดแผง ดู[การควบคุม](Controls)",
@@ -4547,17 +4564,26 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
+  "Smart-Restore:39": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b0724fac56a114aed1905757336fc2bd16f065519872f908a56afc905e5b0d3c"
+  },
+  "Smart-Restore:40": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "81c3c2048752b95069652ecef30608748705b0ecd1930a687c49a0f383a261ad"
+  },
   "Smart-Restore:26": {
     "text": "## ดูเพิ่มเติม",
     "source_hash": "0f2b43836b7db34aeb2ad65d2dc1b19495336b2a8bd81d1a4e6cc10ec180785b",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:27": {
-    "text": "- [ต่อขยาย](Extend) คุณสมบัติที่แท็บโมดูลเก็บชุดแนวรวม\n- [แผง Smart และ HUD](Smart-Panel-and-HUD) ที่อยู่แท็บกู้คืน\n- [ขยายกริด](Grid-Scaling)และ[การแปลงรูปแบบ](Transforms) ค่าที่พรีเซ็ตกริดบันทึก",
-    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264"
   },
   "Smart-Restore:28": {
     "text": "---",
@@ -4565,11 +4591,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Smart-Restore:32": {
-    "text": "_อัปเดตล่าสุด: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
-    "status": "reviewed",
-    "review_method": "Reviewed existing footer with mechanical source date update."
+  "Smart-Restore:42": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Smart-Upgrade:0": {
     "text": "# อัปเกรด Smart",
@@ -4607,11 +4632,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Upgrade:6": {
-    "text": "1. ถืออาคารรองรับ เปิด **K → อัปเกรด** สายพาน ท่อ และสายไฟเปิดได้โดยตรง\n2. เลือกโหมดสแกน\n3. สแกนของใกล้หรือเครือข่าย\n4. เลือกกลุ่มและระดับเป้าหมาย เครือข่ายอาจเลือกต้นทางระดับเดียว\n5. ตรวจวัสดุ\n6. อัปเกรด",
-    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Upgrade:38": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08"
   },
   "Smart-Upgrade:7": {
     "text": "ถือเสาและเต้ารับยังเปิดแผง Smart เพื่อขยาย หากจะอัปเกรด Smart ให้ถือสายไฟหรือใช้สแกน",
@@ -4655,11 +4679,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Upgrade:14": {
-    "text": "- คลิกเช่น **Mk.2** เพื่อเปลี่ยน**เฉพาะ**ระดับนี้ไปเป้า อัป Mk.2 เป็น Mk.3 และเก็บ Mk.4\n- เลือก**ทุกระดับ**ให้สายพาน ลิฟต์ ท่อที่ต่างเป็นระดับเป้า อาจเพิ่มบางระดับและลดบางระดับในแนวเดียว",
-    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Upgrade:39": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8"
   },
   "Smart-Upgrade:15": {
     "text": "เหมือนปุ่มระดับที่สแกนรัศมีมีอยู่",
@@ -4727,11 +4750,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Upgrade:26": {
-    "text": "อัปเกรดใหญ่ซับซ้อนเพราะ Satisfactory รวมสายพานและลิฟต์เป็นตัวจัดการโซ่ภายใน Smart! มีการรักษาเสถียรและวินิจฉัย แต่ใหญ่มากอาจต้องบันทึก/โหลดหากเกมแจ้งสถานะโซ่ยังไม่ลงตัว",
-    "source_hash": "fed328c054689b599658ab3989621c5b784f7bcaa94b5be404727f05664adba7",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Upgrade:36": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "30a1ce6a5b6dcbf3cb863b07c5181d63bc781a27d7277f739226c64c0f12936e"
   },
   "Smart-Upgrade:27": {
     "text": "## ตัวอย่างในเกม",
@@ -4769,11 +4791,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Smart-Upgrade:33": {
-    "text": "_อัปเดตล่าสุด: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Upgrade:37": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Smart-Walking:0": {
     "text": "# เดินแนว Smart",
@@ -5741,65 +5762,90 @@
     "status": "reviewed",
     "review_method": "Reviewed existing footer with mechanical source date update."
   },
-  "Auto-Connect:38": {
+  "Blueprints:33": {
+    "text": "_อัปเดตล่าสุด: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
+    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "status": "reviewed",
+    "review_method": "Reviewed existing footer with mechanical source date update.",
+    "obsolete": true
+  },
+  "Controls:6": {
+    "text": "| ปุ่ม | การทำงาน |\n|-----|--------------|\n| `K` | เปิด/ปิดหน้าต่าง ขยาย / เดินแนว / อัปเกรด / กู้คืน |\n| `F8` | แก้ผัง HUD; มี Smart Camera จะแก้ HUD และกล้อง |\n| `Num Decimal` | สลับตัวช่วยสร้าง Smart ในเซสชัน |\n| `Num 8` | เพิ่มค่าปัจจุบัน |\n| `Num 5` | ลดค่าปัจจุบัน |\n| `Num 6` | เพิ่มกริด Y |\n| `Num 4` | ลดกริด Y |\n| `Num 9` | เพิ่มกริด Z |\n| `Num 3` | ลดกริด Z |\n| `X` | ค้างปรับ X ด้วยปุ่มร่วมหรือล้อ |\n| `Z` | ค้างปรับ Y ด้วยปุ่มร่วมหรือล้อ |\n| `X + Z` | ค้างคู่ปรับ Z ด้วยปุ่มร่วมหรือล้อ |\n| `;` | ค้างโหมดระยะ |\n| `I` | ค้างโหมดระยะสูง |\n| `Y` | ค้างโหมดสลับ |\n| `,` | ค้างโหมดหมุน |\n| `Num 0` | สลับแกนโหมดปัจจุบัน |\n| `U` | เลือกสูตรบนเครื่องผลิต; ตั้งการเชื่อมหรือฐานป้ายบนอาคารที่ใช้ได้ |\n| `Num 1` | สลับลูกศรทิศ |\n| `Mouse Wheel` | ปรับโหมด Smart หรือหมุนเกมเดิมเมื่อไม่มีโหมด Smart |",
+    "source_hash": "2837292eada81d5f2f7b96ee1fa39689f1d488e0ee8b125d948d5069e407097e",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:27": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "2398e8d56840e229a7b387e89a3556aa24edfa217e26cf50db9e5ba6cf6ccf02",
+    "obsolete": true
+  },
+  "Settings-Reference:18": {
+    "text": "- **เชื่อมรอยต่อพิมพ์เขียวอัตโนมัติ** เปิด/ปิดสายพาน ท่อ อุโมงค์ ราง เส้นทางรถมีทิศ และไฟฟ้าที่เหมาะสมระหว่างสำเนา **เปิดเริ่มต้น** (เพิ่ม 34.2.0)",
+    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:25": {
+    "text": "การเชื่อมอุโมงค์มี**สวิตช์เปิดและโหมดแนวเดินของตัวเอง** แยกจากท่อ ตั้งในแผง Smart การตั้งค่าระหว่างสร้าง (กด `U` ค้าง) หรือค่าม็อด ดู[อ้างอิงการตั้งค่า](Settings-Reference)",
+    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:27": {
+    "text": "- [ต่อขยาย](Extend) คุณสมบัติที่แท็บโมดูลเก็บชุดแนวรวม\n- [แผง Smart และ HUD](Smart-Panel-and-HUD) ที่อยู่แท็บกู้คืน\n- [ขยายกริด](Grid-Scaling)และ[การแปลงรูปแบบ](Transforms) ค่าที่พรีเซ็ตกริดบันทึก",
+    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:31": {
+    "text": "- **ขั้นระยะ** (m) ระยะเพิ่มต่อขั้น รวมระยะต่อขยายและเดินหน้าช่วง\n- **ขั้นระยะสูง** (m) ความสูงต่อขั้น รวมยกช่วงเดินแนว\n- **ขั้นสลับ** (m) ระยะเลื่อนต่อขั้น รวมเลื่อนช่วงเดินแนว\n- **ขั้นหมุน** (องศา) มุมต่อขั้น รวมเลี้ยวช่วงเดินแนว",
+    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "afb87f859fcc83d5e6b2266d494b6b507374c2527764492de14534b28dbafa51",
+    "obsolete": true
+  },
+  "Auto-Connect:4": {
+    "text": "เปิด **K → การปรับขนาดกริด** แล้วใช้ส่วน**เชื่อมต่ออัตโนมัติ**ของสิ่งปลูกสร้างที่ถืออยู่ `U` เปิดการตั้งค่าการเชื่อมต่อบนอุปกรณ์ขนส่งที่รองรับ ค่าเริ่มต้นส่วนกลางอยู่ที่**ตัวเลือก → ตั้งค่าม็อด → Smart!** ส่วนตัวเลือกของตัวอย่างปัจจุบันอยู่ในแผง การเชื่อมต่ออัปเดตทันที ไม่ขึ้นกับ**ใช้ตำแหน่งทันที**",
+    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "e2b8d0e432743c7bf14b5c35d055dab7c5692be89a336b3b5b8bf2922ba550f7",
+    "obsolete": true
+  },
+  "Settings-Reference:24": {
+    "text": "- **ระยะโลจิสติกส์ใกล้เคียง** ระยะที่เครื่องแยก รวม ข้อต่อท่อ และช่องท่อพื้นค้นหาช่องโรงงาน ลดค่าไม่ให้เชื่อมถึงกลุ่มข้าง ๆ **เริ่มต้น 25 m**เท่าค่าคงที่เก่า (เพิ่ม 34.2.0)",
+    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:13": {
+    "text": "- **เซิร์ฟเวอร์เฉพาะ:** รองรับ Windows และ Linux\n- **ขนาดสูงสุดพิมพ์เขียว Smart:** การวางกริดครั้งเดียวมีเพดาน (ราวสองสามพันอาคาร หรือหลายร้อยสายพาน/ท่อ แล้วแต่อย่างใดถึงก่อน) หากเกิน Smart! จะปฏิเสธ HUD แจ้งให้แบ่งส่วน และกริดยังปรับได้ ขีดจำกัดข้อมูลปลอดภัยใช้กับเล่นคนเดียวและโฮสต์ร่วมด้วย ปิด[ตัวช่วย Smart](Smart-Assistance)แล้วเลือกสูตรใหม่เพื่อวางพิมพ์เขียวเกมเดิมขนาดใหญ่ตามปกติ\n- **กริดใหญ่สร้างทีละส่วน:** ยืนยันงานใหญ่แล้วสร้างเบื้องหลังช่วงสั้น ๆ เพื่อเซิร์ฟเวอร์ยังตอบสนองและไม่มีคนหลุด\n- **ผู้ดูแลเซิร์ฟเวอร์:** ใช้ Smart! รุ่นเดียวทั้งเซิร์ฟเวอร์และไคลเอนต์ ตัวจัดการม็อดรักษารุ่นตรงกันเมื่ออัปเดต\n- **Smart Camera** ม็อดคู่กันก็ใช้หลายคนได้",
+    "source_hash": "e0abba477abdd815436da48e2f8957237ec0394c708deea58592e10d20ab9268",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:45": {
     "text": "_อัปเดตล่าสุด: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
     "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Smart-Camera:30": {
-    "text": "_อัปเดตล่าสุด: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Smart-Restore:29": {
-    "text": "_อัปเดตล่าสุด: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Water-Extractors:14": {
-    "text": "_อัปเดตล่าสุด: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Feature-Gallery:50": {
-    "text": "_อัปเดตล่าสุด: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Feature-Gallery:30": {
-    "text": "\n## อัปเกรด",
-    "source_hash": "346a4694e55fb3881d4efb3df370eb4fa70ac8f41333fc51b5d2f136ba5ac387",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Lift-Assisted-Auto-Connect:11": {
-    "text": "## ตัวอย่างในเกม",
-    "source_hash": "5eb2c1c9e3dbc39102a812af339752c7f0fe1e0b95368965e2e069a71b377898",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Blueprints:21": {
-    "text": "_อัปเดตล่าสุด: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Lift-Assisted-Auto-Connect:12": {
-    "text": "![ตัวอย่างเครื่องแยกยกสูงสองตัว เห็นลิฟต์ลงถึงระดับช่องเครื่อง ข้างปุ่มขยาย](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/lift-connection-controls.png)",
-    "source_hash": "cc3d5dfc328bad823f169e9cfaa9f3b9faf340768f11bfc85d33f6d73e79b0fc",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
@@ -5811,25 +5857,89 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Lift-Assisted-Auto-Connect:15": {
-    "text": "แนวรับเข้าเครื่องประกอบขนาดใหญ่ที่สร้างแล้ว พร้อมอุปกรณ์กระจายต่างความสูงและระยะ",
-    "source_hash": "3f031fef9aa2b08f029041b38a3ede25923654db3210c0cf2f823345bb155916",
+  "Smart-Upgrade:35": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "fef10fcd052e667d2e0e00e385c7a28cabcf51645e05f4ffe84f7b4be9302924",
+    "obsolete": true
+  },
+  "Settings-Reference:55": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "48890e9ad61621c0f5a145bbfacc031cd10dd0886932dd6ca1718305cc0ded08",
+    "obsolete": true
+  },
+  "Smart-Upgrade:6": {
+    "text": "1. ถืออาคารรองรับ เปิด **K → อัปเกรด** สายพาน ท่อ และสายไฟเปิดได้โดยตรง\n2. เลือกโหมดสแกน\n3. สแกนของใกล้หรือเครือข่าย\n4. เลือกกลุ่มและระดับเป้าหมาย เครือข่ายอาจเลือกต้นทางระดับเดียว\n5. ตรวจวัสดุ\n6. อัปเกรด",
+    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Buildable-Gallery:60": {
+  "Compatibility-and-Multiplayer:28": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "c7aebe8ed6d349fd4710af10aa9e95555d8529fd0728f438c8a84f9ce1b54246",
+    "obsolete": true
+  },
+  "Extend:40": {
     "text": "_อัปเดตล่าสุด: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
     "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Blueprints:20": {
-    "text": "\n---",
-    "source_hash": "3d0b188170e8f7ed4b0a730d3fae39933057e60ba9e030bc278c446442cbabc3",
+  "Settings-Reference:12": {
+    "text": "- **เชื่อมอุโมงค์อัตโนมัติ**เปิด/ปิดการต่ออุโมงค์ **เปิดเริ่มต้น** (เพิ่ม 33.1.0)\n- เลือกโหมดแนวอุโมงค์",
+    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29",
     "status": "reviewed",
-    "review_method": "Language-neutral Markdown, protected brand or code; no translation required.",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:29": {
+    "text": "_อัปเดตล่าสุด: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:41": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6fd578d8f158dba5fa05b36f5f5e607370fc961be65776fbce3a1e7af14d1023",
+    "obsolete": true
+  },
+  "Water-Extractors:14": {
+    "text": "_อัปเดตล่าสุด: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Upgrade:33": {
+    "text": "_อัปเดตล่าสุด: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:25": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6a23ebe76c6c81c346aa9ada46d9598977d528e278a4ec3eba624c42942cbf0a",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:3": {
+    "text": "Smart! 35.0.0 ใช้กับ **Satisfactory 1.2.4 / CL 502094 หรือใหม่กว่า** และ **SML 3.12.x** อัปเดตเกมและตัวโหลดม็อดก่อนติดตั้ง ไม่รองรับเกมเก่า",
+    "source_hash": "67e479ca52c59b7506d6acd2ace2bb75b701e6c7854e5b2d570aeec46f92d66e",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:35": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4ce78ba0540a46d297f12754ed09f0b5fbd3af284a7f90d4157396c30318a9dc",
     "obsolete": true
   },
   "Lift-Assisted-Auto-Connect:14": {
@@ -5839,11 +5949,24 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Feature-Gallery:38": {
-    "text": "\n## รื้อเป็นกลุ่ม",
-    "source_hash": "353f26b4f82a6dd84f38739c12578013748425253037044613768c788d0ac22b",
+  "Feature-Gallery:30": {
+    "text": "\n## อัปเกรด",
+    "source_hash": "346a4694e55fb3881d4efb3df370eb4fa70ac8f41333fc51b5d2f136ba5ac387",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:12": {
+    "text": "- หลังดูตัวอย่างหรือสร้าง Smart [ต่อขยาย](Extend) จะเข้าที่**คลิปบอร์ดต่อขยาย**บนแท็บ **บันทึกเป็นโมดูล**เปลี่ยนเป็นชุดมีชื่อใช้ซ้ำ\n- **โหลดโมดูล**คืนผัง ถืออาคารต้นทางแล้วได้ตัวอย่างสด สามารถ**ประทับ**ด้วยยิงซ้ำ และ**หมุนล้อขยาย**ระหว่างใช้\n- โมดูลกู้คืนไม่ล็อกด้านเดียวเหมือนต่อขยายใหม่ จึง**ขยายย้อนได้ทั้งสองทิศ**ตามแกนก่อนวาง หมุนแต่ละทางเพื่อเพิ่มด้านนั้น\n- **ส่งออกรหัส / นำเข้ารหัส**แชร์เหมือนพรีเซ็ต",
+    "source_hash": "37740d4bfda7ca76487c320d49ae9a15e2da89d1f1fe4a31862a2ad8d53f903b",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "54a959ae32a4d9f6576cccd1f8191d529cda45dd8aca777c420560710c5cfa55",
     "obsolete": true
   },
   "Smart-Camera:17": {
@@ -5853,16 +5976,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Lift-Assisted-Auto-Connect:13": {
-    "text": "เห็นตัวลิฟต์และปลายล่างใต้เครื่องแยกทั้งคู่ สายราบฝั่งเครื่องดูสั้นเพราะมุมภาพ ดูตัวอย่างเครื่องประกอบขนาดใหญ่ที่สร้างแล้วด้านล่างเพื่อผังใหญ่ขึ้น",
-    "source_hash": "461c92ebb7d0183d81d0d44c20001dd4c5d42ceaee5dc38fbc02fc6ff22afe85",
+  "Smart-Restore:21": {
+    "text": "ใช้ **K → กู้คืน**บันทึก เลือก โหลด นำเข้า ส่งออก หลังโหลดใช้แผงขยายหรือล้อ/เลขปรับ HUD แสดงผลกริดและค่าปัจจุบัน ยิงปืนสร้างตามราคาที่เห็น",
+    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Controls:6": {
-    "text": "| ปุ่ม | การทำงาน |\n|-----|--------------|\n| `K` | เปิด/ปิดหน้าต่าง ขยาย / เดินแนว / อัปเกรด / กู้คืน |\n| `F8` | แก้ผัง HUD; มี Smart Camera จะแก้ HUD และกล้อง |\n| `Num Decimal` | สลับตัวช่วยสร้าง Smart ในเซสชัน |\n| `Num 8` | เพิ่มค่าปัจจุบัน |\n| `Num 5` | ลดค่าปัจจุบัน |\n| `Num 6` | เพิ่มกริด Y |\n| `Num 4` | ลดกริด Y |\n| `Num 9` | เพิ่มกริด Z |\n| `Num 3` | ลดกริด Z |\n| `X` | ค้างปรับ X ด้วยปุ่มร่วมหรือล้อ |\n| `Z` | ค้างปรับ Y ด้วยปุ่มร่วมหรือล้อ |\n| `X + Z` | ค้างคู่ปรับ Z ด้วยปุ่มร่วมหรือล้อ |\n| `;` | ค้างโหมดระยะ |\n| `I` | ค้างโหมดระยะสูง |\n| `Y` | ค้างโหมดสลับ |\n| `,` | ค้างโหมดหมุน |\n| `Num 0` | สลับแกนโหมดปัจจุบัน |\n| `U` | เลือกสูตรบนเครื่องผลิต; ตั้งการเชื่อมหรือฐานป้ายบนอาคารที่ใช้ได้ |\n| `Num 1` | สลับลูกศรทิศ |\n| `Mouse Wheel` | ปรับโหมด Smart หรือหมุนเกมเดิมเมื่อไม่มีโหมด Smart |",
-    "source_hash": "2837292eada81d5f2f7b96ee1fa39689f1d488e0ee8b125d948d5069e407097e",
+  "Settings-Reference:2": {
+    "text": "หาได้ที่**เมนูหลัก → ม็อด → Smart!** ค่าเปลี่ยนที่นี่**คงอยู่ข้ามเซฟและเซสชัน** ปุ่มตั้งแยก ดู[การควบคุม](Controls)",
+    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
@@ -5874,9 +5997,401 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
+  "Extend:20": {
+    "text": "เริ่มผ่าน **K → Extend → เลือกต้นทาง** หรือใช้ทางลัดเล็ง แท็บใช้ปุ่มจำนวนกริด ระยะ และรูปแบบร่วม ใช้ล้อ/แป้นเลขเหมือน[ขยายกริด](Grid-Scaling)ได้ ล้อที่ไม่ค้างปุ่มเสริมเลือกทิศ HUD ระบุแนวยาว/แถวและสิ่งที่กำลังปรับให้ตรวจก่อนสร้าง",
+    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:56": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bdf042547add168e1b9964198625cab7539af8176045dd68d70f13a619b0b7be",
+    "obsolete": true
+  },
+  "Settings-Reference:28": {
+    "text": "- ล็อกเมื่อกริดเปลี่ยนช่วยไม่ให้ตัวอย่างใหญ่ขยับพลาด **เปิดเริ่มต้น**ตั้งแต่ 32.1.2 ปิดหากอยากจัดตำแหน่งอิสระ ปุ่มล็อกเกมเดิมปล่อยแต่ละครั้งได้\n- **ควบคุมสัมพันธ์ผู้เล่น** สร้างตามทิศมองแทนเข็มทิศ ล้อขยายไปด้านที่มอง แป้นเลขเป็นไกล/ใกล้ ขวา/ซ้าย ขึ้น/ลง ใช้กับขยาย ระยะ ระยะสูง สลับ หมุน **ปิดเริ่มต้น** ปุ่มเดิมไม่เปลี่ยนจนเปิด แผง Smart ยัง X/Y/Z ดู[การควบคุม](Controls) (เพิ่ม 34.1.0)\n- **แตะเพื่อสลับโหมดแปลงรูปแบบ** แตะปุ่มระยะ ระยะสูง สลับ หมุน หรือสูตรบนโรงงานเพื่อเปิด แตะซ้ำปิด แตะอื่นเปลี่ยนโหมด สำหรับคอนโทรลเลอร์ Steam Deck และการเข้าถึง เพราะเมนู Steam Input ส่งแตะไม่ค้าง เก็บปืน เปลี่ยนอาคาร เปิดแผงปล่อยโหมดเสมอ **ปิดเริ่มต้น** ปิดกลับคืนพฤติกรรมค้างทันที ดู[คอนโทรลเลอร์และ Steam Deck](Controller-and-Steam-Deck) (เพิ่ม 34.2.0)",
+    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:17": {
+    "text": "สวิตช์แยกรอยต่อสำเนา**พิมพ์เขียวของคุณ** ไม่ขึ้นกับสายพานและท่อด้านบน จึงต่อสำเนาได้แม้ปิดเชื่อมทั่วไป",
+    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:32": {
+    "text": "_อัปเดตล่าสุด: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
+    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "status": "reviewed",
+    "review_method": "Reviewed existing footer with mechanical source date update.",
+    "obsolete": true
+  },
+  "Settings-Reference:53": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "f22daf9ba45c58f27cddf5020c4d856e4963c6b4b321e93b90506fe9200725c4",
+    "obsolete": true
+  },
+  "Home:17": {
+    "text": "_อัปเดตล่าสุด: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:57": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "c9db8a4c70492425a227c4f600e18e314036c794ee6ecf7b72819e8c1176d985",
+    "obsolete": true
+  },
+  "Buildable-Gallery:60": {
+    "text": "_อัปเดตล่าสุด: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:24": {
+    "text": "**ขยายฐานอุโมงค์จะสร้างแนวอุโมงค์ด้วย** เมื่อขยายแถวบันไดเสริมอุโมงค์แบบซ้อนได้ Smart! วางอุโมงค์เชื่อมระหว่างสำเนา เช่นเดียวกับเสารับสายพานหรือฐานท่อ แนวเดินตามระยะและความสูงของแถว และไต่ชันได้ จุดยึดแต่ละฐานยังว่างให้ต่ออุโมงค์เอง",
+    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:37": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "89d7ec27427ec2dbeda612d4908225ce4ab17de581eb4e2fc4950c57aaf45e81",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:14": {
+    "text": "ระบบหลายคนใหม่กว่าเล่นคนเดียว หากพฤติกรรมต่างกันถือเป็นบั๊ก โปรดแจ้ง GitHub หรือ Discord พร้อมสิ่งที่สร้างและบทบาทโฮสต์หรือไคลเอนต์",
+    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:8": {
+    "text": "1. สร้างโมดูลที่ใช้ได้ด้วยมือ แล้วถืออาคารชนิดเดียวกัน\n2. เปิด **K → Extend** กด**เลือกต้นทาง**\n3. คลิกอาคารต้นทางในโลกนอกแผง ต้นทางที่เข้ากันได้จะสว่าง **Escape**ยกเลิกเลือก คลิกในแผงยังเป็นปุ่มหน้าจอ\n4. ตรวจชื่อ ชิ้นส่วนที่เก็บ และจำนวนซ้ำ ใช้**เปลี่ยนทิศ**กับปุ่มวางจัดตัวอย่าง\n5. ปิดแผง ตรวจสำเนาและวัสดุ แล้วยิงปืนสร้างตามปกติ",
+    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:27": {
+    "text": "ฐานท่อและอุโมงค์ลูกหมุนตามต้นแบบครบทุกแกน **หมุนผนัง**ในแผงมี**ขั้น 45°**ตามเกมเดิม รวมแนวดิ่ง แยกจากการหมุนกริดที่ทำให้ชุดสำเนาโค้ง",
+    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:18": {
+    "text": "**ขยายเสารองท่อจะสร้างแนวท่อด้วย** เมื่อขยายแถวเสารองท่อบนพื้นหรือผนัง Smart! จะวางท่อเชื่อมสำเนา เช่นเดียวกับแถวเสารับสายพานที่สร้างแนวสายพาน ของเหลวไหลได้ตลอดแนว จุดยึดของแต่ละฐานยังว่างให้ต่อเองได้ ความสูงและมุมหัวฐานบนพื้นส่งต่อไปทั้งแถวเพื่อให้แนวลาดต่อเนื่อง",
+    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:16": {
+    "text": "เครื่องหลอมทึบคือต้นทางเดิม เครื่องหลอม สายพาน และฐานสีฟ้าเป็นสำเนาที่จะสร้าง HUD แสดง**ต่อขยาย 1×1** ยังเป็นตัวอย่างไม่สร้าง",
+    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "0bfbb0f456f389e1d5f74b3927ea2e671cd406c1d43a86691dbaf4cf8466f920",
+    "obsolete": true
+  },
+  "Blueprints:20": {
+    "text": "\n---",
+    "source_hash": "3d0b188170e8f7ed4b0a730d3fae39933057e60ba9e030bc278c446442cbabc3",
+    "status": "reviewed",
+    "review_method": "Language-neutral Markdown, protected brand or code; no translation required.",
+    "obsolete": true
+  },
+  "Smart-Restore:38": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "ec2177c56559237ebd837004fb2b43a250f6a29833da7919279c42a8f1cd7585",
+    "obsolete": true
+  },
+  "Extend:43": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4a4f5c96d35df73910b2887f40ae3bae8ad2bfb9317efd89edeeee8d5cd6a225",
+    "obsolete": true
+  },
+  "Smart-Restore:1": {
+    "text": "กู้คืน Smart บันทึกงาน Smart! ไว้ใช้ซ้ำ แชร์ หรือประทับทั้งโมดูลเหมือนเดิม เปิด **K → กู้คืน**ใน[แผง Smart](Smart-Panel-and-HUD)ร่วม มีแท็บย่อย**พรีเซ็ตกริด**และ**โมดูล**",
+    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:11": {
+    "text": "โมดูลเก็บ**ชุดแนวรวมต่อขยาย**ทั้งหมด ได้แก่ อาคาร สายพาน ท่อ ลิฟต์ อุปกรณ์กระจาย และไฟฟ้าที่เชื่อม ให้ประทับซ้ำ",
+    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:34": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4032031e869ee6cf1a85c2c77f17f1a8e1c5fdfb4d6365de941032362c26bd6b",
+    "obsolete": true
+  },
+  "Home:14": {
+    "text": "นี่คือร่างเอกสารในเครื่องสำหรับ **Smart! 35.0.0 และ Smart Camera 2.0.0** อัปเดตทั้งคู่เมื่อรุ่นที่เข้ากันออก อย่าจับ Camera 2.0 กับ Smart เก่า หน้าร่างนี้ไม่ใช่ประกาศเผยแพร่",
+    "source_hash": "c29d2ea90b7a486f22022563a690b6049c5d72c5bf1c740518bb20fa5747432d",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:15": {
+    "text": "แนวรับเข้าเครื่องประกอบขนาดใหญ่ที่สร้างแล้ว พร้อมอุปกรณ์กระจายต่างความสูงและระยะ",
+    "source_hash": "3f031fef9aa2b08f029041b38a3ede25923654db3210c0cf2f823345bb155916",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:41": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "994fafc6b93774a2bf26fda7226aa7f32d9e5692801829af09b53ed4e124e1dc",
+    "obsolete": true
+  },
+  "Auto-Connect:53": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "7a7775f3971ba2543d8a862d7cb59673e80d88b7b274872a5f5197d36bd4a8cb",
+    "obsolete": true
+  },
+  "Smart-Upgrade:26": {
+    "text": "อัปเกรดใหญ่ซับซ้อนเพราะ Satisfactory รวมสายพานและลิฟต์เป็นตัวจัดการโซ่ภายใน Smart! มีการรักษาเสถียรและวินิจฉัย แต่ใหญ่มากอาจต้องบันทึก/โหลดหากเกมแจ้งสถานะโซ่ยังไม่ลงตัว",
+    "source_hash": "fed328c054689b599658ab3989621c5b784f7bcaa94b5be404727f05664adba7",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:13": {
+    "text": "เห็นตัวลิฟต์และปลายล่างใต้เครื่องแยกทั้งคู่ สายราบฝั่งเครื่องดูสั้นเพราะมุมภาพ ดูตัวอย่างเครื่องประกอบขนาดใหญ่ที่สร้างแล้วด้านล่างเพื่อผังใหญ่ขึ้น",
+    "source_hash": "461c92ebb7d0183d81d0d44c20001dd4c5d42ceaee5dc38fbc02fc6ff22afe85",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:52": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "2f3fecc73d967c4184f0913db5a820573f49a433540b53d23d3f4b45143cea26",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:4": {
+    "text": "เมื่อติดตั้งทั้งคู่ ต้องอัปเดต Smart Camera 2.0 และ Smart! 35.0 ให้เข้ากัน Camera ใช้เดี่ยวได้ เครื่องมือสร้าง Smart ไม่ต้องมี Camera ค่ากล้องและหน้าตา HUD เป็นของผู้เล่นในเครื่อง ไม่ใช่ทุกคนบนเซิร์ฟเวอร์",
+    "source_hash": "d778ecad7f4a6a4eb530120898db7c258299752b3b3849ab7cb18dce25829247",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Feature-Gallery:50": {
+    "text": "_อัปเดตล่าสุด: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:42": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "16d59253ca7db5055c785ca688ef4711b48bf61b30eff0f24767d33040495694",
+    "obsolete": true
+  },
+  "Smart-Restore:2": {
+    "text": "ตอบคำถามว่า “ปรับผังนี้นานมาก จะเรียกกลับอย่างไร?”",
+    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Blueprints:17": {
+    "text": "กริดพิมพ์เขียวก็มีขีดจำกัดข้อมูลสร้างที่ปลอดภัย การวางใหญ่เกินถูกปฏิเสธแต่เก็บตัวอย่างไว้: ลดกริดแล้วแบ่งสร้าง หากจะวางพิมพ์เขียวเกมเดิมขนาดใหญ่ ปิด[ตัวช่วย Smart](Smart-Assistance)แล้วเลือกใหม่",
+    "source_hash": "540e7f14c64d49d7f11fb6b7090a1475087984b4955b0dccb93ca481787d4236",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:40": {
+    "text": "ใน**ม็อด → Smart! Camera** มุมภาพปรากฏใต้ชื่อม็อดและกล้องผู้ให้ รวมมุมที่ไม่ทำงาน ภาพปืนสร้างในตัวมีสวิตช์แยก ตำแหน่ง 0–1 ความละเอียด 64–2048 พิกเซลต่อแกน ขนาด 0.1–2 อัตราจับ 5–60/วินาที ความสว่าง −3 ถึง +3 EV กล้องสร้างที่ใช้ได้มีระยะ 5–50 m ค่ามีผลทันที ภาพซ่อนใต้เมนูอัปเดตเมื่อเล่นต่อ **ทุกเซฟ**แก้เฉพาะช่องที่เปลี่ยนในค่าส่วนกลางและโปรไฟล์กล้องที่บันทึก รวมโลกนี้ **เซฟนี้**เปลี่ยนเฉพาะโปรไฟล์โลกปัจจุบัน ช่องอื่นและกล้องอื่นไม่เปลี่ยน",
+    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "a17847f27c9d126c19f4c648fcce148a467279fc4197ecd4e932411db88929df",
+    "obsolete": true
+  },
+  "Smart-Restore:33": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b2e1a293ae99d7ff0946f54edd6939cf17d18547e848ac895c533abe3c2e4560",
+    "obsolete": true
+  },
+  "Feature-Gallery:38": {
+    "text": "\n## รื้อเป็นกลุ่ม",
+    "source_hash": "353f26b4f82a6dd84f38739c12578013748425253037044613768c788d0ac22b",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:36": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4ca209992e5cc98977db86e926e521228b74ac99cbbce1b5f642444df21d447f",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:11": {
+    "text": "## ตัวอย่างในเกม",
+    "source_hash": "5eb2c1c9e3dbc39102a812af339752c7f0fe1e0b95368965e2e069a71b377898",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:15": {
+    "text": "- เปิด/ปิดเชื่อมไฟอัตโนมัติ\n- เลือกโหมดเชื่อม\n- ตั้งระยะเชื่อม\n- กันช่องเสาไว้ไม่ให้ Smart! ใช้หมด\n- **เชื่อมไฟแบบโซ่เมื่อขยาย** เมื่อปลดขั้วต่อไฟที่ได้รับการปรับปรุงแล้วแล้ว การขยายเครื่องหรือเครื่องกำเนิดตาม X ของ Smart ต่อสำเนาตรงถึงกันแทนเสาแต่ละตัว ให้ผังแนวรวมโดยไม่ต้องต่อขยายแยก แผง Smart ทับค่าเฉพาะครั้งนี้ได้ HUD แสดงค่าจริง เคารพช่องว่างแต่ละจุด **เปิดเริ่มต้น** (เพิ่ม 34.2.0)",
+    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:54": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8382fa1196f068239391b97c93d521c0ed3ba46266fa7254f3e6c05c842fa1d2",
+    "obsolete": true
+  },
   "Smart-Assistance:13": {
     "text": "_อัปเดตล่าสุด: 2026-10-06 · Smart! v34.4.0_\n",
     "source_hash": "9ea842bd5dbdd752d3353ddeeeb68a3eff256015d475f2a5eb6d8e17e13b5156",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Upgrade:14": {
+    "text": "- คลิกเช่น **Mk.2** เพื่อเปลี่ยน**เฉพาะ**ระดับนี้ไปเป้า อัป Mk.2 เป็น Mk.3 และเก็บ Mk.4\n- เลือก**ทุกระดับ**ให้สายพาน ลิฟต์ ท่อที่ต่างเป็นระดับเป้า อาจเพิ่มบางระดับและลดบางระดับในแนวเดียว",
+    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:22": {
+    "text": "_อัปเดตล่าสุด: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:27": {
+    "text": "ต้นทางเดิมสร้างสามโมดูลสีฟ้ารวมแนวสายพานและฐาน HUD แสดง**ต่อขยาย 3×1** วัสดุเพิ่มตามสำเนา ต้นทางทึบอยู่เดิม",
+    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:54": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "92242198e922b4bdd9164d865151a7ed36c6f470ad144311ff077b3cb519dd7a",
+    "obsolete": true
+  },
+  "Auto-Connect:45": {
+    "text": "_อัปเดตล่าสุด: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
+    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "status": "reviewed",
+    "review_method": "Reviewed existing footer with mechanical source date update.",
+    "obsolete": true
+  },
+  "Smart-Upgrade:34": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "e26d8a251fe56b8c46900038254253f78c75d8e69ca22dce9b9e0edc797fe40e",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:12": {
+    "text": "Smart! ทำงานหลายคนบนเซิร์ฟเวอร์เฉพาะ ทุกคุณสมบัติ Smart! — ขยายกริด เชื่อมอัตโนมัติ (สายพาน ท่อ ไฟฟ้า) พิมพ์เขียว Smart ต่อขยาย อัปเกรด Smart กู้คืน Smart และรื้อถอน Smart — ใช้ในฐานะไคลเอนต์ด้วยวัสดุปกติ ทุกสิ่งที่ Smart! วางเป็นอาคารมาตรฐานที่ซิงค์ครบ คนอื่นเห็น ใช้ และรื้อได้เหมือนสร้างด้วยมือ",
+    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:32": {
+    "text": "เริ่มต้น 0.5 m และ 5° ระยะรับ 0.1–8 m มุมรับ 0.5–90°",
+    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:38": {
+    "text": "_อัปเดตล่าสุด: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:44": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6db2053fcc52fc7413a2cac1559df3b88f7c1446d5bc55e82fb5c2b6043c246b",
+    "obsolete": true
+  },
+  "Smart-Camera:30": {
+    "text": "_อัปเดตล่าสุด: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:50": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "d3ecb21df5d1ff326acb297239bef36255c199f23e6b6ec35663f3996c38ec2b",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:12": {
+    "text": "![ตัวอย่างเครื่องแยกยกสูงสองตัว เห็นลิฟต์ลงถึงระดับช่องเครื่อง ข้างปุ่มขยาย](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/lift-connection-controls.png)",
+    "source_hash": "cc3d5dfc328bad823f169e9cfaa9f3b9faf340768f11bfc85d33f6d73e79b0fc",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:8": {
+    "text": "- **บันทึกจากแผง** ตั้งชื่อค่าปัจจุบันและบันทึก\n- **โหลดเข้าแผง** โหลดกลับเพื่อปรับก่อนสร้างหรือใช้เดิม\n- **ส่งออกรหัส / นำเข้ารหัส** แชร์พรีเซ็ตหรือโหลดจากผู้อื่น",
+    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b9d7eb1bd49651f9c06691ed5350a0882a0787f099915de792867f8aa4494c27",
+    "obsolete": true
+  },
+  "Blueprints:21": {
+    "text": "_อัปเดตล่าสุด: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (ร่างเผยแพร่)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true

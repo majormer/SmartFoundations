@@ -37,6 +37,7 @@
 #include "Features/Extend/SFExtendService.h"
 #include "Features/Extend/SFExtendCommitSpec.h"
 #include "Features/Extend/SFExtendWiringInvocation.h"
+#include "Features/Extend/SFExtendDistributorSettingsBatch.h"
 #include "Features/Extend/SFExtendLiftAttachmentReceipt.h"
 #include "Features/Extend/SFExtendPipeCompatibilityReceipt.h"
 #include "Features/Extend/SFExtendPowerConnections.h"
@@ -238,6 +239,7 @@ struct FSFExtendNativeInputOperation
     bool bPaymentPrepared = false;
     bool bPaymentObserved = false;
     bool bConstructionMaterialsVerified = false;
+    FString PaymentFailure;
     struct FSettingsReceipt
     {
         TWeakObjectPtr<AFGBuildableFactory> Factory;
@@ -763,7 +765,13 @@ bool USFExtendService::QueueNativeBuildInput(UFGBuildGunStateBuild* Receiver, bo
             }
         });
     if (Admission == ESFConstructionAdmission::Accepted) NativeBuildInputs.Add(FObjectKey(Root), Operation);
-    else UE_LOG(LogSmartFoundations, Log, TEXT("Extend/Restore native input admission refused before construction: operation=%s admission=%d."), *Operation->Id.ToString(), static_cast<int32>(Admission));
+    else
+    {
+        UE_LOG(LogSmartFoundations, Log, TEXT("Extend/Restore native input admission refused before construction: operation=%s admission=%d."), *Operation->Id.ToString(), static_cast<int32>(Admission));
+        if (Admission == ESFConstructionAdmission::Conflict)
+            PC->ClientMessage(NSLOCTEXT("SmartFoundations", "Extend_PreviousOperationIncomplete",
+                "Smart cannot Extend here because an earlier operation affecting these buildings is still incomplete.").ToString());
+    }
     return true;
 }
 
@@ -823,8 +831,16 @@ void USFExtendService::ObserveOwnedNativeInput(const TSharedPtr<FSFExtendNativeI
     {
         Operation->bReconciliationReported = true;
         Record.RequireReconciliation(Operation->World);
-        UE_LOG(LogSmartFoundations, Warning, TEXT("Extend/Restore operation %s requires reconciliation: %s. No success, rollback or automatic retry is reported."),
-            *Operation->Id.ToString(), *Reason);
+        UE_LOG(LogSmartFoundations, Warning,
+            TEXT("Extend/Restore operation %s requires reconciliation: %s. wiring=%d cargo=%d distributors=%d adoptionFailed=%d settingsDone=%d settingsConserved=%d paymentObserved=%d materialsVerified=%d wiringRefusal=%s paymentFailure=%s. No success, rollback or automatic retry is reported."),
+            *Operation->Id.ToString(), *Reason, Operation->bConveyorWiringVerified, Operation->bCargoVerified,
+            Operation->bDistributorSettingsVerified, Operation->bAdoptionFailed, Operation->bSettingsDone,
+            Operation->bSettingsConserved, Operation->bPaymentObserved, Operation->bConstructionMaterialsVerified,
+            Operation->Wiring ? *Operation->Wiring->GetLastRefusal() : TEXT("missing_invocation"), *Operation->PaymentFailure);
+        if (auto* Player = Operation->Pawn.Get())
+            if (auto* Controller = Cast<AFGPlayerController>(Player->GetController()))
+                Controller->ClientMessage(NSLOCTEXT("SmartFoundations", "Extend_IncompleteConstruction",
+                    "Smart could not finish this Extend. Inspect the partial layout before continuing; affected connections remain protected.").ToString());
     };
 
 
@@ -871,18 +887,19 @@ void USFExtendService::ObserveOwnedNativeInput(const TSharedPtr<FSFExtendNativeI
         || !LiftAttachments.Verify(Operation->Wiring->Plan->GetTopology(), Operation->Wiring->Plan->GetBindings(),
             Operation->Wiring->ActualOutputs, *Owner, Operation->Key, AttachmentReason))
     { Uncertain(AttachmentReason); return; }
-    for (const auto& Clone : Operation->Wiring->ScaledPlans)
-        if (!Clone.CloneTopology || !LiftAttachments.Verify(*Clone.CloneTopology, Operation->Wiring->Plan->GetBindings(),
-            Operation->Wiring->ActualOutputs, *Owner, Operation->Key, AttachmentReason))
-        { Uncertain(AttachmentReason); return; }
     FSFExtendPipeCompatibilityReceipt PipeSiblings;
     if (!PipeSiblings.Verify(Operation->Wiring->Plan->GetTopology(), Operation->Wiring->Plan->GetBindings(),
-        Operation->Wiring->SourceBindings, Operation->Wiring->ActualOutputs, *Owner, Operation->Key, AttachmentReason))
-    { Uncertain(AttachmentReason); return; }
-    for (const auto& Clone : Operation->Wiring->ScaledPlans)
-        if (!Clone.CloneTopology || !PipeSiblings.Verify(*Clone.CloneTopology, Operation->Wiring->Plan->GetBindings(),
-            Operation->Wiring->SourceBindings, Operation->Wiring->ActualOutputs, *Owner, Operation->Key, AttachmentReason))
-    { Uncertain(AttachmentReason); return; }
+        Operation->Wiring->SourceBindings, Operation->Wiring->ActualOutputs,
+        Operation->Wiring->PreparedPipeSplines, *Owner, Operation->Key, AttachmentReason))
+    {
+        // A native network rebuild can still be queued on the first observation
+        // tick. Wait for that work using the same bounded settlement budget as
+        // conveyor migration; never invoke pipe wiring or payment a second time.
+        if (AttachmentReason == TEXT("pipe_sibling_native_network_pending")
+            && ++Operation->SettlementPhases < 120) return;
+        Uncertain(AttachmentReason);
+        return;
+    }
     bool bNativeProof = true;
     for (auto Obligation : {ESFConstructionObligation::Topology, ESFConstructionObligation::NativeMembership,
         ESFConstructionObligation::Cargo}) bNativeProof &= Record.VerifyObligation(Operation->World, Obligation);
@@ -891,8 +908,6 @@ void USFExtendService::ObserveOwnedNativeInput(const TSharedPtr<FSFExtendNativeI
         && FSFExtendWiringPlan::HasSupportedEffects(Operation->Wiring->Plan->GetTopology());
     if (Operation->Wiring)
     {
-        for (const auto& Clone : Operation->Wiring->ScaledPlans)
-            bCompleteReceipts &= Clone.CloneTopology && FSFExtendWiringPlan::HasSupportedEffects(*Clone.CloneTopology);
         TSet<FObjectKey> AllOutputs = Operation->Wiring->ActualOutputs;
         AllOutputs.Append(Operation->AuxiliaryOutputs);
         for (const auto& Identity : AllOutputs)
@@ -1082,13 +1097,13 @@ bool USFExtendService::ApplyOwnedDistributorSettings()
             if (!IsValid(Built) || !Operation->Wiring->ActualOutputs.Contains(FObjectKey(Built))) return false;
             const bool bConfigurable = Built->IsA<AFGBuildableSplitterSmart>() || Built->IsA<AFGBuildableMergerPriority>();
             if (!Child.DistributorSettings.bCaptured && !bConfigurable) continue;
-            if (!Child.DistributorSettings.IsValidFor(Built) || Operation->DistributorSettingsReceipts.Contains(FObjectKey(Built))) return false;
-            Operation->DistributorSettingsReceipts.Add(FObjectKey(Built), Child.DistributorSettings);
+            if (!Child.DistributorSettings.IsValidFor(Built)
+                || !SFExtendDistributorSettingsBatch::Add(Operation->DistributorSettingsReceipts,
+                    FObjectKey(Built), Child.DistributorSettings)) return false;
         }
         return true;
     };
     bool bValid = Include(Operation->Wiring->Plan->GetTopology());
-    for (const auto& Clone : Operation->Wiring->ScaledPlans) if (Clone.CloneTopology) bValid &= Include(*Clone.CloneTopology);
     if (!bValid) return false;
     Operation->bDistributorSettingsAttempted = true;
     // Work from a value copy: setters broadcast delegates that may retire actors.
@@ -1187,13 +1202,30 @@ void USFExtendService::ContinueOwnedFactorySettings(const TSharedPtr<FSFExtendNa
     TSubclassOf<UFGItemDescriptor> OverclockClass = Settings.OverclockShardClass.Get();
     TSubclassOf<UFGItemDescriptor> BoostClass = Settings.ProductionBoostShardClass.Get();
     if (OverclockClass && BoostClass && OverclockClass == BoostClass) { Fail(TEXT("ambiguous_shard_types")); return; }
-    for (auto* Factory : Targets)
-        if (auto* Potential = Factory->GetPotentialInventory(); Potential && !Potential->IsEmpty())
-        { Fail(TEXT("new_factory_potential_inventory_not_empty")); return; }
     // These are separate from construction materials: the existing applier
     // takes shards from player inventory, not central storage or a free-build credit.
     for (const auto& Class : {OverclockClass, BoostClass})
         if (Class) Operation->SettingsMaterialsBefore.Add(Class, Inventory->GetNumItems(Class));
+    // Native construction may already have installed matching shards. Preserve
+    // those items and include them in the transfer baseline; do not charge twice
+    // or assume that a nonempty potential inventory is a failed construction.
+    // Unknown or stateful contents still require an explicit adapter.
+    for (auto* Factory : Targets)
+    {
+        if (auto* Potential = Factory->GetPotentialInventory())
+        {
+            TArray<FInventoryStack> Installed;
+            Potential->GetInventoryStacks(Installed);
+            for (const auto& Stack : Installed)
+            {
+                if (!Stack.HasItems()) continue;
+                auto* Total = Operation->SettingsMaterialsBefore.Find(Stack.Item.GetItemClass());
+                if (!Total || Stack.Item.HasState() || Stack.Item.LegacyItemStateActor != nullptr)
+                { Fail(TEXT("unsupported_existing_potential_item")); return; }
+                *Total += Stack.NumItems;
+            }
+        }
+    }
     if (HasTypedSettingsMaterials(Inventory, Settings)) { Fail(TEXT("typed_settings_material_requires_adapter")); return; }
     // No readiness retry is legal beyond this point. Record one attempt per exact
     // returned factory before invoking the existing bounded native slot helper.
@@ -1209,6 +1241,9 @@ void USFExtendService::ContinueOwnedFactorySettings(const TSharedPtr<FSFExtendNa
         const TSubclassOf<UFGRecipe> BeforeRecipe = Manufacturer ? Manufacturer->GetCurrentRecipe() : nullptr;
         const float BeforePotential = Factory->GetPendingPotential();
         const float BeforeBoost = Factory->GetPendingProductionBoost();
+        auto* BeforeInventory = Factory->GetPotentialInventory();
+        const int32 BeforeOverclock = BeforeInventory && OverclockClass ? BeforeInventory->GetNumItems(OverclockClass) : 0;
+        const int32 BeforeBoostItems = BeforeInventory && BoostClass ? BeforeInventory->GetNumItems(BoostClass) : 0;
         const bool bRecipe = Settings.bHasRecipe && Settings.Recipe && Manufacturer
             && Recipes->IsRecipeCompatibleWithBuilding(Settings.Recipe, Factory);
         const bool bOverclock = Settings.bHasPotential && Settings.Potential > 1.0f && Factory->GetCanChangePotential()
@@ -1217,10 +1252,12 @@ void USFExtendService::ContinueOwnedFactorySettings(const TSharedPtr<FSFExtendNa
         const bool bBoost = Settings.bHasProductionBoost && Settings.ProductionBoost > 1.0f && Factory->CanChangeProductionBoost()
             && Settings.ProductionBoostShardClass && FSFFactorySettingsApplyPolicy::IsShardTypeAllowed(EPowerShardType::PST_ProductionBoost,
                 UFGPowerShardDescriptor::GetPowerShardType(Settings.ProductionBoostShardClass));
-        const int32 ExpectedOverclock = bOverclock ? FSFFactorySettingsApplyPolicy::GetAffordableShardTarget(
-            Settings.OverclockShardCount, 0, Inventory->GetNumItems(OverclockClass)) : 0;
-        const int32 ExpectedBoost = bBoost ? FSFFactorySettingsApplyPolicy::GetAffordableShardTarget(
-            Settings.ProductionBoostShardCount, 0, Inventory->GetNumItems(BoostClass)) : 0;
+        const int32 OverclockTarget = bOverclock ? FSFFactorySettingsApplyPolicy::GetAffordableShardTarget(
+            FMath::Clamp(Settings.OverclockShardCount, 0, 3), BeforeOverclock, Inventory->GetNumItems(OverclockClass)) : 0;
+        const int32 BoostTarget = bBoost ? FSFFactorySettingsApplyPolicy::GetAffordableShardTarget(
+            FMath::Clamp(Settings.ProductionBoostShardCount, 0, 2), BeforeBoostItems, Inventory->GetNumItems(BoostClass)) : 0;
+        const int32 ExpectedOverclock = FMath::Max(BeforeOverclock, OverclockTarget);
+        const int32 ExpectedBoost = FMath::Max(BeforeBoostItems, BoostTarget);
         Operation->SettingsReceipts.Add(Receipt); // retain this identity even on an unexpected partial result
         if (!Recipes->InvokeOwnedFactorySettings(*Owner, Factory, Player, Settings)) { Fail(TEXT("owned_settings_invocation_refused")); return; }
         if (!IsValid(Factory) || Factory->IsActorBeingDestroyed() || Factory->GetWorld() != Owner->GetWorld()
@@ -1233,9 +1270,9 @@ void USFExtendService::ContinueOwnedFactorySettings(const TSharedPtr<FSFExtendNa
         Observed.OverclockItems = Potential && OverclockClass ? Potential->GetNumItems(OverclockClass) : 0;
         Observed.BoostItems = Potential && BoostClass ? Potential->GetNumItems(BoostClass) : 0;
         float ExpectedPotential = BeforePotential, ExpectedProductionBoost = BeforeBoost;
-        if (ExpectedOverclock > 0)
+        if (OverclockTarget > 0)
             FSFFactorySettingsApplyPolicy::TryResolvePendingValue(Settings.Potential, Factory->GetCurrentMaxPotential(), ExpectedPotential);
-        if (ExpectedBoost > 0)
+        if (BoostTarget > 0)
             FSFFactorySettingsApplyPolicy::TryResolvePendingValue(Settings.ProductionBoost, Factory->GetCurrentMaxProductionBoost(), ExpectedProductionBoost);
         if (Observed.Recipe != (bRecipe ? Settings.Recipe : BeforeRecipe)
             || Observed.OverclockItems != ExpectedOverclock || Observed.BoostItems != ExpectedBoost
@@ -1250,7 +1287,7 @@ void USFExtendService::ContinueOwnedFactorySettings(const TSharedPtr<FSFExtendNa
                 if (!Operation->SettingsMaterialsBefore.Contains(Stack.Item.GetItemClass()) || Stack.Item.HasState()
                     || Stack.Item.LegacyItemStateActor != nullptr) { Fail(TEXT("unexpected_installed_material")); return; }
         }
-        bAppliedAnything |= Observed.Recipe != BeforeRecipe || ExpectedOverclock > 0 || ExpectedBoost > 0
+        bAppliedAnything |= Observed.Recipe != BeforeRecipe || ExpectedOverclock != BeforeOverclock || ExpectedBoost != BeforeBoostItems
             || Observed.PendingPotential != BeforePotential || Observed.PendingBoost != BeforeBoost;
     }
     for (const auto& Entry : Operation->SettingsMaterialsBefore)
@@ -1308,12 +1345,18 @@ void USFExtendService::ObserveOwnedNativePayment()
     Operation->bPaymentObserved = true;
     auto* Inventory = Operation->PayerInventory.Get(); auto* Storage = Operation->PayerStorage.Get();
     if (!CanExecuteOwnedInputWiring(Operation->Id) || !Inventory || !Storage || !Operation->Pawn.IsValid()
-        || Operation->Pawn->GetInventory() != Inventory || Inventory->GetNoBuildCost() != Operation->bNoBuildCost) return;
+        || Operation->Pawn->GetInventory() != Inventory || Inventory->GetNoBuildCost() != Operation->bNoBuildCost)
+    { Operation->PaymentFailure = TEXT("payer_context_changed"); return; }
     for (const auto& Entry : Operation->MaterialsBefore)
     {
         const int64 Actual = int64(Inventory->GetNumItems(Entry.Key)) + Storage->GetNumItemsFromCentralStorage(Entry.Key);
         const int64 Expected = Entry.Value - (Operation->bNoBuildCost ? 0 : Operation->QuotedCost.FindRef(Entry.Key));
-        if (Actual != Expected) return;
+        if (Actual != Expected)
+        {
+            Operation->PaymentFailure = FString::Printf(TEXT("%s expected=%lld actual=%lld before=%lld quoted=%lld"),
+                *GetNameSafe(Entry.Key.Get()), Expected, Actual, Entry.Value, Operation->QuotedCost.FindRef(Entry.Key));
+            return;
+        }
     }
     Operation->bConstructionMaterialsVerified = true;
 }
@@ -1396,7 +1439,6 @@ bool USFExtendService::ValidateOwnedPowerWiring(const TSharedPtr<FSFExtendNative
     auto Include = [&](const FSFCloneTopology& Topology)
     { for (const auto& Child : Topology.ChildHolograms) if (Child.Role == TEXT("wire_cost")) ExpectedRoles.Add(Child.HologramId); };
     Include(Operation->Wiring->Plan->GetTopology());
-    for (const auto& Clone : Operation->Wiring->ScaledPlans) if (Clone.CloneTopology) Include(*Clone.CloneTopology);
     if (ExpectedRoles.Num() != Operation->PowerWires.Num() || Operation->AuxiliaryOutputs.Num() != ExpectedRoles.Num()) return false;
     for (const auto& Role : ExpectedRoles)
     {
@@ -1440,17 +1482,8 @@ bool USFExtendService::PrepareOwnedLiftAttachments(AFGHologram* Lift)
     // A native player parent retains its own native placement attachments.
     // Captured clone children must use only this construction's role bindings.
     if (!Data || Data->JsonCloneId.IsEmpty()) return ExecutingNativeBuildInput->Root.Get() == Lift;
-    const FSFCloneHologram* Planned = nullptr;
-    bool bAmbiguous = false;
-    auto Find = [&](const FSFCloneTopology& Topology)
-    {
-        for (const auto& Child : Topology.ChildHolograms)
-            if (Child.HologramId == Data->JsonCloneId)
-            { if (Planned) bAmbiguous = true; else Planned = &Child; }
-    };
-    Find(Invocation->Plan->GetTopology());
-    for (const auto& Clone : Invocation->ScaledPlans) if (Clone.CloneTopology) Find(*Clone.CloneTopology);
-    if (!Planned || bAmbiguous || !Planned->bHasLiftData || !Lift->GetBuildClass()
+    const FSFCloneHologram* Planned = Invocation->Plan->FindRole(Data->JsonCloneId);
+    if (!Planned || !Planned->bHasLiftData || !Lift->GetBuildClass()
         || Lift->GetBuildClass()->GetName() != Planned->BuildClass || Planned->LiftData.PassthroughCloneIds.Num() > 2) return false;
     // The clone registry is a description, not native placement state. Apply both
     // height sign/top rotation and reverse flow before native ConfigureActor reads them.
@@ -1564,8 +1597,6 @@ bool USFExtendService::ExecuteOwnedConveyorWiring()
         return true;
     };
     if (!IncludeTopology(Invocation->Plan->GetTopology())) return Reject(TEXT("missing_conflicting_or_incompatible_exact_endpoint"));
-    for (const auto& Clone : Invocation->ScaledPlans)
-        if (Clone.CloneTopology && !IncludeTopology(*Clone.CloneTopology)) return Reject(TEXT("scaled_endpoint_plan_invalid"));
     // Include all returned conveyors, including native-connected ones absent from
     // extra wiring edges. BeginPlay owns their initial registration.
     for (const auto& Identity : Invocation->ActualOutputs)

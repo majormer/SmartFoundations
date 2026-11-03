@@ -83,6 +83,12 @@ Copied recipes, Power Shards, and Somersloops use the placing player's inventory
 
 On a listen server, a client's Extend or Restore keeps its settings and construction state separate from the host's held preview. Both players should use the same Smart! version.
 
+## Curves and incomplete operations
+
+A curved Extend cannot place a module back on the source or an earlier copy. If the HUD reports an overlap with an earlier copy, reduce the count or change the rotation, spacing or steps. This check prevents repeated module placement; it is not a general collision detector.
+
+Copies do not duplicate cargo from existing conveyors. Inspect the quoted materials and the resulting connections. If an operation reports incomplete settlement, check the world before repeating it; an already completed part may remain.
+
 ## Check the captured layout
 
 Extend preserves the captured route shapes. Inspect the full connected module as well as the machine body before repeating it: long source pipes or belts can cross neighbouring copies when the repeat interval is too small for that layout.
@@ -91,4 +97,4 @@ See the [Feature Gallery](Feature-Gallery) for connected factory layout examples
 
 ---
 
-_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_
+_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0 (release draft)_

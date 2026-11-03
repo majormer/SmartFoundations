@@ -17,11 +17,7 @@
 // under "LogSmartWalkBelt"; filter the log by "SmartWalk" to catch both.
 DEFINE_LOG_CATEGORY_STATIC(LogSmartWalkBelt, Log, All);
 
-// Walk span cap (CHORD / straight pole-to-pole distance). The vanilla belt+pipe limit is mMaxSplineLength = 5600.1 cm
-// (~56m; FGConveyorBeltHologram.h:175 / FGPipelineHologram.h:206, SAME for both). The default 56m support interval is
-// valid for a straight seven-foundation run; turns, rise, or shift can make the routed span exceed this separate cap.
-// Beyond it, LinkOrUpdate refuses the span and the segment shows a gap, matching stackable AC's skip-when-too-far.
-static constexpr float SF_WALK_MAX_SPAN_CM = USFAutoConnectService::MAX_PIPE_LENGTH;   // 5600 cm / 56 m — the single-span max (same as stackable auto-connect); over this the span is skipped and the segment reds
+// Belt and pipe chord limits come from the corresponding native hologram.
 
 // #405 hypertube walk: the tube's own connector-to-connector chord cap (96 m), NOT the 56 m pipe cap above —
 // the game router shows the tube up to a 96 m chord and drops it beyond (USFAutoConnectService::MAX_HYPERTUBE_LENGTH).
@@ -76,14 +72,17 @@ AFGHologram* USFWalkBeltConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
     const FVector StartPos = FromConn ? FromConn->GetComponentLocation() : FromAnchor->GetActorLocation();
     const FVector EndPos = ToConn ? ToConn->GetComponentLocation() : ToAnchor->GetActorLocation();
 
-    // Belt length cap (see SF_WALK_MAX_SPAN_CM above): a walk segment's 3D span (Advance + Rise + Shift) can exceed the
+    const float MaxSpanCm = Cast<ASFConveyorBeltHologram>(ExistingSpan)
+        ? Cast<ASFConveyorBeltHologram>(ExistingSpan)->GetMaxSplineLength()
+        : GetDefault<ASFConveyorBeltHologram>()->GetMaxSplineLength();
+    // Belt length cap: a walk segment's 3D span (Advance + Rise + Shift) can exceed the
     // vanilla belt limit, and our chord is ~2m under the spline limit to leave room for the turn curve. Refuse it here:
     // return null (no span). The caller (UpdateSegmentSpans) destroys any now-too-long existing span; the commit path
     // then builds no belt for that segment (mirrors stackable AC's skip-when-too-far).
-    if (FVector::Dist(StartPos, EndPos) > SF_WALK_MAX_SPAN_CM)
+    if (FVector::Dist(StartPos, EndPos) > MaxSpanCm)
     {
         UE_LOG(LogSmartWalkBelt, Verbose, TEXT("<<< LinkOrUpdate EXIT: belt span %.0f cm > %.0f cm cap — skipped (segment too long)"),
-            FVector::Dist(StartPos, EndPos), SF_WALK_MAX_SPAN_CM);
+            FVector::Dist(StartPos, EndPos), MaxSpanCm);
         return nullptr;
     }
 
@@ -299,12 +298,15 @@ AFGHologram* USFWalkPipeConveyance::LinkOrUpdate(AFGHologram* ExistingSpan, AFGH
     const FVector StartPos = FromConn ? FromConn->GetComponentLocation() : FromAnchor->GetActorLocation();
     const FVector EndPos = ToConn ? ToConn->GetComponentLocation() : ToAnchor->GetActorLocation();
 
-    // Pipe length cap (see SF_WALK_MAX_SPAN_CM above). Refuse an over-long span (return null, no pipe); the caller
+    const float MaxSpanCm = Cast<ASFPipelineHologram>(ExistingSpan)
+        ? Cast<ASFPipelineHologram>(ExistingSpan)->GetMaxSplineLength()
+        : GetDefault<ASFPipelineHologram>()->GetMaxSplineLength();
+    // Pipe length cap. Refuse an over-long span (return null, no pipe); the caller
     // destroys any now-too-long existing one.
-    if (FVector::Dist(StartPos, EndPos) > SF_WALK_MAX_SPAN_CM)
+    if (FVector::Dist(StartPos, EndPos) > MaxSpanCm)
     {
         UE_LOG(LogSmartWalkBelt, Verbose, TEXT("<<< [Pipe] LinkOrUpdate EXIT: span %.0f cm > %.0f cm cap — skipped (segment too long)"),
-            FVector::Dist(StartPos, EndPos), SF_WALK_MAX_SPAN_CM);
+            FVector::Dist(StartPos, EndPos), MaxSpanCm);
         return nullptr;
     }
 

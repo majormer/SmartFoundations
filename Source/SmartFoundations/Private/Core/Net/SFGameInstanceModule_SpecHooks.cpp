@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+// Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 
 /**
  * USFGameInstanceModule - server-side spec-based construction hooks (Net seam).
@@ -47,7 +47,7 @@
 #include "Core/Construction/SFNativeConstructionContext.h"
 #include "Features/AutoConnect/SFBlueprintSeamService.h"
 #include "Features/AutoConnect/Net/SFConveyorBeltPlan.h"
-#include "Features/Scaling/SFHypertubeEntranceState.h"
+#include "Features/Scaling/SFNativeAttachmentGridState.h"
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"  // #341: DrainStackBuiltConveyors
 #include "FGConstructDisqualifier.h"
 #include "FGRecipe.h"
@@ -478,7 +478,7 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
             SFConveyorLiftHologramState::FRequestScope LiftGridRequest;
             FSFLiftFloorHoleGridRequest::FScope LiftFloorHoleRequest;
             SFRailroadAttachmentHologramState::FRequestScope RailroadAttachmentRequest;
-            SFHypertubeEntranceState::FRequestScope EntranceRequest;
+            SFNativeAttachmentGridState::FRequestScope EntranceRequest;
             AFGHologram* Holo = self->GetHologram();
             if (Holo && Holo->HasAuthority() && !Holo->GetParentHologram() && !IsExtendConstructionRequest(Holo))
             {
@@ -526,7 +526,7 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
                 || SFFloodlightHologramState::IsLocalProxyGridConstruction(Holo)
                 || SFConveyorLiftHologramState::HasProxyGrid(Holo)
                 || SFRailroadAttachmentHologramState::HasProxyGrid(Holo)
-                || SFHypertubeEntranceState::HasProxyGrid(Holo)
+                || SFNativeAttachmentGridState::HasProxyGrid(Holo)
                 // Native payment follows Construct; the rail session's preview
                 // cleanup must not erase the validated bridge price before then.
                 || FSFBlueprintRailSeams::IsPrepared(Holo) || FSFBlueprintVehicleSeams::IsPrepared(Holo)
@@ -545,9 +545,9 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
                 Holo->ValidatePlacementAndCost(Player ? Player->GetInventory() : nullptr);
                 if (!Holo->CanConstruct()) { scope.Cancel(); return; }
             }
-            if (SFHypertubeEntranceState::HasProxyGrid(Holo))
+            if (SFNativeAttachmentGridState::HasProxyGrid(Holo))
             {
-                if (!SFHypertubeEntranceState::Prepare(Holo)) { scope.Cancel(); return; }
+                if (!SFNativeAttachmentGridState::Prepare(Holo)) { scope.Cancel(); return; }
                 AFGCharacterPlayer* Player = Cast<AFGCharacterPlayer>(Holo->GetConstructionInstigator());
                 Holo->ValidatePlacementAndCost(Player ? Player->GetInventory() : nullptr);
                 if (!Holo->CanConstruct()) { scope.Cancel(); return; }
@@ -703,7 +703,7 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
             SFConveyorLiftHologramState::FRequestScope LiftGridRequest;
             FSFLiftFloorHoleGridRequest::FScope LiftFloorHoleRequest;
             SFRailroadAttachmentHologramState::FRequestScope RailroadAttachmentRequest;
-            SFHypertubeEntranceState::FRequestScope EntranceRequest;
+            SFNativeAttachmentGridState::FRequestScope EntranceRequest;
             ON_SCOPE_EXIT
             {
                 APawn* Pawn = Gun ? Gun->GetInstigator() : nullptr;
@@ -976,12 +976,12 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
                     return;
                 }
             }
-            if (SFHypertubeEntranceState::IsRequestActive() && SFHypertubeEntranceState::IsHandled(self)
+            if (SFNativeAttachmentGridState::IsRequestActive() && SFNativeAttachmentGridState::IsHandled(self)
                 && !self->GetParentHologram())
             {
                 FSFScalingSpec EntranceSpec;
                 const bool Staged = FindStagedSpec(self, EntranceSpec, false);
-                const bool Valid = SFHypertubeEntranceState::Prepare(self, Staged ? &EntranceSpec : nullptr);
+                const bool Valid = SFNativeAttachmentGridState::Prepare(self, Staged ? &EntranceSpec : nullptr);
                 scope(self, Inventory);
                 if (!Valid) self->AddConstructDisqualifier(UFGCDInvalidPlacement::StaticClass());
                 return;

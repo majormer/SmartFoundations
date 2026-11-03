@@ -12,5 +12,6 @@ struct FSFExtendPipeCompatibilityReceipt
     TSet<FObjectKey> Actors;
     bool Verify(const FSFCloneTopology& Plan, const TMap<FString, FObjectKey>& Built,
         const TMap<FString, FObjectKey>& Sources, const TSet<FObjectKey>& ActualOutputs,
+        const TMap<FString, FSFSplineData>& PreparedSplines,
         USFConstructionOperationCoordinator& Owner, const FSFConstructionOperationKey& Key, FString& Reason);
 };

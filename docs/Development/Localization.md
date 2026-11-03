@@ -132,7 +132,31 @@ including standalone Camera. Check font coverage, shaping, clipping, numbers, co
 tooltips, configuration and error/confirmation flows. Reuse existing gameplay evidence;
 localization changes do not require replaying paid construction tests.
 
-Before publication, resolve all required translation gaps or explicitly agree on fallbacks,
-review contextual terminology, validate generated page/image links, and distinguish
-language review from automated checks. Packaging/deployment and public release remain
-separate operations.
+## Release gate: translations must actually be translated
+
+Gathering keys, synchronizing catalogs and successfully compiling resources do not complete
+localization. Every new or changed HUD message, setting label, tooltip and other player-facing
+string must have an actual, source-matched translation in every supported non-English culture.
+English fallback is an incomplete translation, not a successful release check. Do not silently
+ship it or call localization complete. Any exception requires the maintainer's explicit approval
+for the exact identities and languages before publication; elapsed time is not approval.
+
+For each release:
+
+1. Gather and reconcile the current source, preserving rejected translations in recovery history.
+2. Translate every missing or changed entry using its display context and established terminology.
+   Review meaning, grammar, placeholders, numbers, branding and layout length. Do not fill a
+   non-English entry with its English source or mark an existing entry reviewed without review.
+3. Synchronize and compile after the translations are present. If only translations changed,
+   reuse the successful gather with its matching source-identity receipt; do not repeat gameplay.
+4. Run `scripts/localization/verify_all.py --terms <official-terms.json> --compiled --report <report.json>`.
+   Require exit code zero: no missing, empty, stale, malformed or untranslated-prose entries;
+   current compiled text must equal the reviewed catalogs. Check wiki text and interface coverage
+   too. A report file or successful compile does not override a failing gate.
+5. Record counts per language and the review method. Distinguish agent language review,
+   automated checks, native-speaker review and rendered in-game inspection honestly. Reuse
+   existing visual evidence only where the changed text and layout do not invalidate it.
+
+Wiki changes also require current translations before publication. Build without
+`--include-drafts`, require zero unapproved English fallback units, and validate page/image links.
+Packaging/deployment and public release remain separate operations.

@@ -837,82 +837,82 @@ msgctxt "SmartCompass,WestSouthWest"
 msgid "WSW"
 msgstr "西西南"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1662)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1667)
 msgctxt "SmartFoundations,ACSetting_BeltRouting"
 msgid "Belt Routing"
 msgstr "輸送帶路由"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1625)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1630)
 msgctxt "SmartFoundations,ACSetting_BeltTierMain"
 msgid "Belt Tier (Main)"
 msgstr "輸送帶等級（主要）"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1637)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1642)
 msgctxt "SmartFoundations,ACSetting_BeltTierToBuilding"
 msgid "Belt Tier (To Building)"
 msgstr "輸送帶等級（至建築）"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1649)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1654)
 msgctxt "SmartFoundations,ACSetting_ChainDistributors"
 msgid "Chain Distributors"
 msgstr "鏈式分流器"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1729)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1734)
 msgctxt "SmartFoundations,ACSetting_HorizVert"
 msgid "Horiz→Vert"
 msgstr "水平→垂直"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1738)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1743)
 msgctxt "SmartFoundations,ACSetting_HypertubeAC"
 msgid "Hypertube AC"
 msgstr "超疾管道自動連接"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1743)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1748)
 msgctxt "SmartFoundations,ACSetting_HypertubeRouting"
 msgid "Hypertube Routing"
 msgstr "超疾管道路由"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1615)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1620)
 msgctxt "SmartFoundations,ACSetting_OFF"
 msgid "OFF"
 msgstr "關閉"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1615)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1620)
 msgctxt "SmartFoundations,ACSetting_ON"
 msgid "ON"
 msgstr "開啟"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1710)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1715)
 msgctxt "SmartFoundations,ACSetting_PipeRouting"
 msgid "Pipe Routing"
 msgstr "管線路由"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1681)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1686)
 msgctxt "SmartFoundations,ACSetting_PipeTierMain"
 msgid "Pipe Tier (Main)"
 msgstr "管線等級（主要）"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1693)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1698)
 msgctxt "SmartFoundations,ACSetting_PipeTierToBuilding"
 msgid "Pipe Tier (To Building)"
 msgstr "管線等級（至建築）"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1806)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1811)
 msgctxt "SmartFoundations,ACSetting_ReservedSlots"
 msgid "Reserved Slots"
 msgstr "保留槽位"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1774)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1779)
 msgctxt "SmartFoundations,ACSetting_StackableBeltDirection"
 msgid "Stackable Belt Direction"
 msgstr "堆疊輸送帶方向"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1762)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1767)
 msgctxt "SmartFoundations,ACSetting_StackableBeltTier"
 msgid "Stackable Belt Tier"
 msgstr "堆疊輸送帶等級"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1811)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1816)
 msgctxt "SmartFoundations,ACSetting_Summary"
 msgid "{0}: {1}"
 msgstr "{0}：{1}"
@@ -932,7 +932,7 @@ msgctxt "SmartFoundations,ArrowLabel_Z"
 msgid "Z"
 msgstr "Z"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/AutoConnect/SFBlueprintLiftSeams_Construction.cpp(237)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/AutoConnect/SFBlueprintLiftSeams_Construction.cpp(240)
 msgctxt "SmartFoundations,BlueprintLiftConnectionUnavailable"
 msgid "Blueprint lift connections unavailable. Check endpoint direction, spacing and the selected belt tier."
 msgstr "藍圖輸送梯連接不可用。請檢查端點方向、間距以及所選的輸送帶等級。"
@@ -1077,10 +1077,25 @@ msgctxt "SmartFoundations,Config_ShowHUD"
 msgid "Show HUD Overlay"
 msgstr "顯示 HUD 覆蓋層"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1757)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1762)
 msgctxt "SmartFoundations,Config_StackableBelt"
 msgid "Stackable Belt Auto-Connect"
 msgstr "可堆疊輸送帶自動連接"
+
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(471)
+msgctxt "SmartFoundations,ConstructionContextPending"
+msgid "Synchronizing construction with the server. Try building again."
+msgstr "正在與伺服器同步建造。請再次嘗試建造。"
+
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(131)
+msgctxt "SmartFoundations,ExtendEnvelopeRefused"
+msgid "This construction request could not be sent safely. Re-select the source and try again."
+msgstr "無法安全傳送此建造請求。請重新選擇來源物件後再試。"
+
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(142)
+msgctxt "SmartFoundations,ExtendEnvelopeUnavailable"
+msgid "The server connection is unavailable. Try building again."
+msgstr "伺服器連線無法使用。請再次嘗試建造。"
 
 #: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/UI/SmartSettingsFormWidget_Extend.cpp(106)
 msgctxt "SmartFoundations,ExtendPanel_CancelSelect"
@@ -1162,7 +1177,7 @@ msgctxt "SmartFoundations,ExtendPanel_Summary"
 msgid "Select an existing building of the same type as the one held in your build gun."
 msgstr "選擇與您在 FICSIT 建造槍中持有的類型相同的現有建築。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendPowerConnections.cpp(112)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendPowerConnections.cpp(114)
 msgctxt "SmartFoundations,Extend_CableCapacity"
 msgid "Power connector {0} needs {1} connections but has {2} slots"
 msgstr "電力連接器 {0} 需要 {1} 個連接，但只有 {2} 個槽位"
@@ -1187,12 +1202,12 @@ msgctxt "SmartFoundations,Extend_CableSocketUnavailable"
 msgid "Cannot validate power socket {0}.{1} before construction"
 msgstr "無法在建造前驗證電力插座 {0}.{1}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendPowerConnections.cpp(100)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendPowerConnections.cpp(102)
 msgctxt "SmartFoundations,Extend_CableTooLong"
 msgid "Power cable {0} exceeds its native length limit"
 msgstr "電力纜線 {0} 超過其原生長度限制"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_SpecHooks.cpp(993)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_SpecHooks.cpp(1080)
 msgctxt "SmartFoundations,Extend_CannotReconstruct"
 msgid "Smart could not reconstruct this Extend layout."
 msgstr "Smart 無法重建此延伸佈局。"
@@ -1202,30 +1217,35 @@ msgctxt "SmartFoundations,Extend_DuplicateOwner"
 msgid "Extend construction has duplicate owner identities"
 msgstr "延伸建造存在重複的所有者身分"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendScaledService.cpp(1421)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/Net/SFExtendService_NativeInput.cpp(842)
+msgctxt "SmartFoundations,Extend_IncompleteConstruction"
+msgid "Smart could not finish this Extend. Inspect the partial layout before continuing; affected connections remain protected."
+msgstr "Smart 未能完成此次延伸。請先檢查已建成的部分配置再繼續；受影響的連接仍受到保護。"
+
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_SpecHooks.cpp(1050)
+msgctxt "SmartFoundations,Extend_InvalidDistributorSettings"
+msgid "Distributor settings are missing or incompatible. Re-select the source or recapture the preset."
+msgstr "分配器設定遺失或不相容。請重新選擇來源物件，或重新擷取預設。"
+
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendScaledService.cpp(1452)
 msgctxt "SmartFoundations,Extend_LaneBelt"
 msgid "Belt"
 msgstr "輸送帶"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendScaledService.cpp(1421)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendScaledService.cpp(1452)
 msgctxt "SmartFoundations,Extend_LanePipe"
 msgid "Pipe"
 msgstr "管線"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendScaledService.cpp(1430)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendScaledService.cpp(1461)
 msgctxt "SmartFoundations,Extend_LaneTooLong"
 msgid "{0} lane too long ({1}m > {2}m maximum)"
 msgstr "{0} 通道過長（{1}m > 最大 {2}m）"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendScaledService.cpp(1420)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendScaledService.cpp(1451)
 msgctxt "SmartFoundations,Extend_LaneTooShort"
 msgid "{0} lane too short ({1}m < {2}m minimum)"
 msgstr "{0} 通道過短（{1}m < 最小 {2}m）"
-
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendScaledService.cpp(1452)
-msgctxt "SmartFoundations,Extend_LaneTooSteep"
-msgid "{0} lane angle too steep ({1}°/{2}° > {3}° max)"
-msgstr "{0} 通道角度過陡（{1}°/{2}° > 最大 {3}°）"
 
 #: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendService_PowerValidation.cpp(55)
 msgctxt "SmartFoundations,Extend_MissingCableEndpoints"
@@ -1237,12 +1257,22 @@ msgctxt "SmartFoundations,Extend_MissingTopology"
 msgid "Extend construction has no reconstructed topology"
 msgstr "延伸建造沒有重建的拓撲結構"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendService.cpp(1012)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/Net/SFExtendService_NativeInput.cpp(772)
+msgctxt "SmartFoundations,Extend_PreviousOperationIncomplete"
+msgid "Smart cannot Extend here because an earlier operation affecting these buildings is still incomplete."
+msgstr "涉及這些建築的先前操作尚未完成，因此 Smart 無法在此處延伸。"
+
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendService.cpp(1018)
 msgctxt "SmartFoundations,Extend_ReconstructionIncomplete"
 msgid "Extend commit reconstruction did not complete"
 msgstr "延伸提交的重建未完成"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_SpecHooks.cpp(974)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendScaledService.cpp(1394)
+msgctxt "SmartFoundations,Extend_RepeatedModulePose"
+msgid "Extend overlaps an earlier copy"
+msgstr "延伸與先前的副本重疊"
+
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_SpecHooks.cpp(1056)
 msgctxt "SmartFoundations,Extend_SourceOrCostChanged"
 msgid "The source layout or cable quote changed. Re-select the source before building."
 msgstr "來源佈局或纜線報價已變更。請在建造前重新選擇來源。"
@@ -1307,12 +1337,12 @@ msgctxt "SmartFoundations,HUD_AutoConnectDisabled"
 msgid "*Auto-Connect Disabled (double-tap to re-enable)"
 msgstr "*自動連接已停用（雙按重新啟用）"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(346)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(349)
 msgctxt "SmartFoundations,HUD_BeltsSkipped"
 msgid "*{0} belt connection(s) skipped: {1}"
 msgstr "*已跳過 {0} 個輸送帶連接：{1}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(487)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(490)
 msgctxt "SmartFoundations,HUD_ExtendActive"
 msgid "*Extend Active"
 msgstr "*延伸啟用"
@@ -1322,17 +1352,17 @@ msgctxt "SmartFoundations,HUD_ExtendDisabled"
 msgid "*Extend Disabled"
 msgstr "*延伸已停用"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(452)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(455)
 msgctxt "SmartFoundations,HUD_ExtendPanelAction"
 msgid "Smart Panel"
 msgstr "Smart 面板"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(473)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(476)
 msgctxt "SmartFoundations,HUD_ExtendScaled"
 msgid "*Extend: {0}x{1}"
 msgstr "*延伸: {0}x{1}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(462)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(465)
 msgctxt "SmartFoundations,HUD_ExtendSource"
 msgid "Extend from {0} · {1} → Extend"
 msgstr "從 {0} 延伸 · {1} → 延伸"
@@ -1342,7 +1372,7 @@ msgctxt "SmartFoundations,HUD_Grid"
 msgid "Grid: {0}x{1}x{2} ({3})"
 msgstr "網格: {0}x{1}x{2} ({3})"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(561)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(564)
 msgctxt "SmartFoundations,HUD_GridDefault"
 msgid "Grid: 1x1x1"
 msgstr "網格: 1x1x1"
@@ -1352,47 +1382,47 @@ msgctxt "SmartFoundations,HUD_Header"
 msgid "SMART!"
 msgstr "SMART!"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(985)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(988)
 msgctxt "SmartFoundations,HUD_Hint_Chord"
 msgid "{0} + {1}"
 msgstr "{0} + {1}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(965)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(968)
 msgctxt "SmartFoundations,HUD_Hint_Rotation"
 msgid "Adjust rotation"
 msgstr "調整旋轉"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(984)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(987)
 msgctxt "SmartFoundations,HUD_Hint_Scroll"
 msgid "Scroll"
 msgstr "滾動"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(962)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(965)
 msgctxt "SmartFoundations,HUD_Hint_Spacing"
 msgid "Adjust spacing"
 msgstr "調整間距"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(964)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(967)
 msgctxt "SmartFoundations,HUD_Hint_Stagger"
 msgid "Adjust stagger"
 msgstr "調整交錯"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(963)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(966)
 msgctxt "SmartFoundations,HUD_Hint_Steps"
 msgid "Adjust steps"
 msgstr "調整台階"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(386)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(389)
 msgctxt "SmartFoundations,HUD_HypertubesSkipped"
 msgid "*{0} Hypertube connection(s) skipped: {1}"
 msgstr "*跳過 {0} 個超疾管道連接：{1}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(480)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(483)
 msgctxt "SmartFoundations,HUD_Invalid"
 msgid "[INVALID]"
 msgstr "[無效]"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(439)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(442)
 msgctxt "SmartFoundations,HUD_LiftHeight"
 msgid "Lift: ↕ {0}m  ⇓ {1}m"
 msgstr "升降: ↕ {0}m  ⇓ {1}m"
@@ -1407,32 +1437,32 @@ msgctxt "SmartFoundations,HUD_Mode_PlayerRelative"
 msgid "Controls: Player Relative"
 msgstr "控制：相對於玩家"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(429)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(432)
 msgctxt "SmartFoundations,HUD_Module_HoldPrompt"
 msgid "*Module \"{0}\": equip its source building to place it"
 msgstr "*模組「{0}」：裝備其來源建築以放置"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(423)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(426)
 msgctxt "SmartFoundations,HUD_Module_Ready"
 msgid "*Module \"{0}\": scroll to scale, fire to stamp (repeatable)"
 msgstr "*模組「{0}」：滾動縮放，按下蓋印（可重複）"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(414)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(417)
 msgctxt "SmartFoundations,HUD_Module_Unnamed"
 msgid "Module"
 msgstr "模組"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(368)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(371)
 msgctxt "SmartFoundations,HUD_PipesSkipped"
 msgid "*{0} pipe connection(s) skipped: {1}"
 msgstr "*已跳過 {0} 個管道連接：{1}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(593)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(596)
 msgctxt "SmartFoundations,HUD_Recipe"
 msgid "Recipe {0}/{1}: {2}"
 msgstr "配方 {0}/{1}: {2}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(591)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(594)
 msgctxt "SmartFoundations,HUD_RecipeActive"
 msgid "Recipe* {0}/{1}: {2}"
 msgstr "配方* {0}/{1}: {2}"
@@ -1462,62 +1492,67 @@ msgctxt "SmartFoundations,HUD_RoleVertical"
 msgid "Vertical"
 msgstr "垂直"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(954)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(957)
 msgctxt "SmartFoundations,HUD_RotationDefault"
 msgid "Rotation*: 0.0°"
 msgstr "旋轉*: 0.0°"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(945)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(948)
 msgctxt "SmartFoundations,HUD_RotationZ"
 msgid "Rotation [{0}]{1}: {2}°"
 msgstr "旋轉 [{0}]{1}：{2}°"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(936)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(939)
 msgctxt "SmartFoundations,HUD_RotationZFull"
 msgid "Rotation [{0}]{1}: {2}° (R={3}m, {4}/circle)"
 msgstr "旋轉 [{0}]{1}：{2}° (R={3}m, {4}/圓)"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(659)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(662)
 msgctxt "SmartFoundations,HUD_ScaleDaisyChain"
 msgid "Power Chain: {0}"
 msgstr "電力鏈：{0}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(642)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(645)
 msgctxt "SmartFoundations,HUD_Settings"
 msgid "Settings: {0}"
 msgstr "設定: {0}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(626)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(629)
 msgctxt "SmartFoundations,HUD_SettingsActive"
 msgid "Settings: {0}{1}"
 msgstr "設定: {0}{1}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(633)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(636)
 msgctxt "SmartFoundations,HUD_SettingsCurrent"
 msgid "Settings: {0}*"
 msgstr "設定: {0}*"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(338)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(341)
 msgctxt "SmartFoundations,HUD_SkipReason_InvalidShape"
 msgid "invalid shape ({0})"
 msgstr "形狀無效 ({0})"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(343)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(346)
 msgctxt "SmartFoundations,HUD_SkipReason_LaneBlocked"
 msgid "lane blocked ({0})"
 msgstr "車道受阻 ({0})"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(365)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(332)
+msgctxt "SmartFoundations,HUD_SkipReason_MisalignedPorts"
+msgid "misaligned ports ({0})"
+msgstr "連接埠朝向不符（{0}）"
+
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(368)
 msgctxt "SmartFoundations,HUD_SkipReason_TooClose"
 msgid "too close ({0})"
 msgstr "太近 ({0})"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(360)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(363)
 msgctxt "SmartFoundations,HUD_SkipReason_TooFar"
 msgid "too far ({0})"
 msgstr "太遠 ({0})"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(333)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(336)
 msgctxt "SmartFoundations,HUD_SkipReason_TooSteep"
 msgid "too steep ({0})"
 msgstr "太陡 ({0})"
@@ -1527,137 +1562,137 @@ msgctxt "SmartFoundations,HUD_SmartDisabled"
 msgid "*Smart: Scaling only (double-tap to re-enable)"
 msgstr "*Smart：僅縮放（雙按重新啟用）"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(771)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(774)
 msgctxt "SmartFoundations,HUD_SpacingDefault"
 msgid "Spacing*: 0.0m"
 msgstr "間距*: 0.0m"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(723)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(726)
 msgctxt "SmartFoundations,HUD_SpacingRole"
 msgid "Spacing [{0}]*: {1}m"
 msgstr "間距 [{0}]*: {1}m"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(729)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(732)
 msgctxt "SmartFoundations,HUD_SpacingX"
 msgid "Spacing [X]{0}: {1}m"
 msgstr "間距 [X]{0}: {1}m"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(746)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(749)
 msgctxt "SmartFoundations,HUD_SpacingY"
 msgid "Spacing [Y]{0}: {1}m"
 msgstr "間距 [Y]{0}: {1}m"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(763)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(766)
 msgctxt "SmartFoundations,HUD_SpacingZ"
 msgid "Spacing [Z]{0}: {1}m"
 msgstr "間距 [Z]{0}: {1}m"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(905)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(908)
 msgctxt "SmartFoundations,HUD_StaggerDefault"
 msgid "Stagger*: 0.0m"
 msgstr "交錯*: 0.0m"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(834)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(837)
 msgctxt "SmartFoundations,HUD_StaggerFamilyFlat"
 msgid "Flat"
 msgstr "平鋪"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(833)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(836)
 msgctxt "SmartFoundations,HUD_StaggerFamilyStack"
 msgid "Stack"
 msgstr "堆疊"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(840)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(843)
 msgctxt "SmartFoundations,HUD_StaggerRole"
 msgid "Stagger [{0}/{1}]*: {2}m"
 msgstr "交錯 [{0}/{1}]*: {2}m"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(846)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(849)
 msgctxt "SmartFoundations,HUD_StaggerX"
 msgid "Stagger [X]{0}: {1}m sideways"
 msgstr "交錯 [X]{0}: {1}m 橫向"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(863)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(866)
 msgctxt "SmartFoundations,HUD_StaggerY"
 msgid "Stagger [Y]{0}: {1}m forward"
 msgstr "交錯 [Y]{0}: {1}m 前方"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(880)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(883)
 msgctxt "SmartFoundations,HUD_StaggerZX"
 msgid "Stagger [ZX]{0}: {1}m shift forward"
 msgstr "交錯 [ZX]{0}: {1}m 前移"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(897)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(900)
 msgctxt "SmartFoundations,HUD_StaggerZY"
 msgid "Stagger [ZY]{0}: {1}m shift sideways"
 msgstr "交錯 [ZY]{0}: {1}m 側移"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(817)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(820)
 msgctxt "SmartFoundations,HUD_StepsDefault"
 msgid "Steps*: 0.0m"
 msgstr "台階*: 0.0m"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(786)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(789)
 msgctxt "SmartFoundations,HUD_StepsRole"
 msgid "Steps [{0}]*: {1}m"
 msgstr "台階 [{0}]*: {1}m"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(792)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(795)
 msgctxt "SmartFoundations,HUD_StepsX"
 msgid "Steps [X]{0}: {1}m columns"
 msgstr "台階 [X]{0}: {1}m 列"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(809)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(812)
 msgctxt "SmartFoundations,HUD_StepsY"
 msgid "Steps [Y]{0}: {1}m rows"
 msgstr "台階 [Y]{0}: {1}m 行"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(515)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(518)
 msgctxt "SmartFoundations,HUD_Walk"
 msgid "*Walk  {0} seg | head {1} {2}deg | {3}"
 msgstr "*行走  {0} 段 | 朝向 {1} {2}度 | {3}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(681)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(684)
 msgctxt "SmartFoundations,HUD_WalkAdvance"
 msgid "Advance{0}: {1}m"
 msgstr "前進{0}: {1}m"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(692)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(695)
 msgctxt "SmartFoundations,HUD_WalkRise"
 msgid "Rise{0}: {1}m"
 msgstr "上升{0}: {1}m"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(698)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(701)
 msgctxt "SmartFoundations,HUD_WalkShift"
 msgid "Shift{0}: {1}m"
 msgstr "位移{0}: {1}m"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(686)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(689)
 msgctxt "SmartFoundations,HUD_WalkTurn"
 msgid "Turn{0}: {1}°"
 msgstr "轉向{0}: {1}°"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(510)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(513)
 msgctxt "SmartFoundations,HUD_Walk_Belt"
 msgid "belt"
 msgstr "輸送帶"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(510)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(513)
 msgctxt "SmartFoundations,HUD_Walk_Hypertube"
 msgid "Hypertube"
 msgstr "超疾管道"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(509)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(512)
 msgctxt "SmartFoundations,HUD_Walk_Pipe"
 msgid "pipe"
 msgstr "管道"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(508)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(511)
 msgctxt "SmartFoundations,HUD_Walk_Rail"
 msgid "rail"
 msgstr "軌道"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(507)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Services/SFHudService.cpp(510)
 msgctxt "SmartFoundations,HUD_Walk_VehiclePath"
 msgid "vehicle path"
 msgstr "載具路徑"
@@ -1722,17 +1757,17 @@ msgctxt "SmartFoundations,Help_ScalingTitle"
 msgid "How to use Scaling"
 msgstr "如何使用縮放"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(369)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(373)
 msgctxt "SmartFoundations,Help_UpgradeBody"
 msgid "Radius scans around you; Entire Map scans without a distance limit. Network follows connections from one selected target using the crossing options. Scanning spends no materials and replaces nothing.\nClick a result row, choose the target tier and read Materials: negative amounts are needed; positive amounts are returned. Upgrade executes the replacements and normal settlement. Native restrictions and available resources still apply.\nSwitching methods keeps separate row and tier choices. Selecting another Network target clears its old results and quote until you scan again. Closing the window does not undo upgrades already executed."
 msgstr "半徑會掃描你周圍的區域；整個地圖會掃描而無距離限制。網路會從一個選定的目標追蹤連線，使用交叉選項。掃描不消耗材料且不替換任何東西。\n點擊結果列，選擇目標等級並閱讀材料：負數表示需要；正數表示歸還。升級會執行替換和正常結算。原生限制和可用資源仍然適用。\n切換方法會保留獨立的列和等級選擇。選擇另一個網路目標會清除其舊結果和報價，直到你再次掃描。關閉視窗不會撤銷已執行的升級。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(368)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(372)
 msgctxt "SmartFoundations,Help_UpgradeSummary"
 msgid "1 Choose an area or Network target. 2 Scan and select results. 3 Review the target tier and materials. 4 Upgrade."
 msgstr "1 選擇區域或網路目標。2 掃描並選擇結果。3 檢視目標等級和材料。4 升級。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(367)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(371)
 msgctxt "SmartFoundations,Help_UpgradeTitle"
 msgid "How to use Upgrade"
 msgstr "如何使用升級"
@@ -1872,17 +1907,17 @@ msgctxt "SmartFoundations,Interface_Title"
 msgid "Smart!"
 msgstr "Smart!"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1656)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1661)
 msgctxt "SmartFoundations,LiftMode_BeltsOnly"
 msgid "Belts Only"
 msgstr "僅限輸送帶"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1656)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1661)
 msgctxt "SmartFoundations,LiftMode_Building"
 msgid "Lift at Building"
 msgstr "在建築處使用輸送梯"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1656)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1661)
 msgctxt "SmartFoundations,LiftMode_Distributor"
 msgid "Lift at Distributor"
 msgstr "分流器處的輸送梯"
@@ -1892,32 +1927,37 @@ msgctxt "SmartFoundations,LiftMode_Help"
 msgid "Choose where the lift absorbs the height difference. Native placement and costs apply."
 msgstr "選擇輸送梯吸收高度差的位置。適用原生放置規則與成本。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(570)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(620)
+msgctxt "SmartFoundations,MP_MissingConveyorPeers"
+msgid "The selected belt endpoints could not be captured. Refresh the placement before building."
+msgstr "無法擷取所選輸送帶的端點。請在建造前重新整理放置配置。"
+
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(669)
 msgctxt "SmartFoundations,MP_Notice_BlueprintGridTooLarge"
 msgid "Blueprint grid too large for one multiplayer placement (~{0} buildings, max ~{1}). Build in smaller sections."
 msgstr "藍圖網格對於單次多人放置來說過大（約 {0} 個建築，最多約 {1}）。請分成更小的部分建造。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(434)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(518)
 msgctxt "SmartFoundations,MP_Notice_ExtendStageFailed"
 msgid "Smart!: Extend commit could not be staged - try again."
 msgstr "Smart!：延伸提交無法暫存 - 請重試。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(745)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(844)
 msgctxt "SmartFoundations,MP_Notice_GridTooLarge"
 msgid "Grid too large for multiplayer ({0} cells, max ~{1}). Build in smaller sections."
 msgstr "網格對於多人遊戲來說過大（{0} 個格子，最多約 {1}）。請分成更小的部分建造。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(541)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(637)
 msgctxt "SmartFoundations,MP_Notice_TooManyConduits"
 msgid "Too many auto-connect belts/pipes for one multiplayer placement ({0}). Build in smaller sections."
 msgstr "單次多人放置的自動連接輸送帶/管道過多（{0}）。請分成更小的部分建造。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(535)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(631)
 msgctxt "SmartFoundations,MP_Notice_TooManyConduitsDebug"
 msgid "Smart!: too many auto-connect belts/pipes/wires for one multiplayer placement ({0}). Build in smaller sections."
 msgstr "Smart!：單次多人放置的自動連接輸送帶/管線/纜線過多（{0}）。請分小段建造。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(482)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(566)
 msgctxt "SmartFoundations,MP_Notice_WaterExtractorDeepWater"
 msgid "Every water extractor must be placed on deep water."
 msgstr "每台抽水機都必須放置在深水上。"
@@ -1927,12 +1967,12 @@ msgctxt "SmartFoundations,Module_DefaultName"
 msgid "Module {0}"
 msgstr "模組 {0}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(149)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(195)
 msgctxt "SmartFoundations,Notice_ConstructPayloadTooLarge"
 msgid "Placement too large ({0} KB). Build in smaller sections."
 msgstr "放置規模過大（{0} KB）。請分成更小的部分建造。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(306)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Core/Net/SFGameInstanceModule_NetHooks.cpp(382)
 msgctxt "SmartFoundations,Notice_SignSupportHeight"
 msgid "Sign supports must reach the mounting surface at a native pole height. Adjust height, spacing or steps."
 msgstr "標誌支撐必須以原生桿高度接觸安裝表面。請調整高度、間距或台階。"
@@ -1967,72 +2007,72 @@ msgctxt "SmartFoundations,P.BeltRoutingMode.TT"
 msgid "How auto-connected belts are shaped: Default, Curve, or Straight."
 msgstr "自動連接的輸送帶採用的形狀：預設、曲線或直線。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(135)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(137)
 msgctxt "SmartFoundations,P.BlueprintSpacingX"
 msgid "Blueprint Default X Spacing (m)"
 msgstr "藍圖預設 X 間距 (m)"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(136)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(138)
 msgctxt "SmartFoundations,P.BlueprintSpacingX.TT"
 msgid "Starting X gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
 msgstr "新藍圖建造工作階段的起始 X 間距（0-100 m）。零值表示緊貼；過短的間距可能導致沒有空間進行接縫連接。面板變更會覆蓋此設定以用於目前的工作階段。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(137)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(139)
 msgctxt "SmartFoundations,P.BlueprintSpacingY"
 msgid "Blueprint Default Y Spacing (m)"
 msgstr "藍圖預設 Y 間距 (m)"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(138)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(140)
 msgctxt "SmartFoundations,P.BlueprintSpacingY.TT"
 msgid "Starting Y gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
 msgstr "新藍圖建造工作階段的起始 Y 間距（0-100 m）。零值表示緊貼；過短的間距可能導致沒有空間進行接縫連接。面板變更會覆蓋此設定以用於目前的工作階段。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(139)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(141)
 msgctxt "SmartFoundations,P.BlueprintSpacingZ"
 msgid "Blueprint Default Z Spacing (m)"
 msgstr "藍圖預設 Z 間距 (m)"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(140)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(142)
 msgctxt "SmartFoundations,P.BlueprintSpacingZ.TT"
 msgid "Starting Z gap for a new blueprint build session (0-100 m). Zero tiles flush; short gaps may leave no room for seam connections. Panel changes override this for the current session."
 msgstr "新藍圖建造工作階段的起始 Z 間距（0-100 m）。零值表示緊貼；過短的間距可能導致沒有空間進行接縫連接。面板變更會覆蓋此設定以用於目前的工作階段。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(150)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(152)
 msgctxt "SmartFoundations,P.HUDPositionX"
 msgid "HUD Position X"
 msgstr "HUD 位置 X"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(151)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(153)
 msgctxt "SmartFoundations,P.HUDPositionX.TT"
 msgid "Horizontal position of the HUD on screen (0 = left edge, 1 = right edge)."
 msgstr "HUD 在螢幕上的水平位置（0 = 左邊緣，1 = 右邊緣）。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(152)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(154)
 msgctxt "SmartFoundations,P.HUDPositionY"
 msgid "HUD Position Y"
 msgstr "HUD 位置 Y"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(153)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(155)
 msgctxt "SmartFoundations,P.HUDPositionY.TT"
 msgid "Vertical position of the HUD on screen (0 = top, 1 = bottom)."
 msgstr "HUD 在螢幕上的垂直位置（0 = 頂部，1 = 底部）。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(148)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(150)
 msgctxt "SmartFoundations,P.HUDScale"
 msgid "HUD Scale"
 msgstr "HUD 縮放"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(149)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(151)
 msgctxt "SmartFoundations,P.HUDScale.TT"
 msgid "Size of the Smart! HUD overlay."
 msgstr "Smart! HUD 覆蓋層的大小。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(154)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(156)
 msgctxt "SmartFoundations,P.HUDTheme"
 msgid "HUD Theme"
 msgstr "HUD 主題"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(155)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(157)
 msgctxt "SmartFoundations,P.HUDTheme.TT"
 msgid "Color theme for the HUD: Default (FICSIT orange), Dark, Classic, High Contrast, Minimal, or Monochrome."
 msgstr "HUD 的色彩主題：預設（FICSIT 橘）、暗色、經典、高對比、極簡或單色。"
@@ -2217,6 +2257,16 @@ msgctxt "SmartFoundations,P.bAutoHoldOnGridChange.TT"
 msgid "Automatically lock the hologram in place after any grid change. Press the Hold key to release it."
 msgstr "在任何網格變更後自動將全息圖鎖定就位。按鎖定鍵以解除。"
 
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(135)
+msgctxt "SmartFoundations,P.bBlueprintPlacementSafetyLimit"
+msgid "Blueprint Placement Safety Limit"
+msgstr "藍圖放置安全限制"
+
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(136)
+msgctxt "SmartFoundations,P.bBlueprintPlacementSafetyLimit.TT"
+msgid "Client setting. Limits one multiplayer blueprint placement to approximately 2,000 buildings. Turning this off allows larger placements at your own risk: they can stall or crash the server, cause desynchronization, or disconnect players. Other placement and network safeguards still apply. Takes effect immediately."
+msgstr "用戶端設定。將多人遊戲中單次藍圖放置限制在約 2,000 個建築以內。關閉後可自行承擔風險嘗試更大的放置，但可能導致伺服器停滯或當機、不同步，或玩家斷線。其他放置與網路保護措施仍然有效。此設定立即生效。"
+
 #: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(85)
 msgctxt "SmartFoundations,P.bBlueprintSeamAutoConnectEnabled"
 msgid "Blueprint Seam Auto-Connect"
@@ -2327,42 +2377,42 @@ msgctxt "SmartFoundations,P.bScaleDaisyChainPower.TT"
 msgid "When Upgraded Power Connectors is unlocked, scaling factories and generators wires adjacent buildings together along the grid X axis."
 msgstr "解鎖升級版電力連接器後，縮放工廠和發電機會沿網格 X 軸將相鄰建築相互接線。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(165)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(167)
 msgctxt "SmartFoundations,P.bShowArrowLabels"
 msgid "Arrow Axis Labels"
 msgstr "箭頭軸標籤"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(166)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(168)
 msgctxt "SmartFoundations,P.bShowArrowLabels.TT"
 msgid "Show X/Y/Z axis labels on the direction arrows."
 msgstr "在方向箭頭上顯示 X/Y/Z 軸標籤。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(163)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(165)
 msgctxt "SmartFoundations,P.bShowArrowOrbit"
 msgid "Arrow Orbit Animation"
 msgstr "箭頭軌道動畫"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(164)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(166)
 msgctxt "SmartFoundations,P.bShowArrowOrbit.TT"
 msgid "Animate the arrows orbiting the hologram. Turn off for static arrows that still track you."
 msgstr "讓箭頭環繞全息圖做動畫。關閉以使用仍會追蹤你的靜態箭頭。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(161)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(163)
 msgctxt "SmartFoundations,P.bShowArrows"
 msgid "Show Direction Arrows"
 msgstr "顯示方向箭頭"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(162)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(164)
 msgctxt "SmartFoundations,P.bShowArrows.TT"
 msgid "Show X/Y/Z direction arrows on the building hologram."
 msgstr "在建築全息圖上顯示 X/Y/Z 方向箭頭。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(146)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(148)
 msgctxt "SmartFoundations,P.bShowHUD"
 msgid "Show HUD Overlay"
 msgstr "顯示 HUD"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(147)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(149)
 msgctxt "SmartFoundations,P.bShowHUD.TT"
 msgid "Show the Smart! overlay (grid, scale, and recipe info) while building."
 msgstr "建造時顯示 Smart! 覆蓋層（網格、縮放與配方資訊）。"
@@ -2892,22 +2942,22 @@ msgctxt "SmartFoundations,Restore_ApplyAndBuild"
 msgid "Apply & Build"
 msgstr "套用並建造"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1269)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1331)
 msgctxt "SmartFoundations,Restore_BeltTierLocked"
 msgid "Auto-connect {0} belt tier Mk{1} is not unlocked"
 msgstr "自動連接的 {0} 輸送帶等級 Mk{1} 尚未解鎖"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1199)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1261)
 msgctxt "SmartFoundations,Restore_BuildableLocked"
 msgid "{0} buildable '{1}' is not unlocked"
 msgstr "{0} 建築 '{1}' 尚未解鎖"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1192)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1254)
 msgctxt "SmartFoundations,Restore_BuildableMissing"
 msgid "{0} buildable '{1}' could not be resolved"
 msgstr "無法解析 {0} 建築 '{1}'"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendPowerConnections.cpp(259)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendPowerConnections.cpp(261)
 msgctxt "SmartFoundations,Restore_CableMissingIdentity"
 msgid "Saved power cable {0} lacks unambiguous endpoint identity. Re-import this layout from its original build."
 msgstr "儲存的纜線 {0} 缺乏明確的端點識別。請從原始建造重新匯入此佈局。"
@@ -2937,32 +2987,32 @@ msgctxt "SmartFoundations,Restore_Clipboard_UnknownSource"
 msgid "Extend"
 msgstr "延伸"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1221)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1283)
 msgctxt "SmartFoundations,Restore_ContextBuilding"
 msgid "Preset building"
 msgstr "預設建築"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1302)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1364)
 msgctxt "SmartFoundations,Restore_ContextComponent"
 msgid "component"
 msgstr "元件"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1301)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1363)
 msgctxt "SmartFoundations,Restore_ContextExtendPart"
 msgid "Extend {0} '{1}'"
 msgstr "延伸 {0} '{1}'"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1287)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1349)
 msgctxt "SmartFoundations,Restore_ContextMain"
 msgid "main"
 msgstr "主要"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1229)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1291)
 msgctxt "SmartFoundations,Restore_ContextProduction"
 msgid "Production"
 msgstr "製作"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1288)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1350)
 msgctxt "SmartFoundations,Restore_ContextToBuilding"
 msgid "to-building"
 msgstr "目標建築"
@@ -3112,7 +3162,7 @@ msgctxt "SmartFoundations,Restore_ModuleName_NoCapture"
 msgid "Capture a Smart Extend first"
 msgstr "請先擷取 Smart 延伸"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1327)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1389)
 msgctxt "SmartFoundations,Restore_MoreFailures"
 msgid "and {0} more"
 msgstr "另有 {0} 項失敗"
@@ -3147,7 +3197,7 @@ msgctxt "SmartFoundations,Restore_PanelLoadTimeout"
 msgid "The building preview did not become ready. Your saved preset is unchanged; select it again when the build gun is ready."
 msgstr "建造預覽未準備就緒。您的儲存預設未變更；請在 FICSIT 建造槍準備就緒後再次選擇。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1281)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1343)
 msgctxt "SmartFoundations,Restore_PipeTierLocked"
 msgid "Auto-connect {0} pipe tier Mk{1} is not unlocked"
 msgstr "自動連接的 {0} 管線等級 Mk{1} 尚未解鎖"
@@ -3162,42 +3212,42 @@ msgctxt "SmartFoundations,Restore_PresetName_Hint"
 msgid "New preset name"
 msgstr "新預設名稱"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(986)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1048)
 msgctxt "SmartFoundations,Restore_RecentArmed"
 msgid "Restore: {0} ({1}/{2}) - {3}"
 msgstr "還原: {0} ({1}/{2}) - {3}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(981)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1043)
 msgctxt "SmartFoundations,Restore_RecentKindGrid"
 msgid "grid preset"
 msgstr "網格預設"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(980)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1042)
 msgctxt "SmartFoundations,Restore_RecentKindModule"
 msgid "module"
 msgstr "模組"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1015)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1077)
 msgctxt "SmartFoundations,Restore_RecentNone"
 msgid "No recent restores this session - apply one from the Smart Panel first"
 msgstr "本次工作階段沒有最近的還原 - 請先在 Smart 面板中套用一個"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1251)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1313)
 msgctxt "SmartFoundations,Restore_RecipeIncompatible"
 msgid "Production recipe '{0}' is not valid for buildable '{1}'"
 msgstr "製作配方 '{0}' 對建築 '{1}' 無效"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1169)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1231)
 msgctxt "SmartFoundations,Restore_RecipeLocked"
 msgid "{0} recipe '{1}' is not unlocked"
 msgstr "{0} 配方 '{1}' 尚未解鎖"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1132)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1194)
 msgctxt "SmartFoundations,Restore_RecipeManagerUnavailable"
 msgid "Recipe manager is unavailable"
 msgstr "配方管理器不可用"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendService.cpp(1081)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Extend/SFExtendService.cpp(1087)
 msgctxt "SmartFoundations,Restore_ReconstructionFailed"
 msgid "Restore commit reconstruction failed"
 msgstr "還原提交重建失敗"
@@ -3247,7 +3297,7 @@ msgctxt "SmartFoundations,Restore_ShareModules"
 msgid "Share"
 msgstr "分享"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1124)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Restore/SFRestoreService.cpp(1186)
 msgctxt "SmartFoundations,Restore_SubsystemUnavailable"
 msgid "Smart subsystem is unavailable"
 msgstr "Smart 子系統不可用"
@@ -3372,12 +3422,12 @@ msgctxt "SmartFoundations,Role_Wires"
 msgid "wires"
 msgstr "電線"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(159)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(161)
 msgctxt "SmartFoundations,Sec.Arrows"
 msgid "Arrows"
 msgstr "箭頭"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(160)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(162)
 msgctxt "SmartFoundations,Sec.Arrows.TT"
 msgid "Directional arrows drawn on the building hologram."
 msgstr "繪製在建築全息圖上的方向箭頭。"
@@ -3422,12 +3472,12 @@ msgctxt "SmartFoundations,Sec.Building.TT"
 msgid "How Extend, auto-hold, and Apply behave while building."
 msgstr "建造時延伸、自動鎖定與套用的行為方式。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(144)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(146)
 msgctxt "SmartFoundations,Sec.HUD"
 msgid "HUD"
 msgstr "HUD"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(145)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Config/SmartFoundationsModConfiguration.cpp(147)
 msgctxt "SmartFoundations,Sec.HUD.TT"
 msgid "The on-screen Smart! overlay shown while you build."
 msgstr "建造時顯示於畫面上的 Smart! 覆蓋層。"
@@ -3462,7 +3512,7 @@ msgctxt "SmartFoundations,Sec.Power.TT"
 msgid "Automatically wire power between buildings and power poles as you build."
 msgstr "建造時在建築與電線桿之間自動接線電力。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1628)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1633)
 msgctxt "SmartFoundations,SignSupportValue_Auto"
 msgid "Auto"
 msgstr "自動"
@@ -3472,12 +3522,12 @@ msgctxt "SmartFoundations,SignSupportValue_None"
 msgid "None"
 msgstr "無"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Holograms/Core/SFSignSupportMode.cpp(194)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Holograms/Core/SFSignSupportMode.cpp(195)
 msgctxt "SmartFoundations,SignSupports_Auto"
 msgid "Sign supports: Auto"
 msgstr "標誌支撐：自動"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Holograms/Core/SFSignSupportMode.cpp(193)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Holograms/Core/SFSignSupportMode.cpp(194)
 msgctxt "SmartFoundations,SignSupports_None"
 msgid "Sign supports: None"
 msgstr "標誌支撐：無"
@@ -3812,12 +3862,12 @@ msgctxt "SmartFoundations,Tip_WallRotation"
 msgid "Turns this pipe or Hypertube wall support in native 45-degree steps. The grid and Auto-Connect follow the support's run direction. Native placement restrictions still apply."
 msgstr "以原生 45 度為單位旋轉此管線或超疾管壁掛架。網格與自動連接將跟隨支撐件的走向。原生放置限制仍然適用。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(965)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(977)
 msgctxt "SmartFoundations,UpgradeRow_DoubleWallOutlet"
 msgid "Double Wall Outlet Mk.{0}"
 msgstr "雙面電接頭 Mk.{0}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(961)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(973)
 msgctxt "SmartFoundations,UpgradeRow_WallOutlet"
 msgid "Wall Outlet Mk.{0}"
 msgstr "牆面電接頭 Mk.{0}"
@@ -3837,52 +3887,52 @@ msgctxt "SmartFoundations,Upgrade_AnchorUnsupported"
 msgid "Anchor buildable is not upgradeable"
 msgstr "錨點建築無法升級"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(829)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(841)
 msgctxt "SmartFoundations,Upgrade_AuditComplete"
 msgid "Audit Complete: {0} upgradeable found across {1} structures."
 msgstr "審計完成: 在 {1} 個結構中發現 {0} 個可升級項。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(830)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(842)
 msgctxt "SmartFoundations,Upgrade_AuditFailed"
 msgid "Audit failed or was canceled."
 msgstr "審計失敗或已取消。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(818)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(830)
 msgctxt "SmartFoundations,Upgrade_AuditProgress"
 msgid "Auditing world... {0}% ({1} scanned)"
 msgstr "審計世界... {0}%（{1} 已掃描）"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(160)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(164)
 msgctxt "SmartFoundations,Upgrade_Btn_Close"
 msgid "Close"
 msgstr "關閉"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(142)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(146)
 msgctxt "SmartFoundations,Upgrade_Btn_EntireMap"
 msgid "Entire Map"
 msgstr "整張地圖"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(141)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(145)
 msgctxt "SmartFoundations,Upgrade_Btn_Scan"
 msgid "Scan"
 msgstr "掃描"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(147)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(151)
 msgctxt "SmartFoundations,Upgrade_Btn_ScanNetwork"
 msgid "Scan Network"
 msgstr "掃描網路"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(157)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(161)
 msgctxt "SmartFoundations,Upgrade_Btn_Upgrade"
 msgid "UPGRADE"
 msgstr "升級"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(161)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(165)
 msgctxt "SmartFoundations,Upgrade_Btn_X"
 msgid "X"
 msgstr "X"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(159)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(163)
 msgctxt "SmartFoundations,Upgrade_CancelScan"
 msgid "Cancel Scan"
 msgstr "取消掃描"
@@ -3892,7 +3942,7 @@ msgctxt "SmartFoundations,Upgrade_CancelTarget"
 msgid "Cancel Selection"
 msgstr "取消選擇"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService.cpp(600)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService.cpp(667)
 msgctxt "SmartFoundations,Upgrade_Cancelled"
 msgid "Cancelled by user"
 msgstr "使用者已取消"
@@ -3902,7 +3952,7 @@ msgctxt "SmartFoundations,Upgrade_CancelledProgress"
 msgid "Upgrade cancelled: {0}/{1} completed"
 msgstr "升級已取消：已完成 {0}/{1}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(981)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(993)
 msgctxt "SmartFoundations,Upgrade_ClickToSelect"
 msgid "Click to select {0} for upgrade"
 msgstr "點擊選擇 {0} 進行升級"
@@ -3927,32 +3977,32 @@ msgctxt "SmartFoundations,Upgrade_CostUnavailable"
 msgid "{0} × {1} Mk.{2} → Mk.{3}\n(Cost unavailable)"
 msgstr "{0} × {1} Mk.{2} → Mk.{3}\n(所需材料不可用)"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(401)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(405)
 msgctxt "SmartFoundations,Upgrade_CountColumn"
 msgid "Count"
 msgstr "數量"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(150)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(154)
 msgctxt "SmartFoundations,Upgrade_CrossSplitters"
 msgid "Cross Splitters/Mergers"
 msgstr "穿越分流器/匯流器"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(151)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(155)
 msgctxt "SmartFoundations,Upgrade_CrossStorage"
 msgid "Cross Storage Containers"
 msgstr "穿越儲存貨櫃"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(152)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(156)
 msgctxt "SmartFoundations,Upgrade_CrossTrains"
 msgid "Cross Train Platforms"
 msgstr "穿越火車月台"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(569)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(573)
 msgctxt "SmartFoundations,Upgrade_ErrExecution"
 msgid "Error: Execution service not available"
 msgstr "錯誤：執行服務不可用"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(715)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(727)
 msgctxt "SmartFoundations,Upgrade_ErrRCO"
 msgid "Error: server connection unavailable"
 msgstr "錯誤：伺服器連線不可用"
@@ -3962,12 +4012,12 @@ msgctxt "SmartFoundations,Upgrade_ErrRCOScan"
 msgid "Error: server connection unavailable"
 msgstr "錯誤：伺服器連線不可用"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(559)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(563)
 msgctxt "SmartFoundations,Upgrade_ErrSubsystem"
 msgid "Error: Subsystem not available"
 msgstr "錯誤：子系統不可用"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(144)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(148)
 msgctxt "SmartFoundations,Upgrade_EstimatedCost"
 msgid "Estimated Cost"
 msgstr "預估所需材料"
@@ -3987,52 +4037,47 @@ msgctxt "SmartFoundations,Upgrade_InvalidPowerClass"
 msgid "Power pole/wire cast failed for {0}"
 msgstr "{0} 的電線桿/纜線轉換失敗"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(406)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(410)
 msgctxt "SmartFoundations,Upgrade_MaterialsStep"
 msgid "3. Review materials"
 msgstr "3. 檢視材料"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(59)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(70)
 msgctxt "SmartFoundations,Upgrade_MinerCannotBind"
 msgid "The native Miner replacement could not bind to the selected extractor."
 msgstr "原生採礦機替換件無法綁定至選取的採礦機。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(110)
-msgctxt "SmartFoundations,Upgrade_MinerConstructionFailed"
-msgid "The native Miner replacement could not be constructed."
-msgstr "無法建造原生採礦機替換件。"
-
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(51)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(62)
 msgctxt "SmartFoundations,Upgrade_MinerInvalidAim"
 msgid "The selected Miner has no valid native replacement aim."
 msgstr "選取的採礦機沒有有效的原生替換瞄準點。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(32)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(43)
 msgctxt "SmartFoundations,Upgrade_MinerMissingContext"
 msgid "The selected Miner is missing its native resource or construction context."
 msgstr "選取的採礦機缺少其原生資源或建造上下文。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(95)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(106)
 msgctxt "SmartFoundations,Upgrade_MinerMissingInventory"
 msgid "The selected Miner is missing its native factory inventories."
 msgstr "選取的採礦機缺少其原生工廠庫存。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(37)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(48)
 msgctxt "SmartFoundations,Upgrade_MinerMissingPreview"
 msgid "The native Miner replacement preview could not be created."
 msgstr "無法建立原生採礦機替換件的預覽。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(72)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(83)
 msgctxt "SmartFoundations,Upgrade_MinerPlacementIncomplete"
 msgid "The native Miner replacement placement could not finish."
 msgstr "原生採礦機替換件的放置無法完成。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(81)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(92)
 msgctxt "SmartFoundations,Upgrade_MinerPlacementRejected"
 msgid "Native placement rejected the Miner replacement."
 msgstr "原生放置拒絕了採礦機替換件。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(76)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService_Miner.cpp(87)
 msgctxt "SmartFoundations,Upgrade_MinerSelectionLost"
 msgid "The native Miner replacement lost its selected extractor during placement."
 msgstr "原生採礦機替換件在放置過程中失去了選取的採礦機。"
@@ -4047,7 +4092,7 @@ msgctxt "SmartFoundations,Upgrade_NearestTier"
 msgid "Nearest Mk.{0}: {1}m {2}"
 msgstr "最近的 Mk.{0}：{1}m {2}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(406)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(410)
 msgctxt "SmartFoundations,Upgrade_NetCostTitle"
 msgid "Net cost"
 msgstr "淨成本"
@@ -4057,12 +4102,12 @@ msgctxt "SmartFoundations,Upgrade_NoAnchor"
 msgid "No anchor buildable provided"
 msgstr "未提供錨點建築"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(462)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(466)
 msgctxt "SmartFoundations,Upgrade_NoAudit"
 msgid "No audit snapshot. Press Scan to start."
 msgstr "無審計快照。按掃描開始。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(538)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(542)
 msgctxt "SmartFoundations,Upgrade_NoFamily"
 msgid "No family selected - scan first"
 msgstr "未選擇類別 — 請先掃描"
@@ -4087,12 +4132,12 @@ msgctxt "SmartFoundations,Upgrade_NoPlayerLoc"
 msgid "Cannot find player location"
 msgstr "無法找到玩家位置"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(615)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(619)
 msgctxt "SmartFoundations,Upgrade_NoValidTarget"
 msgid "{0} Mk.{1}: No valid upgrade target selected"
 msgstr "{0} Mk.{1}: 未選擇有效的升級目標"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService.cpp(578)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Upgrade/SFUpgradeExecutionService.cpp(633)
 msgctxt "SmartFoundations,Upgrade_PartialInsufficientMaterials"
 msgid "Ran out of materials - partial upgrade completed"
 msgstr "材料不足 - 部分升級已完成"
@@ -4107,12 +4152,12 @@ msgctxt "SmartFoundations,Upgrade_ProgressCount"
 msgid "Upgrading... {0}/{1} ({2}%)"
 msgstr "升級中... {0}/{1} ({2}%)"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(140)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(144)
 msgctxt "SmartFoundations,Upgrade_RadiusLabel"
 msgid "Radius (m):"
 msgstr "半徑 (m):"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(331)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(335)
 msgctxt "SmartFoundations,Upgrade_Ready"
 msgid "Ready"
 msgstr "就緒"
@@ -4127,12 +4172,12 @@ msgctxt "SmartFoundations,Upgrade_ReselectTarget"
 msgid "Select a valid network target before scanning."
 msgstr "掃描前請選擇有效的網路目標。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(401)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(405)
 msgctxt "SmartFoundations,Upgrade_ResultsStep"
 msgid "2. Results and target tier"
 msgstr "2. 結果與目標等級"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(258)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(262)
 msgctxt "SmartFoundations,Upgrade_ScanCosts"
 msgid "Scan network to see costs"
 msgstr "掃描網路以查看所需材料"
@@ -4147,7 +4192,7 @@ msgctxt "SmartFoundations,Upgrade_Scanning"
 msgid "Scanning network..."
 msgstr "正在掃描網路..."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(371)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(375)
 msgctxt "SmartFoundations,Upgrade_ScopeStep"
 msgid "1. Scope and scan"
 msgstr "1. 範圍與掃描"
@@ -4157,12 +4202,12 @@ msgctxt "SmartFoundations,Upgrade_SelectAndScan"
 msgid "Select a target, then press Scan Network"
 msgstr "選擇目標，然後按下掃描網路"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(224)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(228)
 msgctxt "SmartFoundations,Upgrade_SelectFamily"
 msgid "Select a family to see costs"
 msgstr "選擇一個系列以查看所需材料"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(548)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(552)
 msgctxt "SmartFoundations,Upgrade_SelectRow"
 msgid "Select a row first to upgrade"
 msgstr "請先選擇一列進行升級"
@@ -4182,27 +4227,32 @@ msgctxt "SmartFoundations,Upgrade_SelectTargetTier"
 msgid "Select target tier"
 msgstr "選擇目標等級"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(605)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(609)
 msgctxt "SmartFoundations,Upgrade_SelectTier"
 msgid "Select a target tier from the dropdown"
 msgstr "從下拉選單中選擇目標等級"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(1006)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(1018)
 msgctxt "SmartFoundations,Upgrade_Separator"
 msgid " x "
 msgstr " x "
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(466)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(470)
 msgctxt "SmartFoundations,Upgrade_SetRadiusScan"
 msgid "Set radius and press Scan to find items"
 msgstr "設定半徑並按掃描以查找項目"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(136)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(627)
+msgctxt "SmartFoundations,Upgrade_SynchronizingWorld"
+msgid "Connecting to the current world; try again shortly"
+msgstr "正在連線至目前的世界；請稍後再試"
+
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(140)
 msgctxt "SmartFoundations,Upgrade_Tab_Network"
 msgid "Network"
 msgstr "網路"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(135)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(139)
 msgctxt "SmartFoundations,Upgrade_Tab_Radius"
 msgid "Radius"
 msgstr "半徑"
@@ -4227,7 +4277,7 @@ msgctxt "SmartFoundations,Upgrade_TargetSelected"
 msgid "Network target selected. Press Scan to inspect its network."
 msgstr "已選擇網路目標。按下掃描以檢查其網路。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(143)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(147)
 msgctxt "SmartFoundations,Upgrade_TargetTier"
 msgid "Target Tier:"
 msgstr "目標等級:"
@@ -4237,22 +4287,22 @@ msgctxt "SmartFoundations,Upgrade_TierRowTooltip"
 msgid "Upgrade only Mk.{0} in this network"
 msgstr "只升級此網路中的 Mk.{0}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(131)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(135)
 msgctxt "SmartFoundations,Upgrade_Title"
 msgid "Smart! Upgrade Panel"
 msgstr "Smart! 升級面板"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(661)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(670)
 msgctxt "SmartFoundations,Upgrade_TraversalEmpty"
 msgid "No matching traversal buildables remain; scan again"
 msgstr "沒有剩餘的相符網路可建造物；請重新掃描"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(640)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(649)
 msgctxt "SmartFoundations,Upgrade_TraversalExpired"
 msgid "Traversal results are no longer valid; scan again"
 msgstr "網路掃描結果已失效；請重新掃描"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(254)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(258)
 msgctxt "SmartFoundations,Upgrade_TraversalHint"
 msgid "Aim at a belt, pipe, or pole to scan its network"
 msgstr "瞄準輸送帶、管線或電線桿以掃描其網路"
@@ -4262,17 +4312,17 @@ msgctxt "SmartFoundations,Upgrade_UnsupportedFamily"
 msgid "Unsupported family type: {0}"
 msgstr "不支援的類型：{0}"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(1032)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(1044)
 msgctxt "SmartFoundations,Upgrade_UpgradeableCount"
 msgid "({0} upgradeable)"
 msgstr "（{0} 可升級）"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(684)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(695)
 msgctxt "SmartFoundations,Upgrade_Upgrading"
 msgid "Upgrading {0} Mk.{1} → Mk.{2}..."
 msgstr "正在升級 {0} Mk.{1} → Mk.{2}..."
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(688)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SmartUpgradePanel.cpp(699)
 msgctxt "SmartFoundations,Upgrade_UpgradingSweep"
 msgid "Upgrading {0} → Mk.{1}..."
 msgstr "正在升級 {0} → Mk.{1}..."
@@ -4372,7 +4422,7 @@ msgctxt "SmartFoundations,Walk_EndWarning"
 msgid "End this walk? The unbuilt path and staged segment edits will be discarded."
 msgstr "結束此行走？未建造的路徑與暫存段落編輯將被捨棄。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkService.cpp(1078)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkService.cpp(1053)
 msgctxt "SmartFoundations,Walk_ExistingEndpointChanged"
 msgid "An existing endpoint moved, was removed, or is now occupied."
 msgstr "現有的端點已移動、被移除或目前已被佔用。"
@@ -4387,11 +4437,6 @@ msgctxt "SmartFoundations,Walk_Invalid_TooLong"
 msgid "segment {0} too long ({1}m > {2}m)"
 msgstr "段 {0} 過長 ({1}m > {2}m)"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Public/Shared/Conduits/SFConveyanceShape.h(53)
-msgctxt "SmartFoundations,Walk_Invalid_TooSteep"
-msgid "segment {0} too steep ({1}deg > 30deg)"
-msgstr "段 {0} 過陡 ({1}度 > 30度)"
-
 #: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/UI/SFWalkPanelWidget.cpp(560)
 msgctxt "SmartFoundations,Walk_Keep"
 msgid "Keep Walking"
@@ -4402,7 +4447,7 @@ msgctxt "SmartFoundations,Walk_Lbl_Direction"
 msgid "Direction"
 msgstr "方向"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1705)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1710)
 msgctxt "SmartFoundations,Walk_Lbl_PipeStyle"
 msgid "Pipe Style"
 msgstr "管線樣式"
@@ -4422,27 +4467,27 @@ msgctxt "SmartFoundations,Walk_Opt_Auto"
 msgid "Auto"
 msgstr "自動"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1717)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1722)
 msgctxt "SmartFoundations,Walk_Opt_Auto2D"
 msgid "Auto 2D"
 msgstr "自動 2D"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1775)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1780)
 msgctxt "SmartFoundations,Walk_Opt_Backward"
 msgid "Backward"
 msgstr "向後"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1706)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1711)
 msgctxt "SmartFoundations,Walk_Opt_Clean"
 msgid "Clean"
 msgstr "簡潔"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1669)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1674)
 msgctxt "SmartFoundations,Walk_Opt_Curve"
 msgid "Curve"
 msgstr "曲線"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1666)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1671)
 msgctxt "SmartFoundations,Walk_Opt_Default"
 msgid "Default"
 msgstr "預設"
@@ -4457,62 +4502,62 @@ msgctxt "SmartFoundations,Walk_Opt_HToV"
 msgid "H->V"
 msgstr "水平→垂直"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1726)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1731)
 msgctxt "SmartFoundations,Walk_Opt_Noodle"
 msgid "Noodle"
 msgstr "麵條式"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1706)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1711)
 msgctxt "SmartFoundations,Walk_Opt_Normal"
 msgid "Normal"
 msgstr "正常"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1672)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Subsystem/SFSubsystem_Config.cpp(1677)
 msgctxt "SmartFoundations,Walk_Opt_Straight"
 msgid "Straight"
 msgstr "直線"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(274)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(275)
 msgctxt "SmartFoundations,Walk_ResumeAimEnd"
 msgid "Aim at an exposed end of the existing run."
 msgstr "瞄準現有路線的裸露端點。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(295)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(296)
 msgctxt "SmartFoundations,Walk_ResumeAmbiguousEnd"
 msgid "More than one endpoint matches this attachment."
 msgstr "有多個端點符合此附件。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(278)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(279)
 msgctxt "SmartFoundations,Walk_ResumeExcludedAttachment"
 msgid "This endpoint belongs to an excluded wall or floor attachment."
 msgstr "此端點屬於被排除的牆面或地板附件。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(306)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(307)
 msgctxt "SmartFoundations,Walk_ResumeHorizontalEnd"
 msgid "Select a horizontal endpoint for Walking; rise is available on the continuation."
 msgstr "請為「行走」選擇水平端點；上升功能可在後續延伸段使用。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(319)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(320)
 msgctxt "SmartFoundations,Walk_ResumeInvalidGrid"
 msgid "The endpoint cross-section is occupied, irregular or ambiguous."
 msgstr "端點橫截面已被佔用、不規則或存在歧義。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(329)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(330)
 msgctxt "SmartFoundations,Walk_ResumeMissingAnchor"
 msgid "The native support snap anchor is unavailable."
 msgstr "標準支撐吸附錨點不可用。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(249)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(250)
 msgctxt "SmartFoundations,Walk_ResumeNoAttachment"
 msgid "Walking cannot resume from a wall or floor attachment."
 msgstr "「行走」無法從牆面或地板附件繼續。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(298)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(299)
 msgctxt "SmartFoundations,Walk_ResumeTooManyEnds"
 msgid "Too many nearby endpoints; select a smaller cross-section."
 msgstr "附近端點過多；請選擇較小的橫截面。"
 
-#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(302)
+#: Mods/GameFeatures/SmartFoundations/Source/SmartFoundations/Private/Features/Walk/SFWalkExistingOrigin.cpp(303)
 msgctxt "SmartFoundations,Walk_ResumeUnoccupiedEnd"
 msgid "Select an unoccupied conduit endpoint."
 msgstr "請選擇未被佔用的導管端點。"

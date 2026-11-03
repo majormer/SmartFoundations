@@ -77,7 +77,7 @@
     "source": "## Where to change connections",
     "source_hash": "151edf3476102e2eed39483524478ba90aaead8959c67a1dfe1fcf1d6a0112d5"
   },
-  "Auto-Connect:4": {
+  "Auto-Connect:56": {
     "page": "Auto-Connect",
     "position": 8,
     "source": "Open **K → Scaling** and use the applicable **Auto-Connect** section for the held buildable. On supported logistics buildables, `U` opens connection settings. Global defaults are in **Options → Mod Settings → Smart!**; the current preview's choices are in the Panel. Connection preferences update live, independently of **Apply placement immediately**.",
@@ -119,209 +119,233 @@
     "source": "See the step-by-step [Lift-assisted Auto-Connect](Lift-Assisted-Auto-Connect) guide.",
     "source_hash": "e298b5a94ff81e994527adc768d5e9764cc98d01ecb1dd6ea12f6dca747287fd"
   },
-  "Auto-Connect:11": {
+  "Auto-Connect:47": {
     "page": "Auto-Connect",
     "position": 22,
+    "source": "### Distributor branches",
+    "source_hash": "bfcb0d7bcbf0b5b36a80dd16a2dac958a4db4fc0261b34174dd132215ae37e01"
+  },
+  "Auto-Connect:48": {
+    "page": "Auto-Connect",
+    "position": 24,
+    "source": "A splitter or merger branch must face the machine connection it serves. Smart! permits one branch per factory and does not send two branches toward the same side of a machine row. Opposed machine rows can use opposed branches. These rules also apply to Smart, Programmable and Priority variants. Rotate or reposition the distributor if the desired port faces away; an unused port facing away is normal and does not itself produce a warning.",
+    "source_hash": "59bd907b72a7a1bd727a61b3bb63c228bae6f45d96d4267b1fa73010ed0ca1df"
+  },
+  "Auto-Connect:11": {
+    "page": "Auto-Connect",
+    "position": 26,
     "source": "### Lift-assisted machine connections",
     "source_hash": "0a34e86adb49eda67d4fe0bbc824c96093c2072dcaba71949f040cd5c6c89ea7"
   },
   "Auto-Connect:12": {
     "page": "Auto-Connect",
-    "position": 24,
+    "position": 28,
     "source": "Choose **Belts Only** (default), **Lift at Distributor** or **Lift at Building** in the Panel or global Belt Auto-Connect settings. The lift options handle the height difference while keeping the flat belt level at the machine connection. Use stagger and Z scaling to place splitters or mergers at different heights and distances along a Manufacturer line.",
     "source_hash": "9f712d81a0b62f7d0a2412aa9c94353e01fa6ef0d7e34ea6e4118bf9cfe4e5be"
   },
   "Auto-Connect:13": {
     "page": "Auto-Connect",
-    "position": 26,
+    "position": 30,
     "source": "Smart reuses the existing port-selection rules, preserves flow and charges for the new lifts and belts. Matching native direct docks need no extra belt and do not charge for one. A lift does not bypass unlocks, native attachment rules or an invalid route.",
     "source_hash": "3cb5af5db66edee73f25dda845b455c192cdfdddbcb971ebd4e9f33c31eab717"
   },
   "Auto-Connect:39": {
     "page": "Auto-Connect",
-    "position": 28,
+    "position": 32,
     "source": "![Lift at Building: cyan lift and belt previews join the raised splitters to the existing Constructor inputs.](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/lift-at-building-side.png)",
     "source_hash": "80f59b4b84f1452a31dabd389dfbf2297aeceaccdb4bd27bba0ea1f1a9bd97b8"
   },
   "Auto-Connect:40": {
     "page": "Auto-Connect",
-    "position": 30,
+    "position": 34,
     "source": "Lift at Building: cyan lift and belt previews join the raised splitters to the existing Constructor inputs.",
     "source_hash": "1ced53444733c10815306ec5b19b6293e5ff5ae26304e3acec0cc3d67759a354"
   },
   "Auto-Connect:14": {
     "page": "Auto-Connect",
-    "position": 32,
+    "position": 36,
     "source": "## Pipe Auto-Connect",
     "source_hash": "593c5c2da35af5043c31c9ba6d976aa575ec4ce89ac7a0e7badd54188cd80e3b"
   },
   "Auto-Connect:15": {
     "page": "Auto-Connect",
-    "position": 34,
+    "position": 38,
     "source": "Use Pipe Auto-Connect when scaling:",
     "source_hash": "9598a3303c2e20d1c7a463006a7c825cd7edbd41564f80791bb73b9d6864e6bd"
   },
   "Auto-Connect:16": {
     "page": "Auto-Connect",
-    "position": 36,
+    "position": 40,
     "source": "- Pipe junctions.\n- Pipeline supports (ground and wall).\n- Fluid machines.\n- Fluid buffers.",
     "source_hash": "451b2b73e6765f52f924670de39f68c0e4b4df7697019f39a8a71f76a2b19870"
   },
   "Auto-Connect:17": {
     "page": "Auto-Connect",
-    "position": 38,
+    "position": 42,
     "source": "Smart! can preview pipe connections where the pipe endpoints are compatible.",
     "source_hash": "f6271bdf04bea2c1519325826aaf51f0b93c7b703d2b0e52eca9d9f6089ca14a"
   },
-  "Auto-Connect:18": {
+  "Auto-Connect:57": {
     "page": "Auto-Connect",
-    "position": 40,
+    "position": 44,
     "source": "**Scaled pipeline supports build a pipe run.** When you scale a line of Pipeline Supports or Pipeline Wall Supports, Smart! plumbs a connected pipe run between the copies — the same way a scaled line of Conveyor Poles builds a belt run. Fluid flows through the whole run, and each support's own snap point stays free, so you can still connect a pipe to it by hand. The ground support's height and its top-piece angle carry across the whole line, so a sloped run stays consistent.",
     "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01"
   },
   "Auto-Connect:19": {
     "page": "Auto-Connect",
-    "position": 42,
+    "position": 46,
     "source": "Generated pipes inherit paint from a connected source pipe. A fitting inherits paint only when its connected pipes agree; moving a preview to a connection with no paint source restores its original paint.",
     "source_hash": "9b599b8c5663d27daabe71c7a12d577787a584b0e18efd0deb87fb4bb1965ef8"
   },
   "Auto-Connect:20": {
     "page": "Auto-Connect",
-    "position": 44,
+    "position": 48,
     "source": "Connection settings are live: changing pipe tier, style or routing refreshes the preview immediately. **Apply placement immediately** controls grid geometry, not these preferences.",
     "source_hash": "3b6b4230a7d520c47510be8f7edcbfcaf8c7eaf8d85986434cef029c89bb99d6"
   },
   "Auto-Connect:41": {
     "page": "Auto-Connect",
-    "position": 46,
+    "position": 50,
     "source": "![A rotated Pipeline Wall Support grid with its connecting pipe preview.](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/pipe-wall-rotation.png)",
     "source_hash": "ee658170abdaf5039d77678e8a6bb57d81e278fa3b2355c1f0723da241830dc4"
   },
   "Auto-Connect:42": {
     "page": "Auto-Connect",
-    "position": 48,
+    "position": 52,
     "source": "A rotated Pipeline Wall Support grid with its connecting pipe preview.",
     "source_hash": "cbf7804fa372d7af84aa1040726b46122ed4dd7f3d8cb0d6118022bb493afcb1"
   },
+  "Auto-Connect:50": {
+    "page": "Auto-Connect",
+    "position": 54,
+    "source": "### Pipe junction branches",
+    "source_hash": "a731c462366f0c155a14546a1265f77d5e93778036e1ebd4a44e669ff5112e22"
+  },
+  "Auto-Connect:51": {
+    "page": "Auto-Connect",
+    "position": 56,
+    "source": "Pipe junction branches follow the same facing and machine-side rules. T-junction and cross-junction ports retain their actual directions when rotated. Smart! skips an unsuitable branch while retaining valid connections. Route length and conveyor slope checks use the applicable native construction limits, rather than a universal 25 m pipe or 30-degree belt limit.",
+    "source_hash": "0a29d3c9b8ec32dedec575d19408d9bb4da0cbb09a58b8d2ed2dc2c0f3f833c7"
+  },
   "Auto-Connect:21": {
     "page": "Auto-Connect",
-    "position": 50,
+    "position": 58,
     "source": "## Hyper Tube Auto-Connect",
     "source_hash": "4bcc46f7a3e328199f2b10ea31239d134d1815f33bf0911b2c5020959c930f54"
   },
   "Auto-Connect:22": {
     "page": "Auto-Connect",
-    "position": 52,
+    "position": 60,
     "source": "Use Hyper Tube Auto-Connect when scaling:",
     "source_hash": "769de2e6a447e43cb5b0f3f20efe81a38677c471e9fb127096e5191555e88eae"
   },
   "Auto-Connect:23": {
     "page": "Auto-Connect",
-    "position": 54,
+    "position": 62,
     "source": "- Stackable Hypertube supports.\n- Hypertube wall supports.",
     "source_hash": "9509092563a14c6134eb046c115666dd6ede27a509fc04a0fc084c3074d1ee23"
   },
-  "Auto-Connect:24": {
+  "Auto-Connect:58": {
     "page": "Auto-Connect",
-    "position": 56,
+    "position": 64,
     "source": "**Scaled hyper tube supports build a hyper tube run.** When you scale a line of Stackable Hyper Tube Supports, Smart! lays a connected hyper tube run between the copies — the same way a scaled line of Conveyor Poles builds a belt run or Pipeline Supports build a pipe run. The run follows the line's spacing and height and can climb steeply, and each support's own snap point stays free, so you can still connect a hyper tube to it by hand.",
     "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455"
   },
-  "Auto-Connect:25": {
+  "Auto-Connect:59": {
     "page": "Auto-Connect",
-    "position": 58,
+    "position": 66,
     "source": "Hyper Tube Auto-Connect has its **own enable toggle and routing mode**, independent from pipes — set them from the Smart Panel, the in-build Auto-Connect settings (hold `U`), or the mod config. See [Settings Reference](Settings-Reference).",
     "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213"
   },
   "Auto-Connect:26": {
     "page": "Auto-Connect",
-    "position": 60,
+    "position": 68,
     "source": "## Rotated wall-support runs",
     "source_hash": "1ed944560d5414e3cbc52bbb053caaeb30e3d2554461fbc7b3e995ae72bd380e"
   },
-  "Auto-Connect:27": {
+  "Auto-Connect:60": {
     "page": "Auto-Connect",
-    "position": 62,
+    "position": 70,
     "source": "Pipeline and Hypertube wall-support children follow the parent's full rotation. The Panel's **Wall rotation** offers native **45° steps**, including a vertical run. This is separate from grid Rotation, which bends a sequence of copies.",
     "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce"
   },
   "Auto-Connect:28": {
     "page": "Auto-Connect",
-    "position": 64,
+    "position": 72,
     "source": "In Building Relative controls, Y follows the rotated wall run. In Player Relative controls, vertical input follows the most vertical supported direction: for a vertical wall run, **X+Z + wheel** grows the run vertically while **Z + wheel** grows sideways. The Panel retains its X/Y/Z columns; use the arrows to see those axes. Conveyor wall connectors retain their native orientation restrictions and use lifts for vertical transport.",
     "source_hash": "26fa6bf4a9d6424f1ff0a41750fc6c60f27cb81e925e6b367f3171e04ab2b54c"
   },
   "Auto-Connect:43": {
     "page": "Auto-Connect",
-    "position": 66,
+    "position": 74,
     "source": "![Hypertube Wall Support copies retain the selected angle, with a connecting route preview.](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/hypertube-wall-rotation.png)",
     "source_hash": "b72796f1f638558d9e0d9bdf7219779c715c021ef46e91f7a0fd9fee93372503"
   },
   "Auto-Connect:44": {
     "page": "Auto-Connect",
-    "position": 68,
+    "position": 76,
     "source": "Hypertube Wall Support copies retain the selected angle, with a connecting route preview.",
     "source_hash": "c2d94daaad1b927d14f65254110ff3176d553cfa713a2f8cec1c04c8cbd0dca1"
   },
   "Auto-Connect:29": {
     "page": "Auto-Connect",
-    "position": 70,
+    "position": 78,
     "source": "## Power Auto-Connect",
     "source_hash": "ecf2c3cde4169a7cf913195eefc2533e25177e426344bd83da216caf62ed689b"
   },
   "Auto-Connect:30": {
     "page": "Auto-Connect",
-    "position": 72,
+    "position": 80,
     "source": "Use Power Auto-Connect when scaling:",
     "source_hash": "dea8aa219d4ab2b7dfa5f5e2f0c171797335b26cabed26bb996f151f82e81abb"
   },
   "Auto-Connect:31": {
     "page": "Auto-Connect",
-    "position": 74,
+    "position": 82,
     "source": "- Power poles.\n- Single- and double-sided wall outlets, Mk.1-Mk.3.\n- Rows of powered machines.",
     "source_hash": "92b4c8c975e07bab9c4ad69e8839c105cb946807f4f70b832b5bf6e775d2f68f"
   },
   "Auto-Connect:32": {
     "page": "Auto-Connect",
-    "position": 76,
+    "position": 84,
     "source": "Smart! can connect poles to nearby poles and, depending on settings and capacity, connect machines to poles. Auto mode joins a continuous chain across horizontal and vertical outlet grids. Double-sided outlets count each face's available slots separately and can supply nearby unconnected buildings from either face. Native cable range and unlock-dependent socket capacities still apply.",
     "source_hash": "d67c868a7c26da87f9d256f87a153278262980fb262941b5baa5f820741ea179"
   },
   "Auto-Connect:33": {
     "page": "Auto-Connect",
-    "position": 78,
+    "position": 86,
     "source": "## If A Connection Is Missing",
     "source_hash": "17f9a63d245f36a9068f81d9b54a6fdbe44a0ceadd709d047e613cc81679edda"
   },
   "Auto-Connect:34": {
     "page": "Auto-Connect",
-    "position": 80,
+    "position": 88,
     "source": "Check:",
     "source_hash": "e00f42e49dda4b65cf2b547e95b07a6dd717ef0af5d4e35c8952c44433a91da1"
   },
   "Auto-Connect:35": {
     "page": "Auto-Connect",
-    "position": 82,
+    "position": 90,
     "source": "- Auto-Connect is enabled in the Smart Panel.\n- The belt, pipe, or power tier is available.\n- The distance is reasonable.\n- The connectors face compatible directions.\n- Power poles still have free connection slots.",
     "source_hash": "aee868586321f1e3f988de37aaee67f9f9cdfe2776d22fe4aa8cf27e36f13515"
   },
   "Auto-Connect:36": {
     "page": "Auto-Connect",
-    "position": 84,
+    "position": 92,
     "source": "Some layouts still need a manual connection afterward. That is normal.",
     "source_hash": "56919ffdbacf58c3d8fb01e30535ecf80444214023fd38b4fb379576099bb3f6"
   },
   "Auto-Connect:37": {
     "page": "Auto-Connect",
-    "position": 86,
+    "position": 94,
     "source": "---",
     "source_hash": "cb3f91d54eee30e53e35b2b99905f70f169ed549fd78909d3dac2defc9ed8d3b"
   },
-  "Auto-Connect:45": {
+  "Auto-Connect:55": {
     "page": "Auto-Connect",
-    "position": 88,
-    "source": "_Last updated: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89"
+    "position": 96,
+    "source": "_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0 (release draft)_\n",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Blueprints:0": {
     "page": "Blueprints",
@@ -425,11 +449,11 @@
     "source": "Each copy stays independently dismantlable. Within a native Designer, permitted Smart construction belongs to that Designer; Smart does not grant permission to place a building the Designer rejects.",
     "source_hash": "9a28188236d772506d51ad175602fc4c4009ffcbd01130fb0824fc5f4e1f1bf6"
   },
-  "Blueprints:17": {
+  "Blueprints:34": {
     "page": "Blueprints",
     "position": 34,
-    "source": "The safe construction-payload limit also applies to Blueprint grids. A refused oversized placement keeps its preview: reduce the grid and build in sections. For a large vanilla Blueprint placement, disable [Smart Assistance](Smart-Assistance) and select it again.",
-    "source_hash": "540e7f14c64d49d7f11fb6b7090a1475087984b4955b0dccb93ca481787d4236"
+    "source": "**Blueprint Placement Safety Limit** under Building Behavior is enabled by default. For a remote multiplayer client, it blocks a Blueprint grid estimated above 2,000 buildings, counting the original and all copies. You can disable this setting live to attempt a larger placement, with increased freeze, disconnect and failure risk. Normal material, placement and construction-payload checks still apply. Build in smaller sections if a placement is refused.",
+    "source_hash": "60707b2c9e66e6d33812f6b75b700b1d1cfafde4fcb92a54f5847b69c82a8ac8"
   },
   "Blueprints:18": {
     "page": "Blueprints",
@@ -509,11 +533,11 @@
     "source": "---",
     "source_hash": "cb3f91d54eee30e53e35b2b99905f70f169ed549fd78909d3dac2defc9ed8d3b"
   },
-  "Blueprints:33": {
+  "Blueprints:35": {
     "page": "Blueprints",
     "position": 62,
-    "source": "_Last updated: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89"
+    "source": "_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0 (release draft)_\n",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Buildable-Gallery:0": {
     "page": "Buildable-Gallery",
@@ -983,17 +1007,17 @@
     "source": "## Supported Game Version",
     "source_hash": "c32303765234bc53799ff75a217ea02031605f7b3bdb1efe9c32cbf376756e4d"
   },
-  "Compatibility-and-Multiplayer:3": {
+  "Compatibility-and-Multiplayer:23": {
     "page": "Compatibility-and-Multiplayer",
     "position": 6,
-    "source": "Smart! 35.0.0 targets **Satisfactory 1.2.4 / CL 502094 or newer** and **SML 3.12.x**. Update the game and mod loader before installing. Older game builds are unsupported.",
-    "source_hash": "67e479ca52c59b7506d6acd2ace2bb75b701e6c7854e5b2d570aeec46f92d66e"
+    "source": "Smart! 35.1.0 targets **Satisfactory 1.2.4 / CL 502094 or newer** and **SML 3.12.x**. Update the game and mod loader before installing. Older game builds are unsupported.",
+    "source_hash": "ddb7f6d3428242b7eb2a16d6468bc1c961f041f29251922f6c6a6922bfa78751"
   },
-  "Compatibility-and-Multiplayer:4": {
+  "Compatibility-and-Multiplayer:24": {
     "page": "Compatibility-and-Multiplayer",
     "position": 8,
-    "source": "Smart Camera 2.0 and Smart! 35.0 must be updated as a compatible pair when both are installed. Camera also works alone; Smart's building tools do not require Camera. Camera preferences and HUD appearance belong to each local player, not everyone on the server.",
-    "source_hash": "d778ecad7f4a6a4eb530120898db7c258299752b3b3849ab7cb18dce25829247"
+    "source": "Smart Camera 2.0 and Smart! 35.1 must be updated as a compatible pair when both are installed. Camera also works alone; Smart's building tools do not require Camera. Camera preferences and HUD appearance belong to each local player, not everyone on the server.",
+    "source_hash": "52b5e96461ffcb32e45b4e4f8c6a7bb4ae65053d1b8488b28119e6c0efbcaf11"
   },
   "Compatibility-and-Multiplayer:5": {
     "page": "Compatibility-and-Multiplayer",
@@ -1037,19 +1061,19 @@
     "source": "## Multiplayer",
     "source_hash": "2d86993a835bdcd4ef89b393a737d559d52248b3d55176a49ab984db60646814"
   },
-  "Compatibility-and-Multiplayer:12": {
+  "Compatibility-and-Multiplayer:29": {
     "page": "Compatibility-and-Multiplayer",
     "position": 24,
     "source": "Smart! works in multiplayer on dedicated servers. Every Smart! feature — Grid Scaling, Auto-Connect (belts, pipes, and power), Smart Blueprints, Extend, Smart Upgrade, Smart Restore, and Smart Dismantle — works when you play as a client, with normal build costs. Everything Smart! places is a standard, fully replicated game building: other players see it, can use it, and can dismantle it, just as if you had built it by hand.",
     "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5"
   },
-  "Compatibility-and-Multiplayer:13": {
+  "Compatibility-and-Multiplayer:26": {
     "page": "Compatibility-and-Multiplayer",
     "position": 26,
-    "source": "- **Dedicated servers:** both Windows and Linux are supported.\n- **Smart Blueprints size ceiling:** a single blueprint-grid placement on a server is capped (roughly a couple of thousand buildings, or a few hundred connecting belts/pipes, whichever comes first). Scale past it and Smart! refuses the placement — the HUD tells you to build in smaller sections, and the grid stays live so you can. The safe construction-payload limit also applies in single-player and listen-server sessions. Disable [Smart Assistance](Smart-Assistance) and select the recipe again to place a large vanilla blueprint normally.\n- **Large grids build progressively:** committing a very large scaled build constructs it in the background over a few moments, so the server stays responsive and no one is disconnected while it builds.\n- **For server admins:** install the same Smart! version on the server and on every client. The Mod Manager keeps these matched when you update.\n- **Smart Camera** (the companion mod) also works in multiplayer.",
-    "source_hash": "e0abba477abdd815436da48e2f8957237ec0394c708deea58592e10d20ab9268"
+    "source": "- **Dedicated servers:** both Windows and Linux are supported.\n- **Blueprint Placement Safety Limit** under Building Behavior is enabled by default. For a remote multiplayer client, it blocks a Blueprint grid estimated above 2,000 buildings, counting the original and all copies. You can disable this setting live to attempt a larger placement, with increased freeze, disconnect and failure risk. Normal material, placement and construction-payload checks still apply. Build in smaller sections if a placement is refused.\n- **For server admins:** install the same Smart! version on the server and on every client. The Mod Manager keeps these matched when you update.\n- **Smart Camera** (the companion mod) also works in multiplayer.",
+    "source_hash": "8cb40018690ab6ebe9357b170389232193d08c25eafc1fd5d631dac793751ffe"
   },
-  "Compatibility-and-Multiplayer:14": {
+  "Compatibility-and-Multiplayer:30": {
     "page": "Compatibility-and-Multiplayer",
     "position": 28,
     "source": "Multiplayer is newer than single-player, so if something behaves differently in a multiplayer session than it does in single-player, that is a bug — please report it on GitHub or Discord, and mention what you were building and whether you were the host or a client.",
@@ -1097,11 +1121,11 @@
     "source": "---",
     "source_hash": "cb3f91d54eee30e53e35b2b99905f70f169ed549fd78909d3dac2defc9ed8d3b"
   },
-  "Compatibility-and-Multiplayer:22": {
+  "Compatibility-and-Multiplayer:31": {
     "page": "Compatibility-and-Multiplayer",
     "position": 44,
-    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659"
+    "source": "_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0 (release draft)_\n",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Controller-and-Steam-Deck:0": {
     "page": "Controller-and-Steam-Deck",
@@ -1637,7 +1661,7 @@
     "source": "## Basic Use",
     "source_hash": "4c83e6b02bfe6aca94ca987455273aac56ce10f7b8eb58f8a7b36a66526b6d4e"
   },
-  "Extend:8": {
+  "Extend:49": {
     "page": "Extend",
     "position": 16,
     "source": "1. Build one working module manually and equip the same building type in the build gun.\n2. Open **K → Extend** and press **Select Source**.\n3. Click the existing source building in the world outside the Panel. Compatible sources highlight while selecting. **Escape** cancels selection; clicks inside the Panel stay in the interface.\n4. Check the source name, captured companions and repeat counts. Use **Change Direction** and the placement controls to shape the preview.\n5. Close the Panel, inspect the proposed copies and material quote, then fire the build gun to build normally.",
@@ -1685,7 +1709,7 @@
     "source": "![One active Extend module beside its existing Smelter source, with copied belts and conveyor supports.](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/extend-regular.png)",
     "source_hash": "3e2d122ca534695ce3faaf8d62d398038297a75eefbd638104a94aee3635de82"
   },
-  "Extend:16": {
+  "Extend:50": {
     "page": "Extend",
     "position": 32,
     "source": "The solid Smelter is the existing source. The cyan Smelter, belts and supports are the proposed copy; the HUD reads **Extend 1×1**. This is an unbuilt preview.",
@@ -1709,7 +1733,7 @@
     "source": "## Panel, wheel and keyboard controls",
     "source_hash": "7fd832f6b58863628d4d23f3818b6b4c787cd39a8f2927f7f72771d82a86c98c"
   },
-  "Extend:20": {
+  "Extend:51": {
     "page": "Extend",
     "position": 40,
     "source": "Start explicitly through **K → Extend → Select Source**, or use the hover shortcut. The Extend tab reuses the placement controls for grid counts, spacing and supported transforms. You can also use the same wheel/numpad controls as [Grid Scaling](Grid-Scaling). Without a modifier held, the wheel selects the Extend direction. The runtime HUD identifies the run/rows and active adjustment so you can check what will change before building.",
@@ -1751,7 +1775,7 @@
     "source": "![Three active Scaled Extend modules beside the same existing Smelter source.](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/extend-scaled.png)",
     "source_hash": "c982ea815004aa531eb9c42708134ccaa42ea497e45161f69cfbc64e9f9b81eb"
   },
-  "Extend:27": {
+  "Extend:52": {
     "page": "Extend",
     "position": 54,
     "source": "The same source now produces three cyan module copies, including their conveyor routes and supports. The HUD reads **Extend 3×1** and the material quote grows with the copies. The solid source remains in place.",
@@ -1805,35 +1829,53 @@
     "source": "On a listen server, a client's Extend or Restore keeps its settings and construction state separate from the host's held preview. Both players should use the same Smart! version.",
     "source_hash": "5c4197eff6cf6f92e4c0b1ce33801e047e3b64644259f147733568a086b2bc6f"
   },
-  "Extend:36": {
+  "Extend:45": {
     "page": "Extend",
     "position": 72,
+    "source": "## Curves and incomplete operations",
+    "source_hash": "54e38c7493c79d3f4bc2f71a29b70d8dd6942a4f44bee91a351b6ebd82db6819"
+  },
+  "Extend:46": {
+    "page": "Extend",
+    "position": 74,
+    "source": "A curved Extend cannot place a module back on the source or an earlier copy. If the HUD reports an overlap with an earlier copy, reduce the count or change the rotation, spacing or steps. This check prevents repeated module placement; it is not a general collision detector.",
+    "source_hash": "2fc6ba5d654478f0d36a249ac28472d87d41be4029ae07a4e513561265a5f725"
+  },
+  "Extend:47": {
+    "page": "Extend",
+    "position": 76,
+    "source": "Copies do not duplicate cargo from existing conveyors. Inspect the quoted materials and the resulting connections. If an operation reports incomplete settlement, check the world before repeating it; an already completed part may remain.",
+    "source_hash": "8d860159ae76958c5e531b7732a1d2bed5e6c39a0cc339d47fa7d866c6ab94e8"
+  },
+  "Extend:36": {
+    "page": "Extend",
+    "position": 78,
     "source": "## Check the captured layout",
     "source_hash": "f1c2f5c6de3f53c619dc7b774e5c42c86b11c0f59d3d150537e145bb3f358680"
   },
   "Extend:37": {
     "page": "Extend",
-    "position": 74,
+    "position": 80,
     "source": "Extend preserves the captured route shapes. Inspect the full connected module as well as the machine body before repeating it: long source pipes or belts can cross neighbouring copies when the repeat interval is too small for that layout.",
     "source_hash": "4cb298635b35545efbbabf2ce10a2afe128b34f4797bcbcd83066fdaf69efd93"
   },
   "Extend:38": {
     "page": "Extend",
-    "position": 76,
+    "position": 82,
     "source": "See the [Feature Gallery](Feature-Gallery) for connected factory layout examples.",
     "source_hash": "6703fb61c7adbd8a7aaa5ab99d1488994b17d3399cf352fbfdc9f5d66660aaac"
   },
   "Extend:39": {
     "page": "Extend",
-    "position": 78,
+    "position": 84,
     "source": "---",
     "source_hash": "cb3f91d54eee30e53e35b2b99905f70f169ed549fd78909d3dac2defc9ed8d3b"
   },
-  "Extend:40": {
+  "Extend:48": {
     "page": "Extend",
-    "position": 80,
-    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659"
+    "position": 86,
+    "source": "_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0 (release draft)_\n",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "FAQ:0": {
     "page": "FAQ",
@@ -3119,35 +3161,47 @@
     "source": "- [Settings Reference](Settings-Reference)\n- [Compatibility and Multiplayer](Compatibility-and-Multiplayer)\n- [Frequently Asked Questions](FAQ)\n- [History and Credits](History-and-Credits)\n- [Support Development](Support-Development)\n- [Screenshot Checklist](Screenshot-Checklist)",
     "source_hash": "62d68fe9418eb86143d7246aeb98526ed40be283f1144a65eb4b53e16b14327e"
   },
-  "Home:13": {
+  "Home:18": {
     "page": "Home",
     "position": 26,
+    "source": "## Preparing 35.1.0",
+    "source_hash": "1829ed863c572c2dbcafc8f78604d94faa795d58ca1d7e90494d020f49980f60"
+  },
+  "Home:19": {
+    "page": "Home",
+    "position": 28,
+    "source": "This release improves conveyor and lift handling in Extend, Restore and Upgrade, corrects native route limits, and makes Auto-Connect choose suitable distributor branches. Large Blueprint grids gain an optional client safety limit. See [Auto-Connect](Auto-Connect), [Blueprints](Blueprints) and [Smart Upgrade](Smart-Upgrade) for the behavior and limits.",
+    "source_hash": "1bd5656d0819ad3a7d1a6861c038f59661e423c6f03bddc8b203ef1a7ffb5c8b"
+  },
+  "Home:13": {
+    "page": "Home",
+    "position": 30,
     "source": "## Version covered",
     "source_hash": "96ddfc08279c6ae35f38d5139ad21a94f1ac99c7d031fa618cb40edbe35d39a5"
   },
-  "Home:14": {
+  "Home:20": {
     "page": "Home",
-    "position": 28,
-    "source": "This is the local documentation draft for **Smart! 35.0.0 and Smart Camera 2.0.0**. Update the two mods together when their coordinated compatible releases become available; do not pair Camera 2.0 with an older Smart package. These draft pages do not announce publication.",
-    "source_hash": "c29d2ea90b7a486f22022563a690b6049c5d72c5bf1c740518bb20fa5747432d"
+    "position": 32,
+    "source": "This is the local documentation draft for **Smart! 35.1.0 and Smart Camera 2.0.0**. Update the two mods together when their coordinated compatible releases become available; do not pair Camera 2.0 with an older Smart package. These draft pages do not announce publication.",
+    "source_hash": "6de3b72e72a676036d11c5f3b3679009013b370ca2cb7e8aed2d56252d3addd9"
   },
   "Home:15": {
     "page": "Home",
-    "position": 30,
+    "position": 34,
     "source": "Start with the shared [Panel and HUD](Smart-Panel-and-HUD), [Walking resume](Smart-Walking), [lift-assisted Auto-Connect](Auto-Connect) and [Blueprint seam connections](Blueprints).",
     "source_hash": "9726cc7f09a5f2bb1a28ee664c552b3febe7267a23862bd2eef6ff215811e73d"
   },
   "Home:16": {
     "page": "Home",
-    "position": 32,
+    "position": 36,
     "source": "---",
     "source_hash": "cb3f91d54eee30e53e35b2b99905f70f169ed549fd78909d3dac2defc9ed8d3b"
   },
-  "Home:17": {
+  "Home:21": {
     "page": "Home",
-    "position": 34,
-    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659"
+    "position": 38,
+    "source": "_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0 (release draft)_\n",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Lift-Assisted-Auto-Connect:0": {
     "page": "Lift-Assisted-Auto-Connect",
@@ -3473,7 +3527,7 @@
     "source": "This page explains what the Smart! settings are for. Names may vary slightly between versions.",
     "source_hash": "2b4afeb324008a498ca9fe21c3aed98c5be8c05eb5f4e1948f5bba762544c4ea"
   },
-  "Settings-Reference:2": {
+  "Settings-Reference:59": {
     "page": "Settings-Reference",
     "position": 4,
     "source": "Find them from the **Main Menu → Mods → Smart!**. Changes made here **persist between saves and between sessions**. (Keybinds are separate — see [Controls](Controls).)",
@@ -3533,7 +3587,7 @@
     "source": "A separate switch for hypertube previews, independent of Pipe Auto-Connect.",
     "source_hash": "4dcd5df64ca2e111a1a27899e3c263e0bd8cd8ed82ee53b8377930c9ba7b688d"
   },
-  "Settings-Reference:12": {
+  "Settings-Reference:60": {
     "page": "Settings-Reference",
     "position": 24,
     "source": "- **Hypertube Auto-Connect** — enable or disable auto-connecting hypertubes. **On by default.** (Added in 33.1.0.)\n- Choose hypertube routing mode.",
@@ -3551,7 +3605,7 @@
     "source": "Use these settings to control power cable previews.",
     "source_hash": "a899ac00b8c386ce817e7e3a301513809f1826926d3d4473fabdab0a6e252345"
   },
-  "Settings-Reference:15": {
+  "Settings-Reference:61": {
     "page": "Settings-Reference",
     "position": 30,
     "source": "- Enable or disable power Auto-Connect.\n- Choose connection mode.\n- Set connection range.\n- Reserve pole connections so Smart! does not fill every slot.\n- **Daisy-Chain Power When Scaling** — when Upgraded Power Connectors are unlocked, scaling a factory or generator along Smart's X axis wires each copy directly to the next one instead of running a pole to each, matching the common manifold layout without a separate Extend pass. The Smart Panel can override it for the current build, and the HUD reports the effective choice. It respects each connector's available capacity. **On by default.** (Added in 34.2.0.)",
@@ -3563,13 +3617,13 @@
     "source": "## Blueprint Auto-Connect",
     "source_hash": "91e5a8684362c895aea4667b2ba96129a933d88a35cc61adcbf7c49ce5cbabee"
   },
-  "Settings-Reference:17": {
+  "Settings-Reference:62": {
     "page": "Settings-Reference",
     "position": 34,
     "source": "A separate switch for the seams between scaled copies of your **own** blueprints — independent of Belt and Pipe Auto-Connect above, so blueprint copies can keep wiring together even when regular auto-connect is off.",
     "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11"
   },
-  "Settings-Reference:18": {
+  "Settings-Reference:63": {
     "page": "Settings-Reference",
     "position": 36,
     "source": "- **Blueprint Seam Auto-Connect** — enable or disable auto-connecting the belts, pipes, Hypertubes, railway tracks, directed Vehicle Paths, and eligible power connections between scaled blueprint copies. **On by default.** (Added in 34.2.0.)",
@@ -3581,161 +3635,173 @@
     "source": "Power seam connections additionally require **Power Auto-Connect**. Each cable uses a matching power-pole socket with available capacity; internal wires and the two faces of a wall outlet count separately.",
     "source_hash": "f8e43f603399fedc12210a9d21a3d2d8108b47b7c676acc29f4f189f050416ed"
   },
-  "Settings-Reference:20": {
+  "Settings-Reference:51": {
     "page": "Settings-Reference",
     "position": 40,
+    "source": "## Blueprint Placement Safety Limit",
+    "source_hash": "d30a9c4968359ae455bcba1db55829f233cd9689baac7a41ddda2ee677c671a7"
+  },
+  "Settings-Reference:52": {
+    "page": "Settings-Reference",
+    "position": 42,
+    "source": "**Blueprint Placement Safety Limit** under Building Behavior is enabled by default. For a remote multiplayer client, it blocks a Blueprint grid estimated above 2,000 buildings, counting the original and all copies. You can disable this setting live to attempt a larger placement, with increased freeze, disconnect and failure risk. Normal material, placement and construction-payload checks still apply. Build in smaller sections if a placement is refused. No world reload is required.",
+    "source_hash": "8d8d2f7ca8e8f5f5ffd32286939d718b5621954e9eb433f316520ac4e84d392b"
+  },
+  "Settings-Reference:20": {
+    "page": "Settings-Reference",
+    "position": 44,
     "source": "## Blueprint Spacing Defaults",
     "source_hash": "8eae12455902bac0259253af87b3fcf2e15a0463742e0acbd6421a6acbaae735"
   },
   "Settings-Reference:21": {
     "page": "Settings-Reference",
-    "position": 42,
+    "position": 46,
     "source": "Under **Building Behavior**, **Blueprint Default X/Y/Z Spacing (m)** choose the starting gap for each axis of a new blueprint build session. Each defaults to **1 m** and accepts **0-100 m**. Zero allows flush tiling; very short gaps may leave no room for belt or pipe seams.",
     "source_hash": "d18737c1a8d3827edcde7271b8d85e8839fe5310b00e2ce7b72f6d90f95fd5ee"
   },
   "Settings-Reference:22": {
     "page": "Settings-Reference",
-    "position": 44,
+    "position": 48,
     "source": "Panel spacing overrides last for the current blueprint session, including repeated placements. Selecting a different blueprint or holstering starts a fresh session with your defaults. Eligible unresolved lift tails can align stacked copies using one shared Z spacing and native-valid belt slopes. Without those tails, default Z spacing stays in use. See [Blueprints](Blueprints). Settings are read live; no world reload is needed.",
     "source_hash": "c31a602a68ed2d98c72bb69e11742f9a0094a984f81ffb6e19d10310fa2fa819"
   },
   "Settings-Reference:23": {
     "page": "Settings-Reference",
-    "position": 46,
+    "position": 50,
     "source": "## Auto-Connect Behavior",
     "source_hash": "3b873e2b14b75c99692e5e4a9015fcb2c1d4a96ecbb436441b585e99bc59bd25"
   },
-  "Settings-Reference:24": {
+  "Settings-Reference:64": {
     "page": "Settings-Reference",
-    "position": 48,
+    "position": 52,
     "source": "- **Nearby Logistics Range** — how far splitters, mergers, pipe junctions, and pipe floor holes reach toward factory ports when auto-connecting. Lower it to keep Auto-Connect from reaching into neighboring factory groups. **Defaults to 25 m** (the previous fixed behavior). (Added in 34.2.0.)",
     "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592"
   },
   "Settings-Reference:25": {
     "page": "Settings-Reference",
-    "position": 50,
+    "position": 54,
     "source": "## Extend",
     "source_hash": "51dce64f44c1a5a8a6b6bfae59396839925f3dce61888279d5c6429ed545a538"
   },
   "Settings-Reference:26": {
     "page": "Settings-Reference",
-    "position": 52,
+    "position": 56,
     "source": "- Enable or disable Extend.\n- Enable or disable power copying during Extend where supported.\n- Daisy-chain power building-to-building along the lane (once Upgraded Power Connectors is unlocked).\n- Daisy-chain power on pole-less sources when starting a fresh manifold.",
     "source_hash": "9e9344bf94962e043c4ce0258adc94944ed85eedc801336fb45a21e79df57352"
   },
   "Settings-Reference:27": {
     "page": "Settings-Reference",
-    "position": 54,
+    "position": 58,
     "source": "## Scaling",
     "source_hash": "8c4c9c9b3a767b75163f71c6af90a1060139e1f676b88f754e5b2a2106965f21"
   },
-  "Settings-Reference:28": {
+  "Settings-Reference:65": {
     "page": "Settings-Reference",
-    "position": 56,
+    "position": 60,
     "source": "- Auto-Hold on grid change locks the hologram after you modify the grid, so a large preview doesn't move accidentally. **On by default** (as of 32.1.2) — turn it off here if you'd rather the hologram stay free to reposition, and the vanilla Hold key releases any individual lock.\n- **Player Relative Controls** — makes building follow the direction you're looking instead of fixed compass axes: the mouse wheel grows the build toward wherever you're facing, and the numpad becomes a compass (away/toward, right/left, up/down). Applies to scaling, spacing, steps, stagger, and rotation. **Off by default** — your classic controls are unchanged until you turn it on, and the Smart Panel always stays on fixed X/Y/Z. See [Controls](Controls) for the full breakdown. (Added in 34.1.0.)\n- **Tap to Toggle Transform Modes** — tap a transform key (Spacing, Steps, Stagger, Rotation, or Recipe on a factory) to switch that mode on; tap it again to switch it off; tap a different one to change modes. Made for controllers, the Steam Deck, and accessibility setups — Steam Input radial/touch menus send quick taps and cannot hold a key. Holstering, changing buildings, or opening a panel always releases the mode. **Off by default** — the classic hold-to-use behavior is untouched until you turn it on, and turning it back off restores it instantly. See [Controller & Steam Deck](Controller-and-Steam-Deck) for radial-menu setups. (Added in 34.2.0.)",
     "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179"
   },
   "Settings-Reference:29": {
     "page": "Settings-Reference",
-    "position": 58,
+    "position": 62,
     "source": "## Scroll Increments",
     "source_hash": "219b48a24b9c08e24b508f03d6e8d42ba5b38747b6e99132b0eec56f9d02a981"
   },
   "Settings-Reference:30": {
     "page": "Settings-Reference",
-    "position": 60,
+    "position": 64,
     "source": "Found under **Building Behavior** in the mod settings. How much each mouse-wheel notch changes a grid transform. These four increments are shared by Grid scaling, Extend, Restore, and Smart Walking, so tuning them here changes the feel everywhere you scroll to build. (Added in 33.5.3.)",
     "source_hash": "b3148f3d4316bda16c2ebd61071310f46ebe1a98ca51b4432a053d569bc82f93"
   },
-  "Settings-Reference:31": {
+  "Settings-Reference:66": {
     "page": "Settings-Reference",
-    "position": 62,
+    "position": 66,
     "source": "- **Spacing Increment** (m) — meters of spacing added per scroll notch (also Extend spacing and a Walk segment's advance).\n- **Steps Increment** (m) — meters of stepping per notch (also a Walk segment's rise).\n- **Stagger Increment** (m) — meters of stagger per notch (also a Walk segment's shift).\n- **Rotation Increment** (deg) — degrees of rotation per notch (also a Walk segment's turn).",
     "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e"
   },
-  "Settings-Reference:32": {
+  "Settings-Reference:67": {
     "page": "Settings-Reference",
-    "position": 64,
+    "position": 68,
     "source": "Defaults are 0.5 m and 5°. The distance increments accept 0.1–8 m; rotation accepts 0.5–90°.",
     "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da"
   },
   "Settings-Reference:33": {
     "page": "Settings-Reference",
-    "position": 66,
+    "position": 70,
     "source": "## Smart Panel",
     "source_hash": "260f330cbd0bccd99c92f8e39efea85c15f5afee0f1d2dcf8a174a9b41d8cacd"
   },
   "Settings-Reference:34": {
     "page": "Settings-Reference",
-    "position": 68,
+    "position": 72,
     "source": "- **Apply placement immediately** controls grid/transform geometry. When off, Apply updates the preview; closing discards unapplied placement edits.\n- **Apply segment edits immediately** is the corresponding Walking geometry control.\n- Connection preferences, recipes and applicable native building controls remain live and are labeled separately.\n- A manually moved Panel remembers its position across saves; use the position reset to restore it.",
     "source_hash": "cf903cd90b53d8cc70739606f674c9e49c76e4cbab616400e33d400c6264a692"
   },
   "Settings-Reference:35": {
     "page": "Settings-Reference",
-    "position": 70,
+    "position": 74,
     "source": "## Smart Upgrade",
     "source_hash": "f8eefecac4b07a165701ea69309cd11cd29d9ed72a438e8e99e52f0160ff83de"
   },
   "Settings-Reference:36": {
     "page": "Settings-Reference",
-    "position": 72,
+    "position": 76,
     "source": "- **Preserve dismantle groups** defaults to On. Supported replacements keep their original group; turning it off skips Smart's transfer without stripping native membership.",
     "source_hash": "ae626569870982d1f8b37718ffeba0e6aab60fc69a8fa281c923afcd9baa33b1"
   },
   "Settings-Reference:37": {
     "page": "Settings-Reference",
-    "position": 74,
+    "position": 78,
     "source": "## HUD",
     "source_hash": "4c0f055c5e5395dbaeb51136bea099fdd522f5ece12c07367c3dedf7825458e2"
   },
   "Settings-Reference:38": {
     "page": "Settings-Reference",
-    "position": 76,
+    "position": 80,
     "source": "- Show or hide the HUD.\n- Change HUD scale.\n- Change HUD position.\n- Choose one of the six HUD themes.\n- Enter **Edit HUD layout after Resume**, then move/resize, preview, save or cancel.\n- **Reset HUD Appearance** restores defaults. HUD appearance and Panel positions apply to all saves locally; Camera scope does not change them.",
     "source_hash": "343114d4fcf3e3192869be73571a1a2ba1d94c1b217e8670073a75646ac83cba"
   },
   "Settings-Reference:39": {
     "page": "Settings-Reference",
-    "position": 78,
+    "position": 82,
     "source": "## Smart Camera 2.0 scopes",
     "source_hash": "3db6fbb277a8d471a577004e1ccb5c579aa66cb569081c248f4d2dda906fc83a"
   },
-  "Settings-Reference:40": {
+  "Settings-Reference:68": {
     "page": "Settings-Reference",
-    "position": 80,
+    "position": 84,
     "source": "In **Mods → Smart! Camera**, views appear automatically under their supplying mod and camera names, including inactive views. The built-in build-gun view has an independent enable control. Per-view position is normalized 0–1, resolution is 64–2048 pixels per axis, scale is 0.1–2, capture rate is 5–60/sec and brightness is −3 to +3 EV. Applicable building-camera distances are 5–50 m. Camera settings apply immediately; views hidden by menus update when you Resume. **All saves** patches only the edited field across global and existing saved profiles for that camera, including the current world. **This save** changes only the current native save profile. Unrelated fields and other cameras remain intact.",
     "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29"
   },
   "Settings-Reference:41": {
     "page": "Settings-Reference",
-    "position": 82,
+    "position": 86,
     "source": "**Use mod suggestions** in All saves resets that camera across saves. **Use global settings** in This save removes only the current override. Framing/distance reset changes only those two fields. Layout edits preview until the shared **Done / Lock**; Cancel discards pending layout/HUD changes. See [Smart Camera](Smart-Camera).",
     "source_hash": "ba783eab65f670a0597d953664afdcf47580b1df3e4378a8afc7c9f8ab4666c2"
   },
   "Settings-Reference:42": {
     "page": "Settings-Reference",
-    "position": 84,
+    "position": 88,
     "source": "## Arrows",
     "source_hash": "c0bd4fc590d480f9111cb13a57cb22630a953ce2cb44ac521f05c80289ea4935"
   },
   "Settings-Reference:43": {
     "page": "Settings-Reference",
-    "position": 86,
+    "position": 90,
     "source": "- Show or hide direction arrows.\n- Enable orbit animation.\n- Show or hide X/Y/Z labels.",
     "source_hash": "da46a4c039dd4af9c95b84750c7d983919bc0723f699fcfb3c5f86435f7d6c2d"
   },
   "Settings-Reference:44": {
     "page": "Settings-Reference",
-    "position": 88,
+    "position": 92,
     "source": "---",
     "source_hash": "cb3f91d54eee30e53e35b2b99905f70f169ed549fd78909d3dac2defc9ed8d3b"
   },
-  "Settings-Reference:45": {
+  "Settings-Reference:58": {
     "page": "Settings-Reference",
-    "position": 90,
-    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659"
+    "position": 94,
+    "source": "_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0 (release draft)_\n",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Smart-Assistance:0": {
     "page": "Smart-Assistance",
@@ -4385,13 +4451,13 @@
     "source": "# Smart Restore",
     "source_hash": "82178dc0389868421b9957e732bec884cd2568a7ac51924eb57c4c61d7aa37e5"
   },
-  "Smart-Restore:1": {
+  "Smart-Restore:43": {
     "page": "Smart-Restore",
     "position": 2,
     "source": "Smart Restore saves your Smart! work so you can reuse it later, share it, or stamp a whole factory module out again the same way every time. Open **K → Restore** in the shared [Smart Panel](Smart-Panel-and-HUD). Its two subtabs are **Grid Presets** and **Modules**.",
     "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35"
   },
-  "Smart-Restore:2": {
+  "Smart-Restore:44": {
     "page": "Smart-Restore",
     "position": 4,
     "source": "It is the answer to \"I spent ages dialing in this layout — how do I get it back?\"",
@@ -4427,7 +4493,7 @@
     "source": "Use the Grid Presets tab to:",
     "source_hash": "dde91c1a26c30290ee141ce3a44bfea21519e50506e51823f74400df886ae924"
   },
-  "Smart-Restore:8": {
+  "Smart-Restore:45": {
     "page": "Smart-Restore",
     "position": 16,
     "source": "- **Save from Panel** — name your current panel setup and save it as a preset.\n- **Load to Panel** — load a saved preset back into the panel to fine-tune before building, or apply it as-is.\n- **Export Code / Import Code** — share a preset as a code, or load one someone shared with you.",
@@ -4445,17 +4511,17 @@
     "source": "## Modules",
     "source_hash": "3dbd88619170feda78a1f4c5ae4635a92cb032f4cfc8397ff97015089abdffa7"
   },
-  "Smart-Restore:11": {
+  "Smart-Restore:46": {
     "page": "Smart-Restore",
     "position": 22,
     "source": "A Module captures a whole **Extend manifold** — a wired unit of buildings with their belts, pipes, lifts, distributors, and power — that you can stamp down repeatedly.",
     "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b"
   },
-  "Smart-Restore:12": {
+  "Smart-Restore:47": {
     "page": "Smart-Restore",
     "position": 24,
-    "source": "- After you preview or build a Smart [Extend](Extend), it lands in the **Extend clipboard** at the top of the tab. **Save as Module** turns that captured layout into a named, reusable Module.\n- **Load Module** for a saved Module to rebuild that layout: equip its source building and it becomes a live preview you can **stamp** (fire to place, repeatedly) and **scroll to scale** on the fly.\n- Because a restored Module isn't locked to one side the way a fresh Scaled Extend is, you can **rescale the run in either direction** along its axis before placing — scroll one way to grow it one way, the other way to grow it the other.\n- **Export Code / Import Code** share Modules the same way presets do.",
-    "source_hash": "37740d4bfda7ca76487c320d49ae9a15e2da89d1f1fe4a31862a2ad8d53f903b"
+    "source": "- After you preview or build a Smart [Extend](Extend), it lands in the **Extend clipboard** at the top of the tab. **Save as Module** turns that captured layout into a named, reusable Module.\n- **Load Module** for a saved Module to rebuild that layout: the build gun can open its source building automatically and display a live preview you can **stamp** (fire to place, repeatedly) and **scroll to scale** on the fly.\n- Because a restored Module isn't locked to one side the way a fresh Scaled Extend is, you can **rescale the run in either direction** along its axis before placing — scroll one way to grow it one way, the other way to grow it the other.\n- **Export Code / Import Code** share Modules the same way presets do.",
+    "source_hash": "bec0ec9303e43dd7907dc7dc366c045b75ee549bfcabebb02918f256b044593e"
   },
   "Smart-Restore:13": {
     "page": "Smart-Restore",
@@ -4517,7 +4583,7 @@
     "source": "## Panel and world controls",
     "source_hash": "bbaf74b9f23bbdd4db4b5bf9d298a121bf925adce708d4fe5d603098a752cd26"
   },
-  "Smart-Restore:21": {
+  "Smart-Restore:48": {
     "page": "Smart-Restore",
     "position": 46,
     "source": "Use **K → Restore** to save, select, load, import or export layouts. After loading, use the Scaling Panel or wheel/numpad controls to adjust the placement; the HUD reports the resulting grid and active adjustment. Fire the build gun to construct it at the displayed cost.",
@@ -4547,29 +4613,41 @@
     "source": "That keeps shared setups honest: importing one never skips progression.",
     "source_hash": "c3c8ec69bef37036a1525ad9a13e44e5b6705b39cb1a9f7aed4cd7bedb336b3a"
   },
-  "Smart-Restore:26": {
+  "Smart-Restore:39": {
     "page": "Smart-Restore",
     "position": 56,
+    "source": "## Conveyor contents and completion",
+    "source_hash": "b0724fac56a114aed1905757336fc2bd16f065519872f908a56afc905e5b0d3c"
+  },
+  "Smart-Restore:40": {
+    "page": "Smart-Restore",
+    "position": 58,
+    "source": "Saved Modules describe construction and settings; they do not duplicate live conveyor cargo. Review the full material quote before placement. If an operation reports incomplete settlement, inspect what was placed before trying again; cancellation does not promise to undo construction already performed.",
+    "source_hash": "81c3c2048752b95069652ecef30608748705b0ecd1930a687c49a0f383a261ad"
+  },
+  "Smart-Restore:26": {
+    "page": "Smart-Restore",
+    "position": 60,
     "source": "## See Also",
     "source_hash": "0f2b43836b7db34aeb2ad65d2dc1b19495336b2a8bd81d1a4e6cc10ec180785b"
   },
-  "Smart-Restore:27": {
+  "Smart-Restore:49": {
     "page": "Smart-Restore",
-    "position": 58,
+    "position": 62,
     "source": "- [Extend](Extend) — the feature whose manifolds the Modules tab captures.\n- [Smart Panel and HUD](Smart-Panel-and-HUD) — where the Restore tab lives.\n- [Grid Scaling](Grid-Scaling) and [Transforms](Transforms) — what a Grid Preset saves.",
     "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264"
   },
   "Smart-Restore:28": {
     "page": "Smart-Restore",
-    "position": 60,
+    "position": 64,
     "source": "---",
     "source_hash": "cb3f91d54eee30e53e35b2b99905f70f169ed549fd78909d3dac2defc9ed8d3b"
   },
-  "Smart-Restore:32": {
+  "Smart-Restore:42": {
     "page": "Smart-Restore",
-    "position": 62,
-    "source": "_Last updated: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89"
+    "position": 66,
+    "source": "_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0 (release draft)_\n",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Smart-Upgrade:0": {
     "page": "Smart-Upgrade",
@@ -4607,7 +4685,7 @@
     "source": "## Basic Flow",
     "source_hash": "ad98efdff44a4c2731340de0966464ae128584cb61b053c41eadc3ae6a3073fe"
   },
-  "Smart-Upgrade:6": {
+  "Smart-Upgrade:38": {
     "page": "Smart-Upgrade",
     "position": 12,
     "source": "1. Open **K → Upgrade** with a supported building held. Belts, pipes and wire/power lines can open this task directly.\n2. Choose a scan mode.\n3. Scan nearby items or a connected network.\n4. Pick the family and target tier — and, on a network scan, optionally a single source tier to upgrade just that tier.\n5. Review the material cost.\n6. Run the upgrade.",
@@ -4655,7 +4733,7 @@
     "source": "A network scan lists the tiers it found in the connected run, and lets you choose which to upgrade:",
     "source_hash": "e5e848cf69aff4457530c5f51e112b8a9822e6578b66c1a7c1ef32e671c61254"
   },
-  "Smart-Upgrade:14": {
+  "Smart-Upgrade:39": {
     "page": "Smart-Upgrade",
     "position": 28,
     "source": "- Click a specific tier — for example **Mk.2** — to upgrade **only** that tier to your target. Bump your Mk.2 belts to Mk.3 and leave the Mk.4s untouched.\n- Pick **All tiers** to bring every differing belt, lift, or pipe tier to the selected target. This can upgrade some tiers and downgrade others in the same run.",
@@ -4727,11 +4805,11 @@
     "source": "## Conveyor Warning",
     "source_hash": "04b8bcef46d2aefbf515bd7fd2af90d4db48b4c4ce3b5a9c83d3d6c8e96b399b"
   },
-  "Smart-Upgrade:26": {
+  "Smart-Upgrade:36": {
     "page": "Smart-Upgrade",
     "position": 52,
-    "source": "Large conveyor upgrades are complicated because Satisfactory groups belts and lifts into conveyor chain actors internally. Smart! includes stabilization and diagnostics, but very large upgrades may still need a save/reload if the game reports unsettled chain state afterward.",
-    "source_hash": "fed328c054689b599658ab3989621c5b784f7bcaa94b5be404727f05664adba7"
+    "source": "Smart! coordinates belt and lift replacement with native conveyor ownership and item transfer. Existing cargo belongs to the replacement operation; it must not be duplicated or discarded. A failed preflight leaves the original untouched. Once construction has started, an incomplete or cancelled operation is not a promise of full rollback. If Smart! reports incomplete settlement, inspect the result and retain the game log before retrying. A save/reload is not a guaranteed repair.",
+    "source_hash": "30a1ce6a5b6dcbf3cb863b07c5181d63bc781a27d7277f739226c64c0f12936e"
   },
   "Smart-Upgrade:27": {
     "page": "Smart-Upgrade",
@@ -4769,11 +4847,11 @@
     "source": "---",
     "source_hash": "cb3f91d54eee30e53e35b2b99905f70f169ed549fd78909d3dac2defc9ed8d3b"
   },
-  "Smart-Upgrade:33": {
+  "Smart-Upgrade:37": {
     "page": "Smart-Upgrade",
     "position": 66,
-    "source": "_Last updated: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (release draft)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659"
+    "source": "_Last updated: 2026-11-02 · Smart! v35.1.0 / Smart Camera v2.0.0 (release draft)_\n",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Smart-Walking:0": {
     "page": "Smart-Walking",

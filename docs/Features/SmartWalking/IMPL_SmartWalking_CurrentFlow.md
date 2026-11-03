@@ -77,8 +77,7 @@ the **server** reconstructs under `HasAuthority()` in the `AFGBuildableHologram:
   from the destination and the belt curls back ("returns into the back"). Pipes are bidirectional (no direction).
 - **Two preview-refresh methods:** `RerouteSpans` (geometry/routing — light) vs `RecreateSpans` (destroy+recreate for
   a tier/style **CLASS** change). A tier or pipe-style change MUST use `RecreateSpans`.
-- **Shape validity:** a span > 56 m, or (belts only) climbing > 30°, is invalid — reds the segment, blocks commit
-  (`BuildCommitSpec.bValid`), and the HUD badge reports the reason.
+- **Shape validity:** native hologram length and routed inclination/curvature limits determine validity; invalid spans turn the segment red, block commit (`BuildCommitSpec.bValid`), and show the native reason in the HUD badge.
 
 ## Camera
 The SmartCamera PiP latches the path **FRONTIER** (active segment exit frame), **not** furthest-by-coordinate (which

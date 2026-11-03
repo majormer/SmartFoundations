@@ -77,11 +77,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Auto-Connect:4": {
-    "text": "Åpne **K → Skalering**, og bruk den aktuelle **Auto-tilkobling**-delen for valgt byggeobjekt. På støttede logistikkobjekter åpner `U` tilkoblingsinnstillingene. Globale standardvalg ligger under **Innstillinger → Modinnstillinger → Smart!**; valgene for gjeldende forhåndsvisning er i panelet. Tilkoblingsvalg oppdateres direkte, uavhengig av **Bruk plassering umiddelbart**.",
-    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:56": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b"
   },
   "Auto-Connect:5": {
     "text": "Bruk panelet, hjulet eller talltastaturet til å forme rutenettet; kontroller de genererte forbindelsene og retningspilene i verden før du bygger. HUD viser plasseringsverdier i stedet for å være enda et skjema for tilkoblingsinnstillinger. Se [Kontroller](Controls) for standardtaster og spillerrelativ oppførsel.",
@@ -118,6 +117,16 @@
     "source_hash": "e298b5a94ff81e994527adc768d5e9764cc98d01ecb1dd6ea12f6dca747287fd",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  },
+  "Auto-Connect:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bfcb0d7bcbf0b5b36a80dd16a2dac958a4db4fc0261b34174dd132215ae37e01"
+  },
+  "Auto-Connect:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "59bd907b72a7a1bd727a61b3bb63c228bae6f45d96d4267b1fa73010ed0ca1df"
   },
   "Auto-Connect:11": {
     "text": "### Maskintilkoblinger med transportbåndheiser",
@@ -173,11 +182,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Auto-Connect:18": {
-    "text": "**Skalerte rørstøtter bygger en rørstrekning.** Når du skalerer en rekke Rørledningstolper eller Rørledningstøtter for vegg, legger Smart! en sammenkoblet rørstrekning mellom kopiene — slik en skalert rekke Transportbåndstolper bygger en båndstrekning. Væsken flyter gjennom hele strekningen, og hver støttes eget festepunkt forblir ledig, slik at du fortsatt kan koble til et rør manuelt. Bakkestøttens høyde og vinkelen på toppstykket videreføres langs hele rekken, slik at en skrå strekning holder samme form.",
-    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:57": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01"
   },
   "Auto-Connect:19": {
     "text": "Genererte rør arver maling fra et tilkoblet kilderør. En rørdel arver maling bare når de tilkoblede rørene samsvarer; flytter du forhåndsvisningen til en forbindelse uten malingskilde, gjenopprettes den opprinnelige malingen.",
@@ -203,6 +211,16 @@
     "status": "reviewed",
     "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
   },
+  "Auto-Connect:50": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "a731c462366f0c155a14546a1265f77d5e93778036e1ebd4a44e669ff5112e22"
+  },
+  "Auto-Connect:51": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "0a29d3c9b8ec32dedec575d19408d9bb4da0cbb09a58b8d2ed2dc2c0f3f833c7"
+  },
   "Auto-Connect:21": {
     "text": "## Auto-tilkobling av hyperrør",
     "source_hash": "4bcc46f7a3e328199f2b10ea31239d134d1815f33bf0911b2c5020959c930f54",
@@ -221,17 +239,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Auto-Connect:24": {
-    "text": "**Skalerte hyperrørstøtter bygger en hyperrørstrekning.** Når du skalerer en rekke Stabelbare hyperrørstøtter, legger Smart! en sammenkoblet hyperrørstrekning mellom kopiene — slik en skalert rekke Transportbåndstolper bygger bånd, eller Rørledningstolper bygger rør. Strekningen følger rekkens avstand og høyde og kan stige bratt, mens hver støttes eget festepunkt forblir ledig, slik at du fortsatt kan koble til et hyperrør manuelt.",
-    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:58": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455"
   },
-  "Auto-Connect:25": {
-    "text": "Auto-tilkobling av hyperrør har **sin egen aktiveringsbryter og ruteføringsmodus**, uavhengig av rør — still dem fra Smart-panelet, Auto-tilkoblingsinnstillingene under bygging (hold `U`), eller modinnstillingene. Se [Innstillingsreferanse](Settings-Reference).",
-    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:59": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213"
   },
   "Auto-Connect:26": {
     "text": "## Roterte veggstøttestrekninger",
@@ -239,11 +255,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Auto-Connect:27": {
-    "text": "Underordnede rør- og hyperrørveggstøtter følger hele forelderens rotasjon. Panelets **Veggrotasjon** tilbyr grunnspillets **45°-trinn**, også for vertikale strekninger. Dette er adskilt fra rutenettets Rotasjon, som bøyer en serie kopier.",
-    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Auto-Connect:60": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce"
   },
   "Auto-Connect:28": {
     "text": "Med bygningsrelative kontroller følger Y den roterte veggstrekningen. Med spillerrelative kontroller følger vertikal inndata den mest vertikale støttede retningen: for en vertikal veggstrekning vokser **X+Z + hjul** vertikalt, mens **Z + hjul** vokser sidelengs. Panelet beholder X/Y/Z-kolonnene; bruk pilene for å se aksene. Veggkoblinger for transportbånd beholder grunnspillets retningsbegrensninger og bruker heiser til vertikal transport.",
@@ -317,11 +332,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Auto-Connect:45": {
-    "text": "_Sist oppdatert: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
-    "status": "reviewed",
-    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
+  "Auto-Connect:55": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Blueprints:0": {
     "text": "# Smart!-byggeplaner",
@@ -425,11 +439,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Blueprints:17": {
-    "text": "Den trygge grensen for byggedata gjelder også byggeplanrutenett. En avvist, for stor plassering beholder forhåndsvisningen: reduser rutenettet og bygg i deler. For en stor byggeplan fra grunnspillet, deaktiver [Smart-hjelp](Smart-Assistance) og velg den på nytt.",
-    "source_hash": "540e7f14c64d49d7f11fb6b7090a1475087984b4955b0dccb93ca481787d4236",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Blueprints:34": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "60707b2c9e66e6d33812f6b75b700b1d1cfafde4fcb92a54f5847b69c82a8ac8"
   },
   "Blueprints:18": {
     "text": "Flerspiller bruker autoritativ kontroll og vanlige kostnader. Et endret endepunkt eller utilstrekkelige ressurser kan ugyldiggjøre en tidligere gyldig forhåndsvisning. Se [Auto-tilkobling](Auto-Connect) og [Kompatibilitet og flerspiller](Compatibility-and-Multiplayer).",
@@ -509,11 +522,10 @@
     "status": "reviewed",
     "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
   },
-  "Blueprints:33": {
-    "text": "_Sist oppdatert: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
-    "status": "reviewed",
-    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
+  "Blueprints:35": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Buildable-Gallery:0": {
     "text": "# Byggegalleri",
@@ -983,17 +995,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Compatibility-and-Multiplayer:3": {
-    "text": "Smart! 35.0.0 er rettet mot **Satisfactory 1.2.4 / CL 502094 eller nyere** og **SML 3.12.x**. Oppdater spillet og modlasteren før installasjon. Eldre spillversjoner støttes ikke.",
-    "source_hash": "67e479ca52c59b7506d6acd2ace2bb75b701e6c7854e5b2d570aeec46f92d66e",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:23": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "ddb7f6d3428242b7eb2a16d6468bc1c961f041f29251922f6c6a6922bfa78751"
   },
-  "Compatibility-and-Multiplayer:4": {
-    "text": "Smart Camera 2.0 og Smart! 35.0 må oppdateres som et kompatibelt par når begge er installert. Camera fungerer også alene; byggeverktøyene til Smart krever ikke Camera. Kameravalg og HUD-utseende tilhører hver lokal spiller, ikke alle på serveren.",
-    "source_hash": "d778ecad7f4a6a4eb530120898db7c258299752b3b3849ab7cb18dce25829247",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:24": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "52b5e96461ffcb32e45b4e4f8c6a7bb4ae65053d1b8488b28119e6c0efbcaf11"
   },
   "Compatibility-and-Multiplayer:5": {
     "text": "## Trygge lagringer",
@@ -1037,23 +1047,20 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Compatibility-and-Multiplayer:12": {
-    "text": "Smart! fungerer i flerspiller på dedikerte servere. Alle Smart!-funksjoner — Rutenettskalering, Auto-tilkobling (bånd, rør og strøm), Smart-byggeplaner, Utvidelse, Smart-oppgradering, Smart Gjenopprett og Smart-demontering — fungerer når du spiller som klient, med normale byggekostnader. Alt Smart! plasserer er en vanlig, fullstendig replikert spillbygning: andre spillere ser den, kan bruke den og demontere den akkurat som om du bygde den manuelt.",
-    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:29": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5"
   },
-  "Compatibility-and-Multiplayer:13": {
-    "text": "- **Dedikerte servere:** både Windows og Linux støttes.\n- **Størrelsesgrense for Smart-byggeplaner:** én byggeplanrutenettplassering på en server har en grense (omtrent et par tusen bygninger eller noen hundre forbindelsesbånd/rør, det som nås først). Skalerer du forbi den, avviser Smart! plasseringen — HUD ber deg bygge i mindre deler, og rutenettet forblir aktivt slik at du kan gjøre det. Den trygge grensen for byggedata gjelder også i enkeltspiller og på spillervertede servere. Deaktiver [Smart-hjelp](Smart-Assistance) og velg oppskriften på nytt for å plassere en stor byggeplan normalt.\n- **Store rutenett bygges gradvis:** svært store skalerte bygg konstrueres i bakgrunnen over noen øyeblikk, slik at serveren svarer og ingen kobles fra under byggingen.\n- **For serveradministratorer:** installer samme Smart!-versjon på serveren og alle klienter. Modbehandleren holder dem like ved oppdatering.\n- **Smart Camera** (tilleggmoden) fungerer også i flerspiller.",
-    "source_hash": "e0abba477abdd815436da48e2f8957237ec0394c708deea58592e10d20ab9268",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:26": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8cb40018690ab6ebe9357b170389232193d08c25eafc1fd5d631dac793751ffe"
   },
-  "Compatibility-and-Multiplayer:14": {
-    "text": "Flerspiller er nyere enn enkeltspiller, så hvis noe oppfører seg annerledes i flerspiller enn alene, er det en feil — rapporter den på GitHub eller Discord, og oppgi hva du bygde og om du var vert eller klient.",
-    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:30": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9"
   },
   "Compatibility-and-Multiplayer:15": {
     "text": "Hver spillers bryter for økthjelp påvirker bare egne byggeverktøy. Ekstern Utvidelse/Gjenopprett holder vertens forhåndsvisning og innstillinger adskilt fra klientens handling.",
@@ -1097,11 +1104,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Compatibility-and-Multiplayer:22": {
-    "text": "_Sist oppdatert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Compatibility-and-Multiplayer:31": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Controller-and-Steam-Deck:0": {
     "text": "# Håndkontrollere og Steam Deck (eksperimentelt)",
@@ -1637,11 +1643,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Extend:8": {
-    "text": "1. Bygg én fungerende modul manuelt og velg samme bygningstype i byggepistolen.\n2. Åpne **K → Utvidelse** og trykk **Velg kilde**.\n3. Klikk den eksisterende kildebygningen i verden utenfor panelet. Kompatible kilder markeres mens du velger. **Escape** avbryter valget; klikk inne i panelet forblir i grensesnittet.\n4. Kontroller kildenavn, fangede følgedeler og antall gjentakelser. Bruk **Endre retning** og plasseringskontrollene til å forme forhåndsvisningen.\n5. Lukk panelet, kontroller foreslåtte kopier og materialkostnad, og avfyr så byggepistolen for å bygge normalt.",
-    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca"
   },
   "Extend:9": {
     "text": "Å velge kilde bygger ingenting. Et bomklikk beholder forrige forhåndsvisning. Bytte av kilde eller en større ubygd plassering ber om bekreftelse før den forkastes. Den valgte kilden forblir festet for kontroll til plasseringen avbrytes, bygges eller oppskriften endres.",
@@ -1685,11 +1690,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Extend:16": {
-    "text": "Den solide Smelteren er den eksisterende kilden. Den cyanblå Smelteren, båndene og støttene er den foreslåtte kopien; HUD viser **Utvidelse 1×1**. Dette er en ubygd forhåndsvisning.",
-    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:50": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc"
   },
   "Extend:17": {
     "text": "## Endre retning",
@@ -1709,11 +1713,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Extend:20": {
-    "text": "Start direkte via **K → Utvidelse → Velg kilde**, eller bruk siktesnarveien. Utvidelse-fanen gjenbruker plasseringskontrollene for rutenettantall, avstand og støttede transformasjoner. Du kan også bruke samme hjul-/talltastaturkontroller som [Rutenettskalering](Grid-Scaling). Uten en modifikatortast velger hjulet utvidelsesretningen. HUD identifiserer strekning/rekker og aktiv justering, slik at du kan kontrollere hva som endres før du bygger.",
-    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:51": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13"
   },
   "Extend:21": {
     "text": "## Skalert Utvidelse",
@@ -1751,11 +1754,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Extend:27": {
-    "text": "Samme kilde gir nå tre cyanblå modulkopier, inkludert transportbåndrutene og støttene deres. HUD viser **Utvidelse 3×1**, og materialkostnaden øker med antall kopier. Den solide kilden forblir på plass.",
-    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:52": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7"
   },
   "Extend:28": {
     "text": "## Vannsamlere",
@@ -1805,6 +1807,21 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
+  "Extend:45": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "54e38c7493c79d3f4bc2f71a29b70d8dd6942a4f44bee91a351b6ebd82db6819"
+  },
+  "Extend:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "2fc6ba5d654478f0d36a249ac28472d87d41be4029ae07a4e513561265a5f725"
+  },
+  "Extend:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8d860159ae76958c5e531b7732a1d2bed5e6c39a0cc339d47fa7d866c6ab94e8"
+  },
   "Extend:36": {
     "text": "## Kontroller det fangede oppsettet",
     "source_hash": "f1c2f5c6de3f53c619dc7b774e5c42c86b11c0f59d3d150537e145bb3f358680",
@@ -1829,11 +1846,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Extend:40": {
-    "text": "_Sist oppdatert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Extend:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "FAQ:0": {
     "text": "# Vanlige spørsmål",
@@ -3119,17 +3135,26 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
+  "Home:18": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1829ed863c572c2dbcafc8f78604d94faa795d58ca1d7e90494d020f49980f60"
+  },
+  "Home:19": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1bd5656d0819ad3a7d1a6861c038f59661e423c6f03bddc8b203ef1a7ffb5c8b"
+  },
   "Home:13": {
     "text": "## Versjonen som dekkes",
     "source_hash": "96ddfc08279c6ae35f38d5139ad21a94f1ac99c7d031fa618cb40edbe35d39a5",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Home:14": {
-    "text": "Dette er det lokale dokumentasjonsutkastet for **Smart! 35.0.0 og Smart Camera 2.0.0**. Oppdater begge modene sammen når deres samordnede, kompatible utgivelser blir tilgjengelige; ikke kombiner Camera 2.0 med en eldre Smart-pakke. Disse utkastssidene kunngjør ingen publisering.",
-    "source_hash": "c29d2ea90b7a486f22022563a690b6049c5d72c5bf1c740518bb20fa5747432d",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Home:20": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6de3b72e72a676036d11c5f3b3679009013b370ca2cb7e8aed2d56252d3addd9"
   },
   "Home:15": {
     "text": "Start med det felles [Panelet og HUD](Smart-Panel-and-HUD), [gjenoppta Gang](Smart-Walking), [auto-tilkobling med transportbåndheiser](Auto-Connect) og [koblinger mellom byggeplaner](Blueprints).",
@@ -3143,11 +3168,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Home:17": {
-    "text": "_Sist oppdatert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Home:21": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Lift-Assisted-Auto-Connect:0": {
     "text": "# Auto-tilkobling med transportbåndheiser",
@@ -3473,11 +3497,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:2": {
-    "text": "Du finner dem under **Hovedmeny → Moder → Smart!**. Endringer her **bevares mellom lagringer og økter**. (Tastebindinger er separate — se [Kontroller](Controls).)",
-    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:59": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb"
   },
   "Settings-Reference:3": {
     "text": "## Auto-tilkobling av bånd",
@@ -3533,11 +3556,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:12": {
-    "text": "- **Auto-tilkobling av hyperrør** — aktiver eller deaktiver automatisk sammenkobling av hyperrør. **På som standard.** (Lagt til i 33.1.0.)\n- Velg ruteføringsmodus for hyperrør.",
-    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:60": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29"
   },
   "Settings-Reference:13": {
     "text": "## Auto-tilkobling av strøm",
@@ -3551,11 +3573,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:15": {
-    "text": "- Aktiver eller deaktiver Auto-tilkobling av strøm.\n- Velg tilkoblingsmodus.\n- Still tilkoblingsrekkevidden.\n- Reserver stolpetilkoblinger slik at Smart! ikke fyller hver plass.\n- **Seriekoblet strøm ved skalering** — når Oppgraderte strømtilkoblinger er låst opp, kobles hver fabrikk- eller generatorkopi langs X-aksen i Smart direkte til neste i stedet for en stolpe til hver. Det tilsvarer et vanlig manifoldoppsett uten en separat Utvidelse-runde. Smart-panelet kan overstyre valget for gjeldende bygg, og HUD viser det aktive valget. Ledig kapasitet på hver kobling respekteres. **På som standard.** (Lagt til i 34.2.0.)",
-    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:61": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb"
   },
   "Settings-Reference:16": {
     "text": "## Auto-tilkobling av byggeplaner",
@@ -3563,23 +3584,31 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:17": {
-    "text": "En egen bryter for skjøtene mellom skalerte kopier av dine **egne** byggeplaner — uavhengig av Auto-tilkobling av bånd og rør ovenfor, slik at byggeplankopier fortsatt kan kobles sammen når vanlig auto-tilkobling er av.",
-    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:62": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11"
   },
-  "Settings-Reference:18": {
-    "text": "- **Auto-tilkobling av byggeplanskjøter** — aktiver eller deaktiver automatisk sammenkobling av bånd, rør, hyperrør, jernbanespor, retningsbestemte Kjøretøybaner og kvalifiserte strømforbindelser mellom skalerte byggeplankopier. **På som standard.** (Lagt til i 34.2.0.)",
-    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:63": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4"
   },
   "Settings-Reference:19": {
     "text": "Strømskjøter krever i tillegg **Auto-tilkobling av strøm**. Hver kabel bruker en samsvarende strømstolpekontakt med ledig kapasitet; interne ledninger og de to sidene av et vegguttak teller separat.",
     "source_hash": "f8e43f603399fedc12210a9d21a3d2d8108b47b7c676acc29f4f189f050416ed",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  },
+  "Settings-Reference:51": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "d30a9c4968359ae455bcba1db55829f233cd9689baac7a41ddda2ee677c671a7"
+  },
+  "Settings-Reference:52": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8d8d2f7ca8e8f5f5ffd32286939d718b5621954e9eb433f316520ac4e84d392b"
   },
   "Settings-Reference:20": {
     "text": "## Standardavstand for byggeplaner",
@@ -3605,11 +3634,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:24": {
-    "text": "- **Rekkevidde for nærliggende logistikk** — hvor langt splittere, samlere, rørkryss og rørgulvhull når mot fabrikkporter ved auto-tilkobling. Senk den for å hindre at Auto-tilkobling når inn i nabofabrikkgrupper. **Standard er 25 m** (tidligere fast oppførsel). (Lagt til i 34.2.0.)",
-    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:64": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592"
   },
   "Settings-Reference:25": {
     "text": "## Utvidelse",
@@ -3629,11 +3657,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:28": {
-    "text": "- Automatisk hold ved rutenettendring låser hologrammet etter at rutenettet endres, så en stor forhåndsvisning ikke flyttes ved et uhell. **På som standard** (fra 32.1.2) — slå det av her hvis du vil flytte hologrammet fritt; grunnspillets Hold-tast frigjør hver enkelt lås.\n- **Spillerrelative kontroller** — byggingen følger retningen du ser i i stedet for faste kompassakser: musehjulet utvider bygget mot blikkretningen, og talltastaturet blir et kompass (bort/mot, høyre/venstre, opp/ned). Gjelder skalering, avstand, trinn, forskyvning og rotasjon. **Av som standard** — klassiske kontroller er uendret til du slår det på, og Smart-panelet beholder alltid faste X/Y/Z. Se [Kontroller](Controls) for full gjennomgang. (Lagt til i 34.1.0.)\n- **Trykk for å veksle transformasjonsmoduser** — trykk en transformasjonstast (Avstand, Trinn, Forskyvning, Rotasjon eller Oppskrift på en fabrikk) for å slå modusen på; trykk igjen for å slå av; trykk en annen for å bytte modus. Laget for håndkontrollere, Steam Deck og tilgjengelighetsoppsett — Steam Input-radial-/berøringsmenyer sender korte trykk og kan ikke holde en tast. Å legge bort pistolen, bytte bygning eller åpne et panel frigjør alltid modusen. **Av som standard** — klassisk hold-for-bruk er uendret til du slår det på, og gjenopprettes umiddelbart når du slår av. Se [Kontroller og Steam Deck](Controller-and-Steam-Deck) for radialmenyoppsett. (Lagt til i 34.2.0.)",
-    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:65": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179"
   },
   "Settings-Reference:29": {
     "text": "## Rulletrinn",
@@ -3647,17 +3674,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:31": {
-    "text": "- **Avstandstrinn** (m) — meter avstand per rullehakk (også Utvidelse-avstand og fremrykning for Gang-segment).\n- **Høydetrinn** (m) — meter trinnhøyde per hakk (også stigning for Gang-segment).\n- **Forskyvningstrinn** (m) — meter forskyvning per hakk (også sideforskyvning for Gang-segment).\n- **Rotasjonstrinn** (grader) — grader rotasjon per hakk (også sving for Gang-segment).",
-    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:66": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e"
   },
-  "Settings-Reference:32": {
-    "text": "Standardene er 0.5 m og 5°. Avstandstrinn godtar 0.1–8 m; rotasjon godtar 0.5–90°.",
-    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:67": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da"
   },
   "Settings-Reference:33": {
     "text": "## Smart-panel",
@@ -3701,11 +3726,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Settings-Reference:40": {
-    "text": "I **Moder → Smart! Camera** vises visningene automatisk under mod- og kameranavnene som leverer dem, også inaktive visninger. Den innebygde byggepistolvisningen har en uavhengig aktiveringskontroll. Posisjon per visning er normalisert 0–1, oppløsning er 64–2048 piksler per akse, skala er 0.1–2, opptaksfrekvens er 5–60/sek og lysstyrke er −3 til +3 EV. Aktuell byggekameraavstand er 5–50 m. Kamerainnstillinger brukes straks; meny-skjulte visninger oppdateres når du fortsetter. **Alle lagringer** endrer bare feltet som redigeres i globale og eksisterende lagrede profiler for kameraet, også gjeldende verden. **Denne lagringen** endrer bare gjeldende spillagringsprofil. Andre felt og kameraer forblir urørt.",
-    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:68": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29"
   },
   "Settings-Reference:41": {
     "text": "**Bruk modens forslag** i Alle lagringer tilbakestiller kameraet på tvers av lagringer. **Bruk globale innstillinger** i Denne lagringen fjerner bare gjeldende overstyring. Innramming-/avstandstilbakestilling endrer bare de to feltene. Oppsettsendringer forhåndsvises frem til felles **Ferdig / Lås**; Avbryt forkaster ventende oppsetts-/HUD-endringer. Se [Smart Camera](Smart-Camera).",
@@ -3731,11 +3755,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Settings-Reference:45": {
-    "text": "_Sist oppdatert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Settings-Reference:58": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Smart-Assistance:0": {
     "text": "# Smart-hjelp",
@@ -4385,17 +4408,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:1": {
-    "text": "Smart Gjenopprett lagrer Smart!-arbeidet ditt, slik at du kan bruke det senere, dele det eller plassere en hel fabrikkmodul på samme måte hver gang. Åpne **K → Gjenopprett** i det felles [Smart-panelet](Smart-Panel-and-HUD). De to underfanene er **Rutenettforvalg** og **Moduler**.",
-    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:43": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35"
   },
-  "Smart-Restore:2": {
-    "text": "Det er svaret på «Jeg brukte evigheter på å stille inn dette oppsettet — hvordan får jeg det tilbake?»",
-    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:44": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2"
   },
   "Smart-Restore:3": {
     "text": "![Gjenopprett-oppgaven med underfanene Rutenettforvalg og Moduler](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/restore.png)",
@@ -4427,11 +4448,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:8": {
-    "text": "- **Lagre fra panel** — gi gjeldende paneloppsett et navn og lagre det som forvalg.\n- **Last til panel** — last et lagret forvalg tilbake til panelet for finjustering før bygging, eller bruk det som det er.\n- **Eksporter kode / Importer kode** — del et forvalg som kode, eller last inn et forvalg noen har delt med deg.",
-    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:45": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40"
   },
   "Smart-Restore:9": {
     "text": "Hvert forvalg viser et lettfattelig sammendrag av innholdet (bygning, rutenett, transformasjoner, oppskrift), slik at du lett kan skille dem fra hverandre.",
@@ -4445,17 +4465,15 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:11": {
-    "text": "En Modul fanger en hel **Utvidelse-manifold** — en tilkoblet enhet av bygninger med bånd, rør, heiser, fordelere og strøm — som du kan plassere gjentatte ganger.",
-    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b"
   },
-  "Smart-Restore:12": {
-    "text": "- Etter at du forhåndsviser eller bygger en Smart-[Utvidelse](Extend), havner den i **Utvidelse-utklippstavlen** øverst i fanen. **Lagre som modul** gjør det fangede oppsettet til en navngitt, gjenbrukbar Modul.\n- **Last modul** på en lagret Modul gjenskaper oppsettet: velg kildebygningen, så blir det en levende forhåndsvisning du kan **plassere gjentatte ganger** (avfyr for å plassere) og **rulle for å skalere** underveis.\n- Fordi en gjenopprettet Modul ikke er låst til én side slik en ny Skalert Utvidelse er, kan du **skalere strekningen begge veier** langs aksen før plassering — rull én vei for å vokse den veien, den andre for å vokse motsatt vei.\n- **Eksporter kode / Importer kode** deler Moduler på samme måte som forvalg.",
-    "source_hash": "37740d4bfda7ca76487c320d49ae9a15e2da89d1f1fe4a31862a2ad8d53f903b",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bec0ec9303e43dd7907dc7dc366c045b75ee549bfcabebb02918f256b044593e"
   },
   "Smart-Restore:13": {
     "text": "Hver Modul viser et sammendrag av delene (antall bånd, rør, fordelere og så videre), slik at du vet hva den gjenskaper.",
@@ -4517,11 +4535,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:21": {
-    "text": "Bruk **K → Gjenopprett** til å lagre, velge, laste, importere eller eksportere oppsett. Etter lasting bruker du Skaleringspanelet eller hjul-/talltastaturkontroller for å justere plasseringen; HUD viser det resulterende rutenettet og aktiv justering. Avfyr byggepistolen for å bygge til vist kostnad.",
-    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c"
   },
   "Smart-Restore:22": {
     "text": "For å veksle mellom nylig brukte gjenopprettinger uten å åpne panelet igjen, hold `U` og trykk `Num 9` for neste nylige forvalg eller `Num 3` for å gå tilbake. Se [Kontroller](Controls).",
@@ -4547,17 +4564,26 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
+  "Smart-Restore:39": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b0724fac56a114aed1905757336fc2bd16f065519872f908a56afc905e5b0d3c"
+  },
+  "Smart-Restore:40": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "81c3c2048752b95069652ecef30608748705b0ecd1930a687c49a0f383a261ad"
+  },
   "Smart-Restore:26": {
     "text": "## Se også",
     "source_hash": "0f2b43836b7db34aeb2ad65d2dc1b19495336b2a8bd81d1a4e6cc10ec180785b",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Restore:27": {
-    "text": "- [Utvidelse](Extend) — funksjonen som leverer manifoldene Moduler-fanen fanger.\n- [Smart-panelet og HUD](Smart-Panel-and-HUD) — der Gjenopprett-fanen finnes.\n- [Rutenettskalering](Grid-Scaling) og [Transformasjoner](Transforms) — det et Rutenettforvalg lagrer.",
-    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Restore:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264"
   },
   "Smart-Restore:28": {
     "text": "---",
@@ -4565,11 +4591,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Smart-Restore:32": {
-    "text": "_Sist oppdatert: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
-    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
-    "status": "reviewed",
-    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
+  "Smart-Restore:42": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Smart-Upgrade:0": {
     "text": "# Smart-oppgradering",
@@ -4607,11 +4632,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Upgrade:6": {
-    "text": "1. Åpne **K → Oppgradering** med en støttet bygning valgt. Bånd, rør og strømledninger kan åpne oppgaven direkte.\n2. Velg skannemodus.\n3. Skann nærliggende objekter eller et tilkoblet nettverk.\n4. Velg type og målnivå — og eventuelt ett kildenivå ved nettverksskanning for å oppgradere bare det.\n5. Kontroller materialkostnaden.\n6. Kjør oppgraderingen.",
-    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Upgrade:38": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08"
   },
   "Smart-Upgrade:7": {
     "text": "Strømstolper og vegguttak åpner fortsatt det vanlige Smart-panelet når de velges, slik at de kan skaleres. For å oppgradere dem åpner du Smart-oppgradering fra en strømledning eller bruker skannemodusene.",
@@ -4655,11 +4679,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Upgrade:14": {
-    "text": "- Klikk et bestemt nivå — for eksempel **Mk.2** — for å oppgradere **bare** det til målnivået. Gjør Mk.2-bånd til Mk.3 og la Mk.4 være urørt.\n- Velg **Alle nivåer** for å endre alle avvikende bånd-, heis- eller rørnivåer til valgt mål. Dette kan oppgradere noen nivåer og nedgradere andre i samme kjøring.",
-    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Upgrade:39": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8"
   },
   "Smart-Upgrade:15": {
     "text": "Dette tilsvarer nivåkontrollen radiusskanning allerede hadde.",
@@ -4727,11 +4750,10 @@
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
   },
-  "Smart-Upgrade:26": {
-    "text": "Store transportbåndoppgraderinger er kompliserte fordi Satisfactory internt grupperer bånd og heiser i transportbåndkjedeaktører. Smart! inneholder stabilisering og diagnostikk, men svært store oppgraderinger kan fortsatt trenge lagring/ny lasting hvis spillet etterpå rapporterer en uavklart kjedetilstand.",
-    "source_hash": "fed328c054689b599658ab3989621c5b784f7bcaa94b5be404727f05664adba7",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Upgrade:36": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "30a1ce6a5b6dcbf3cb863b07c5181d63bc781a27d7277f739226c64c0f12936e"
   },
   "Smart-Upgrade:27": {
     "text": "## Eksempler fra spillet",
@@ -4769,11 +4791,10 @@
     "status": "reviewed",
     "review_method": "Language-neutral Markdown, protected brand or code; no translation required."
   },
-  "Smart-Upgrade:33": {
-    "text": "_Sist oppdatert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification"
+  "Smart-Upgrade:37": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "1f33f111fcf322e03c3c4644002603f111fb49dd6a31adff83a28289336699bb"
   },
   "Smart-Walking:0": {
     "text": "# Smart Gang",
@@ -5741,65 +5762,90 @@
     "status": "reviewed",
     "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification."
   },
-  "Auto-Connect:38": {
+  "Blueprints:33": {
+    "text": "_Sist oppdatert: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
+    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "status": "reviewed",
+    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification.",
+    "obsolete": true
+  },
+  "Controls:6": {
+    "text": "| Tast | Hva den gjør |\n|-----|--------------|\n| `K` | Åpner eller lukker fellesvinduet for Skalering / Gang / Oppgradering / Gjenopprett |\n| `F8` | Redigerer HUD-oppsett; med Smart Camera installert redigeres HUD og kameraoppsett sammen |\n| `Num Decimal` | Slår Smart-byggehjelp av/på for økten |\n| `Num 8` | Øker aktiv verdi |\n| `Num 5` | Reduserer aktiv verdi |\n| `Num 6` | Øker Y-antall i rutenettet |\n| `Num 4` | Reduserer Y-antall i rutenettet |\n| `Num 9` | Øker Z-antall i rutenettet |\n| `Num 3` | Reduserer Z-antall i rutenettet |\n| `X` | Hold for å justere X med felleskontrollene eller musehjulet |\n| `Z` | Hold for å justere Y med felleskontrollene eller musehjulet |\n| `X + Z` | Hold begge for å justere Z med felleskontrollene eller musehjulet |\n| `;` | Hold Avstand-modus |\n| `I` | Hold Trinn-modus |\n| `Y` | Hold Forskyvning-modus |\n| `,` | Hold Rotasjon-modus |\n| `Num 0` | Veksler den aktive modusens akse |\n| `U` | Oppskriftsvalg på produksjonsbygninger; tilkoblingsinnstillinger eller skiltstøtter på aktuelle objekter |\n| `Num 1` | Viser/skjuler retningspiler |\n| `Mouse Wheel` | Justerer aktiv Smart-modus, eller vanlig rotasjon når ingen Smart-modus er aktiv |",
+    "source_hash": "2837292eada81d5f2f7b96ee1fa39689f1d488e0ee8b125d948d5069e407097e",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:27": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "2398e8d56840e229a7b387e89a3556aa24edfa217e26cf50db9e5ba6cf6ccf02",
+    "obsolete": true
+  },
+  "Settings-Reference:18": {
+    "text": "- **Auto-tilkobling av byggeplanskjøter** — aktiver eller deaktiver automatisk sammenkobling av bånd, rør, hyperrør, jernbanespor, retningsbestemte Kjøretøybaner og kvalifiserte strømforbindelser mellom skalerte byggeplankopier. **På som standard.** (Lagt til i 34.2.0.)",
+    "source_hash": "5daf4a877774b178a7054980007283bb25a2de416f6dad2c908287768adb9db4",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:25": {
+    "text": "Auto-tilkobling av hyperrør har **sin egen aktiveringsbryter og ruteføringsmodus**, uavhengig av rør — still dem fra Smart-panelet, Auto-tilkoblingsinnstillingene under bygging (hold `U`), eller modinnstillingene. Se [Innstillingsreferanse](Settings-Reference).",
+    "source_hash": "12ed988af1c997655966e3695ec2f34cf65159be86bd53b56fa1a92c8a85b213",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:27": {
+    "text": "- [Utvidelse](Extend) — funksjonen som leverer manifoldene Moduler-fanen fanger.\n- [Smart-panelet og HUD](Smart-Panel-and-HUD) — der Gjenopprett-fanen finnes.\n- [Rutenettskalering](Grid-Scaling) og [Transformasjoner](Transforms) — det et Rutenettforvalg lagrer.",
+    "source_hash": "52daff47c488c29086aa3ce6e5cea9be1d21194fb00b9e2d10a09d723d037264",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:31": {
+    "text": "- **Avstandstrinn** (m) — meter avstand per rullehakk (også Utvidelse-avstand og fremrykning for Gang-segment).\n- **Høydetrinn** (m) — meter trinnhøyde per hakk (også stigning for Gang-segment).\n- **Forskyvningstrinn** (m) — meter forskyvning per hakk (også sideforskyvning for Gang-segment).\n- **Rotasjonstrinn** (grader) — grader rotasjon per hakk (også sving for Gang-segment).",
+    "source_hash": "89d132f31272346911aed3355f02885dd096f7bf810ca50e85be98947993996e",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "afb87f859fcc83d5e6b2266d494b6b507374c2527764492de14534b28dbafa51",
+    "obsolete": true
+  },
+  "Auto-Connect:4": {
+    "text": "Åpne **K → Skalering**, og bruk den aktuelle **Auto-tilkobling**-delen for valgt byggeobjekt. På støttede logistikkobjekter åpner `U` tilkoblingsinnstillingene. Globale standardvalg ligger under **Innstillinger → Modinnstillinger → Smart!**; valgene for gjeldende forhåndsvisning er i panelet. Tilkoblingsvalg oppdateres direkte, uavhengig av **Bruk plassering umiddelbart**.",
+    "source_hash": "0ef504a252dcabd3541b9ed8c7d000b31225026b5fa22aa19b6f534eadd38d6b",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:47": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "e2b8d0e432743c7bf14b5c35d055dab7c5692be89a336b3b5b8bf2922ba550f7",
+    "obsolete": true
+  },
+  "Settings-Reference:24": {
+    "text": "- **Rekkevidde for nærliggende logistikk** — hvor langt splittere, samlere, rørkryss og rørgulvhull når mot fabrikkporter ved auto-tilkobling. Senk den for å hindre at Auto-tilkobling når inn i nabofabrikkgrupper. **Standard er 25 m** (tidligere fast oppførsel). (Lagt til i 34.2.0.)",
+    "source_hash": "bb2d0aef5ebb0f05f6e0332aba3b272795cbf3d8bade162603d3521aad41d592",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:13": {
+    "text": "- **Dedikerte servere:** både Windows og Linux støttes.\n- **Størrelsesgrense for Smart-byggeplaner:** én byggeplanrutenettplassering på en server har en grense (omtrent et par tusen bygninger eller noen hundre forbindelsesbånd/rør, det som nås først). Skalerer du forbi den, avviser Smart! plasseringen — HUD ber deg bygge i mindre deler, og rutenettet forblir aktivt slik at du kan gjøre det. Den trygge grensen for byggedata gjelder også i enkeltspiller og på spillervertede servere. Deaktiver [Smart-hjelp](Smart-Assistance) og velg oppskriften på nytt for å plassere en stor byggeplan normalt.\n- **Store rutenett bygges gradvis:** svært store skalerte bygg konstrueres i bakgrunnen over noen øyeblikk, slik at serveren svarer og ingen kobles fra under byggingen.\n- **For serveradministratorer:** installer samme Smart!-versjon på serveren og alle klienter. Modbehandleren holder dem like ved oppdatering.\n- **Smart Camera** (tilleggmoden) fungerer også i flerspiller.",
+    "source_hash": "e0abba477abdd815436da48e2f8957237ec0394c708deea58592e10d20ab9268",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:45": {
     "text": "_Sist oppdatert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
     "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Smart-Camera:30": {
-    "text": "_Sist oppdatert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Smart-Restore:29": {
-    "text": "_Sist oppdatert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Water-Extractors:14": {
-    "text": "_Sist oppdatert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Feature-Gallery:50": {
-    "text": "_Sist oppdatert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Feature-Gallery:30": {
-    "text": "\n## Oppgradering",
-    "source_hash": "346a4694e55fb3881d4efb3df370eb4fa70ac8f41333fc51b5d2f136ba5ac387",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Lift-Assisted-Auto-Connect:11": {
-    "text": "## Eksempler fra spillet",
-    "source_hash": "5eb2c1c9e3dbc39102a812af339752c7f0fe1e0b95368965e2e069a71b377898",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Blueprints:21": {
-    "text": "_Sist oppdatert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
-    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
-    "status": "reviewed",
-    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
-    "obsolete": true
-  },
-  "Lift-Assisted-Auto-Connect:12": {
-    "text": "![To hevede splitterforhåndsvisninger med synlige vertikale heiser ned til maskintilkoblingens nivå, ved siden av skaleringskontrollene.](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/lift-connection-controls.png)",
-    "source_hash": "cc3d5dfc328bad823f169e9cfaa9f3b9faf340768f11bfc85d33f6d73e79b0fc",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
@@ -5811,25 +5857,89 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Lift-Assisted-Auto-Connect:15": {
-    "text": "En bygd inngangslinje for Produsenter med fordelere forskjøvet til ulike høyder og avstander.",
-    "source_hash": "3f031fef9aa2b08f029041b38a3ede25923654db3210c0cf2f823345bb155916",
+  "Smart-Upgrade:35": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "fef10fcd052e667d2e0e00e385c7a28cabcf51645e05f4ffe84f7b4be9302924",
+    "obsolete": true
+  },
+  "Settings-Reference:55": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "48890e9ad61621c0f5a145bbfacc031cd10dd0886932dd6ca1718305cc0ded08",
+    "obsolete": true
+  },
+  "Smart-Upgrade:6": {
+    "text": "1. Åpne **K → Oppgradering** med en støttet bygning valgt. Bånd, rør og strømledninger kan åpne oppgaven direkte.\n2. Velg skannemodus.\n3. Skann nærliggende objekter eller et tilkoblet nettverk.\n4. Velg type og målnivå — og eventuelt ett kildenivå ved nettverksskanning for å oppgradere bare det.\n5. Kontroller materialkostnaden.\n6. Kjør oppgraderingen.",
+    "source_hash": "32316883719d3460a5f56824a7fb92559589793f835d63f4bd04e2103217fa08",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Buildable-Gallery:60": {
+  "Compatibility-and-Multiplayer:28": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "c7aebe8ed6d349fd4710af10aa9e95555d8529fd0728f438c8a84f9ce1b54246",
+    "obsolete": true
+  },
+  "Extend:40": {
     "text": "_Sist oppdatert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
     "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Blueprints:20": {
-    "text": "\n---",
-    "source_hash": "3d0b188170e8f7ed4b0a730d3fae39933057e60ba9e030bc278c446442cbabc3",
+  "Settings-Reference:12": {
+    "text": "- **Auto-tilkobling av hyperrør** — aktiver eller deaktiver automatisk sammenkobling av hyperrør. **På som standard.** (Lagt til i 33.1.0.)\n- Velg ruteføringsmodus for hyperrør.",
+    "source_hash": "de7e8d93fbc71c12b9ce0a1c8db5fdc99380795aa7009f219fc68164294d1f29",
     "status": "reviewed",
-    "review_method": "Language-neutral Markdown, protected brand or code; no translation required.",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:29": {
+    "text": "_Sist oppdatert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:41": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6fd578d8f158dba5fa05b36f5f5e607370fc961be65776fbce3a1e7af14d1023",
+    "obsolete": true
+  },
+  "Water-Extractors:14": {
+    "text": "_Sist oppdatert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Upgrade:33": {
+    "text": "_Sist oppdatert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:25": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6a23ebe76c6c81c346aa9ada46d9598977d528e278a4ec3eba624c42942cbf0a",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:3": {
+    "text": "Smart! 35.0.0 er rettet mot **Satisfactory 1.2.4 / CL 502094 eller nyere** og **SML 3.12.x**. Oppdater spillet og modlasteren før installasjon. Eldre spillversjoner støttes ikke.",
+    "source_hash": "67e479ca52c59b7506d6acd2ace2bb75b701e6c7854e5b2d570aeec46f92d66e",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:35": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4ce78ba0540a46d297f12754ed09f0b5fbd3af284a7f90d4157396c30318a9dc",
     "obsolete": true
   },
   "Lift-Assisted-Auto-Connect:14": {
@@ -5839,11 +5949,24 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Feature-Gallery:38": {
-    "text": "\n## Gruppedemontering",
-    "source_hash": "353f26b4f82a6dd84f38739c12578013748425253037044613768c788d0ac22b",
+  "Feature-Gallery:30": {
+    "text": "\n## Oppgradering",
+    "source_hash": "346a4694e55fb3881d4efb3df370eb4fa70ac8f41333fc51b5d2f136ba5ac387",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:12": {
+    "text": "- Etter at du forhåndsviser eller bygger en Smart-[Utvidelse](Extend), havner den i **Utvidelse-utklippstavlen** øverst i fanen. **Lagre som modul** gjør det fangede oppsettet til en navngitt, gjenbrukbar Modul.\n- **Last modul** på en lagret Modul gjenskaper oppsettet: velg kildebygningen, så blir det en levende forhåndsvisning du kan **plassere gjentatte ganger** (avfyr for å plassere) og **rulle for å skalere** underveis.\n- Fordi en gjenopprettet Modul ikke er låst til én side slik en ny Skalert Utvidelse er, kan du **skalere strekningen begge veier** langs aksen før plassering — rull én vei for å vokse den veien, den andre for å vokse motsatt vei.\n- **Eksporter kode / Importer kode** deler Moduler på samme måte som forvalg.",
+    "source_hash": "37740d4bfda7ca76487c320d49ae9a15e2da89d1f1fe4a31862a2ad8d53f903b",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:48": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "54a959ae32a4d9f6576cccd1f8191d529cda45dd8aca777c420560710c5cfa55",
     "obsolete": true
   },
   "Smart-Camera:17": {
@@ -5853,16 +5976,16 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Lift-Assisted-Auto-Connect:13": {
-    "text": "De vertikale heisdelene og nedre endene er synlige under begge splitterne. De horisontale båndene på maskinsiden er forkortet av perspektivet; se det bygde Produsent-eksemplet nedenfor for hele oppsettet.",
-    "source_hash": "461c92ebb7d0183d81d0d44c20001dd4c5d42ceaee5dc38fbc02fc6ff22afe85",
+  "Smart-Restore:21": {
+    "text": "Bruk **K → Gjenopprett** til å lagre, velge, laste, importere eller eksportere oppsett. Etter lasting bruker du Skaleringspanelet eller hjul-/talltastaturkontroller for å justere plasseringen; HUD viser det resulterende rutenettet og aktiv justering. Avfyr byggepistolen for å bygge til vist kostnad.",
+    "source_hash": "1b1ed17e9fec531c12a9f625b3a9bfc523afdeccaf5ba0c4bca304c837f1764c",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
-  "Controls:6": {
-    "text": "| Tast | Hva den gjør |\n|-----|--------------|\n| `K` | Åpner eller lukker fellesvinduet for Skalering / Gang / Oppgradering / Gjenopprett |\n| `F8` | Redigerer HUD-oppsett; med Smart Camera installert redigeres HUD og kameraoppsett sammen |\n| `Num Decimal` | Slår Smart-byggehjelp av/på for økten |\n| `Num 8` | Øker aktiv verdi |\n| `Num 5` | Reduserer aktiv verdi |\n| `Num 6` | Øker Y-antall i rutenettet |\n| `Num 4` | Reduserer Y-antall i rutenettet |\n| `Num 9` | Øker Z-antall i rutenettet |\n| `Num 3` | Reduserer Z-antall i rutenettet |\n| `X` | Hold for å justere X med felleskontrollene eller musehjulet |\n| `Z` | Hold for å justere Y med felleskontrollene eller musehjulet |\n| `X + Z` | Hold begge for å justere Z med felleskontrollene eller musehjulet |\n| `;` | Hold Avstand-modus |\n| `I` | Hold Trinn-modus |\n| `Y` | Hold Forskyvning-modus |\n| `,` | Hold Rotasjon-modus |\n| `Num 0` | Veksler den aktive modusens akse |\n| `U` | Oppskriftsvalg på produksjonsbygninger; tilkoblingsinnstillinger eller skiltstøtter på aktuelle objekter |\n| `Num 1` | Viser/skjuler retningspiler |\n| `Mouse Wheel` | Justerer aktiv Smart-modus, eller vanlig rotasjon når ingen Smart-modus er aktiv |",
-    "source_hash": "2837292eada81d5f2f7b96ee1fa39689f1d488e0ee8b125d948d5069e407097e",
+  "Settings-Reference:2": {
+    "text": "Du finner dem under **Hovedmeny → Moder → Smart!**. Endringer her **bevares mellom lagringer og økter**. (Tastebindinger er separate — se [Kontroller](Controls).)",
+    "source_hash": "3f27a7251dee61f272afa2b13b0a9a7d3b5d0782f11461e43b22ec93ed6baceb",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
@@ -5874,9 +5997,401 @@
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true
   },
+  "Extend:20": {
+    "text": "Start direkte via **K → Utvidelse → Velg kilde**, eller bruk siktesnarveien. Utvidelse-fanen gjenbruker plasseringskontrollene for rutenettantall, avstand og støttede transformasjoner. Du kan også bruke samme hjul-/talltastaturkontroller som [Rutenettskalering](Grid-Scaling). Uten en modifikatortast velger hjulet utvidelsesretningen. HUD identifiserer strekning/rekker og aktiv justering, slik at du kan kontrollere hva som endres før du bygger.",
+    "source_hash": "76acf531cc52c29e073f3df2f0e0d06d36121daf24e05679c1f466af9d01eb13",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:56": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "bdf042547add168e1b9964198625cab7539af8176045dd68d70f13a619b0b7be",
+    "obsolete": true
+  },
+  "Settings-Reference:28": {
+    "text": "- Automatisk hold ved rutenettendring låser hologrammet etter at rutenettet endres, så en stor forhåndsvisning ikke flyttes ved et uhell. **På som standard** (fra 32.1.2) — slå det av her hvis du vil flytte hologrammet fritt; grunnspillets Hold-tast frigjør hver enkelt lås.\n- **Spillerrelative kontroller** — byggingen følger retningen du ser i i stedet for faste kompassakser: musehjulet utvider bygget mot blikkretningen, og talltastaturet blir et kompass (bort/mot, høyre/venstre, opp/ned). Gjelder skalering, avstand, trinn, forskyvning og rotasjon. **Av som standard** — klassiske kontroller er uendret til du slår det på, og Smart-panelet beholder alltid faste X/Y/Z. Se [Kontroller](Controls) for full gjennomgang. (Lagt til i 34.1.0.)\n- **Trykk for å veksle transformasjonsmoduser** — trykk en transformasjonstast (Avstand, Trinn, Forskyvning, Rotasjon eller Oppskrift på en fabrikk) for å slå modusen på; trykk igjen for å slå av; trykk en annen for å bytte modus. Laget for håndkontrollere, Steam Deck og tilgjengelighetsoppsett — Steam Input-radial-/berøringsmenyer sender korte trykk og kan ikke holde en tast. Å legge bort pistolen, bytte bygning eller åpne et panel frigjør alltid modusen. **Av som standard** — klassisk hold-for-bruk er uendret til du slår det på, og gjenopprettes umiddelbart når du slår av. Se [Kontroller og Steam Deck](Controller-and-Steam-Deck) for radialmenyoppsett. (Lagt til i 34.2.0.)",
+    "source_hash": "5062fcd97160abfb325d9843686928ec4e50ca66911455b5f84cd6515d2b0179",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:17": {
+    "text": "En egen bryter for skjøtene mellom skalerte kopier av dine **egne** byggeplaner — uavhengig av Auto-tilkobling av bånd og rør ovenfor, slik at byggeplankopier fortsatt kan kobles sammen når vanlig auto-tilkobling er av.",
+    "source_hash": "777a49715537ba1bf7334d6be913926f712654bb9bcb31b43455ceeff3c86b11",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:32": {
+    "text": "_Sist oppdatert: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
+    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "status": "reviewed",
+    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification.",
+    "obsolete": true
+  },
+  "Settings-Reference:53": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "f22daf9ba45c58f27cddf5020c4d856e4963c6b4b321e93b90506fe9200725c4",
+    "obsolete": true
+  },
+  "Home:17": {
+    "text": "_Sist oppdatert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:57": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "c9db8a4c70492425a227c4f600e18e314036c794ee6ecf7b72819e8c1176d985",
+    "obsolete": true
+  },
+  "Buildable-Gallery:60": {
+    "text": "_Sist oppdatert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:24": {
+    "text": "**Skalerte hyperrørstøtter bygger en hyperrørstrekning.** Når du skalerer en rekke Stabelbare hyperrørstøtter, legger Smart! en sammenkoblet hyperrørstrekning mellom kopiene — slik en skalert rekke Transportbåndstolper bygger bånd, eller Rørledningstolper bygger rør. Strekningen følger rekkens avstand og høyde og kan stige bratt, mens hver støttes eget festepunkt forblir ledig, slik at du fortsatt kan koble til et hyperrør manuelt.",
+    "source_hash": "eb2ee60a85c009c8b087b30e51ca7b4eb21ab2ca69353d8b3bce92a60256f455",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:37": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "89d7ec27427ec2dbeda612d4908225ce4ab17de581eb4e2fc4950c57aaf45e81",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:14": {
+    "text": "Flerspiller er nyere enn enkeltspiller, så hvis noe oppfører seg annerledes i flerspiller enn alene, er det en feil — rapporter den på GitHub eller Discord, og oppgi hva du bygde og om du var vert eller klient.",
+    "source_hash": "be6a21fb0e3a5a2792dc5eaa0095af9dbd2cdc8641d29aed38e44f5a8dce7ce9",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:8": {
+    "text": "1. Bygg én fungerende modul manuelt og velg samme bygningstype i byggepistolen.\n2. Åpne **K → Utvidelse** og trykk **Velg kilde**.\n3. Klikk den eksisterende kildebygningen i verden utenfor panelet. Kompatible kilder markeres mens du velger. **Escape** avbryter valget; klikk inne i panelet forblir i grensesnittet.\n4. Kontroller kildenavn, fangede følgedeler og antall gjentakelser. Bruk **Endre retning** og plasseringskontrollene til å forme forhåndsvisningen.\n5. Lukk panelet, kontroller foreslåtte kopier og materialkostnad, og avfyr så byggepistolen for å bygge normalt.",
+    "source_hash": "be187544697091618ad4e7d6e1a2c2782b01ec9a0930ae4d3655eadaf437a2ca",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:27": {
+    "text": "Underordnede rør- og hyperrørveggstøtter følger hele forelderens rotasjon. Panelets **Veggrotasjon** tilbyr grunnspillets **45°-trinn**, også for vertikale strekninger. Dette er adskilt fra rutenettets Rotasjon, som bøyer en serie kopier.",
+    "source_hash": "fd7f0d71039eaac4e79da271b675c44893d3943fcbd5cfcc62fcca29fe53a2ce",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:18": {
+    "text": "**Skalerte rørstøtter bygger en rørstrekning.** Når du skalerer en rekke Rørledningstolper eller Rørledningstøtter for vegg, legger Smart! en sammenkoblet rørstrekning mellom kopiene — slik en skalert rekke Transportbåndstolper bygger en båndstrekning. Væsken flyter gjennom hele strekningen, og hver støttes eget festepunkt forblir ledig, slik at du fortsatt kan koble til et rør manuelt. Bakkestøttens høyde og vinkelen på toppstykket videreføres langs hele rekken, slik at en skrå strekning holder samme form.",
+    "source_hash": "01bc78e7b2eed2e3b61e790428579385ed84d207401ce8ce691e20542ceb6c01",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:16": {
+    "text": "Den solide Smelteren er den eksisterende kilden. Den cyanblå Smelteren, båndene og støttene er den foreslåtte kopien; HUD viser **Utvidelse 1×1**. Dette er en ubygd forhåndsvisning.",
+    "source_hash": "e63c3cf4682d23c05eeac5028bcb9b9181dbd792603560f52b7b754522f84fbc",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "0bfbb0f456f389e1d5f74b3927ea2e671cd406c1d43a86691dbaf4cf8466f920",
+    "obsolete": true
+  },
+  "Blueprints:20": {
+    "text": "\n---",
+    "source_hash": "3d0b188170e8f7ed4b0a730d3fae39933057e60ba9e030bc278c446442cbabc3",
+    "status": "reviewed",
+    "review_method": "Language-neutral Markdown, protected brand or code; no translation required.",
+    "obsolete": true
+  },
+  "Smart-Restore:38": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "ec2177c56559237ebd837004fb2b43a250f6a29833da7919279c42a8f1cd7585",
+    "obsolete": true
+  },
+  "Extend:43": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4a4f5c96d35df73910b2887f40ae3bae8ad2bfb9317efd89edeeee8d5cd6a225",
+    "obsolete": true
+  },
+  "Smart-Restore:1": {
+    "text": "Smart Gjenopprett lagrer Smart!-arbeidet ditt, slik at du kan bruke det senere, dele det eller plassere en hel fabrikkmodul på samme måte hver gang. Åpne **K → Gjenopprett** i det felles [Smart-panelet](Smart-Panel-and-HUD). De to underfanene er **Rutenettforvalg** og **Moduler**.",
+    "source_hash": "d30db2304eb2c337da20e09266e493bcc8c502907b34b04c692903c1c50cee35",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:11": {
+    "text": "En Modul fanger en hel **Utvidelse-manifold** — en tilkoblet enhet av bygninger med bånd, rør, heiser, fordelere og strøm — som du kan plassere gjentatte ganger.",
+    "source_hash": "15f117646c84198699764f5759ce40f588af9591576ba39e1d7f68ebbf616b8b",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:34": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4032031e869ee6cf1a85c2c77f17f1a8e1c5fdfb4d6365de941032362c26bd6b",
+    "obsolete": true
+  },
+  "Home:14": {
+    "text": "Dette er det lokale dokumentasjonsutkastet for **Smart! 35.0.0 og Smart Camera 2.0.0**. Oppdater begge modene sammen når deres samordnede, kompatible utgivelser blir tilgjengelige; ikke kombiner Camera 2.0 med en eldre Smart-pakke. Disse utkastssidene kunngjør ingen publisering.",
+    "source_hash": "c29d2ea90b7a486f22022563a690b6049c5d72c5bf1c740518bb20fa5747432d",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:15": {
+    "text": "En bygd inngangslinje for Produsenter med fordelere forskjøvet til ulike høyder og avstander.",
+    "source_hash": "3f031fef9aa2b08f029041b38a3ede25923654db3210c0cf2f823345bb155916",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:41": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "994fafc6b93774a2bf26fda7226aa7f32d9e5692801829af09b53ed4e124e1dc",
+    "obsolete": true
+  },
+  "Auto-Connect:53": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "7a7775f3971ba2543d8a862d7cb59673e80d88b7b274872a5f5197d36bd4a8cb",
+    "obsolete": true
+  },
+  "Smart-Upgrade:26": {
+    "text": "Store transportbåndoppgraderinger er kompliserte fordi Satisfactory internt grupperer bånd og heiser i transportbåndkjedeaktører. Smart! inneholder stabilisering og diagnostikk, men svært store oppgraderinger kan fortsatt trenge lagring/ny lasting hvis spillet etterpå rapporterer en uavklart kjedetilstand.",
+    "source_hash": "fed328c054689b599658ab3989621c5b784f7bcaa94b5be404727f05664adba7",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:13": {
+    "text": "De vertikale heisdelene og nedre endene er synlige under begge splitterne. De horisontale båndene på maskinsiden er forkortet av perspektivet; se det bygde Produsent-eksemplet nedenfor for hele oppsettet.",
+    "source_hash": "461c92ebb7d0183d81d0d44c20001dd4c5d42ceaee5dc38fbc02fc6ff22afe85",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:52": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "2f3fecc73d967c4184f0913db5a820573f49a433540b53d23d3f4b45143cea26",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:4": {
+    "text": "Smart Camera 2.0 og Smart! 35.0 må oppdateres som et kompatibelt par når begge er installert. Camera fungerer også alene; byggeverktøyene til Smart krever ikke Camera. Kameravalg og HUD-utseende tilhører hver lokal spiller, ikke alle på serveren.",
+    "source_hash": "d778ecad7f4a6a4eb530120898db7c258299752b3b3849ab7cb18dce25829247",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Feature-Gallery:50": {
+    "text": "_Sist oppdatert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:42": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "16d59253ca7db5055c785ca688ef4711b48bf61b30eff0f24767d33040495694",
+    "obsolete": true
+  },
+  "Smart-Restore:2": {
+    "text": "Det er svaret på «Jeg brukte evigheter på å stille inn dette oppsettet — hvordan får jeg det tilbake?»",
+    "source_hash": "3d432425c5421614e20983fcafadb764c442a1c31b834004ecbebec74df73ea2",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Blueprints:17": {
+    "text": "Den trygge grensen for byggedata gjelder også byggeplanrutenett. En avvist, for stor plassering beholder forhåndsvisningen: reduser rutenettet og bygg i deler. For en stor byggeplan fra grunnspillet, deaktiver [Smart-hjelp](Smart-Assistance) og velg den på nytt.",
+    "source_hash": "540e7f14c64d49d7f11fb6b7090a1475087984b4955b0dccb93ca481787d4236",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:40": {
+    "text": "I **Moder → Smart! Camera** vises visningene automatisk under mod- og kameranavnene som leverer dem, også inaktive visninger. Den innebygde byggepistolvisningen har en uavhengig aktiveringskontroll. Posisjon per visning er normalisert 0–1, oppløsning er 64–2048 piksler per akse, skala er 0.1–2, opptaksfrekvens er 5–60/sek og lysstyrke er −3 til +3 EV. Aktuell byggekameraavstand er 5–50 m. Kamerainnstillinger brukes straks; meny-skjulte visninger oppdateres når du fortsetter. **Alle lagringer** endrer bare feltet som redigeres i globale og eksisterende lagrede profiler for kameraet, også gjeldende verden. **Denne lagringen** endrer bare gjeldende spillagringsprofil. Andre felt og kameraer forblir urørt.",
+    "source_hash": "c472d20351cba658f26ae667c4cd445f95ae5a5ca37a10e8763878b476181f29",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:49": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "a17847f27c9d126c19f4c648fcce148a467279fc4197ecd4e932411db88929df",
+    "obsolete": true
+  },
+  "Smart-Restore:33": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b2e1a293ae99d7ff0946f54edd6939cf17d18547e848ac895c533abe3c2e4560",
+    "obsolete": true
+  },
+  "Feature-Gallery:38": {
+    "text": "\n## Gruppedemontering",
+    "source_hash": "353f26b4f82a6dd84f38739c12578013748425253037044613768c788d0ac22b",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:36": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "4ca209992e5cc98977db86e926e521228b74ac99cbbce1b5f642444df21d447f",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:11": {
+    "text": "## Eksempler fra spillet",
+    "source_hash": "5eb2c1c9e3dbc39102a812af339752c7f0fe1e0b95368965e2e069a71b377898",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:15": {
+    "text": "- Aktiver eller deaktiver Auto-tilkobling av strøm.\n- Velg tilkoblingsmodus.\n- Still tilkoblingsrekkevidden.\n- Reserver stolpetilkoblinger slik at Smart! ikke fyller hver plass.\n- **Seriekoblet strøm ved skalering** — når Oppgraderte strømtilkoblinger er låst opp, kobles hver fabrikk- eller generatorkopi langs X-aksen i Smart direkte til neste i stedet for en stolpe til hver. Det tilsvarer et vanlig manifoldoppsett uten en separat Utvidelse-runde. Smart-panelet kan overstyre valget for gjeldende bygg, og HUD viser det aktive valget. Ledig kapasitet på hver kobling respekteres. **På som standard.** (Lagt til i 34.2.0.)",
+    "source_hash": "ec98629a469e74c7be896e64709377532daca45491fe70e1465ce14f99cffdfb",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:54": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "8382fa1196f068239391b97c93d521c0ed3ba46266fa7254f3e6c05c842fa1d2",
+    "obsolete": true
+  },
   "Smart-Assistance:13": {
     "text": "_Sist oppdatert: 2026-10-06 · Smart! v34.4.0_\n",
     "source_hash": "9ea842bd5dbdd752d3353ddeeeb68a3eff256015d475f2a5eb6d8e17e13b5156",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Upgrade:14": {
+    "text": "- Klikk et bestemt nivå — for eksempel **Mk.2** — for å oppgradere **bare** det til målnivået. Gjør Mk.2-bånd til Mk.3 og la Mk.4 være urørt.\n- Velg **Alle nivåer** for å endre alle avvikende bånd-, heis- eller rørnivåer til valgt mål. Dette kan oppgradere noen nivåer og nedgradere andre i samme kjøring.",
+    "source_hash": "78e23b12048a0221986495c275897aa077ef1a3a23671637128ce9f602d2b7a8",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:22": {
+    "text": "_Sist oppdatert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:27": {
+    "text": "Samme kilde gir nå tre cyanblå modulkopier, inkludert transportbåndrutene og støttene deres. HUD viser **Utvidelse 3×1**, og materialkostnaden øker med antall kopier. Den solide kilden forblir på plass.",
+    "source_hash": "a818fc9f6600b845b33395c092257e5c56b6b18d277fc9a96921343bf18ea9b7",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:54": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "92242198e922b4bdd9164d865151a7ed36c6f470ad144311ff077b3cb519dd7a",
+    "obsolete": true
+  },
+  "Auto-Connect:45": {
+    "text": "_Sist oppdatert: 2026-10-22 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
+    "source_hash": "aad7e3f3c52e500171299ff7fce99fd185d2007d1bcd28d37a0f58d2177f1e89",
+    "status": "reviewed",
+    "review_method": "Direct AI contextual translation and fluency review; official terminology and protected Markdown checked; not human native-speaker certification.",
+    "obsolete": true
+  },
+  "Smart-Upgrade:34": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "e26d8a251fe56b8c46900038254253f78c75d8e69ca22dce9b9e0edc797fe40e",
+    "obsolete": true
+  },
+  "Compatibility-and-Multiplayer:12": {
+    "text": "Smart! fungerer i flerspiller på dedikerte servere. Alle Smart!-funksjoner — Rutenettskalering, Auto-tilkobling (bånd, rør og strøm), Smart-byggeplaner, Utvidelse, Smart-oppgradering, Smart Gjenopprett og Smart-demontering — fungerer når du spiller som klient, med normale byggekostnader. Alt Smart! plasserer er en vanlig, fullstendig replikert spillbygning: andre spillere ser den, kan bruke den og demontere den akkurat som om du bygde den manuelt.",
+    "source_hash": "274d747f094a4e138cbbfdf378bc151dedd8d3fa979722492b56173b298c75d5",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:32": {
+    "text": "Standardene er 0.5 m og 5°. Avstandstrinn godtar 0.1–8 m; rotasjon godtar 0.5–90°.",
+    "source_hash": "b595cc1429fd298b95947cec85d6569724d96fed5b22b0b9424ca76f88c295da",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Auto-Connect:38": {
+    "text": "_Sist oppdatert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Extend:44": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "6db2053fcc52fc7413a2cac1559df3b88f7c1446d5bc55e82fb5c2b6043c246b",
+    "obsolete": true
+  },
+  "Smart-Camera:30": {
+    "text": "_Sist oppdatert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:50": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "d3ecb21df5d1ff326acb297239bef36255c199f23e6b6ec35663f3996c38ec2b",
+    "obsolete": true
+  },
+  "Lift-Assisted-Auto-Connect:12": {
+    "text": "![To hevede splitterforhåndsvisninger med synlige vertikale heiser ned til maskintilkoblingens nivå, ved siden av skaleringskontrollene.](https://raw.githubusercontent.com/wiki/majormer/SmartFoundations/images/v35/lift-connection-controls.png)",
+    "source_hash": "cc3d5dfc328bad823f169e9cfaa9f3b9faf340768f11bfc85d33f6d73e79b0fc",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Smart-Restore:8": {
+    "text": "- **Lagre fra panel** — gi gjeldende paneloppsett et navn og lagre det som forvalg.\n- **Last til panel** — last et lagret forvalg tilbake til panelet for finjustering før bygging, eller bruk det som det er.\n- **Eksporter kode / Importer kode** — del et forvalg som kode, eller last inn et forvalg noen har delt med deg.",
+    "source_hash": "7e35bb8291023e898ca5f34452152a86fb7117cb5f7cb13234c8fd2acf59ef40",
+    "status": "reviewed",
+    "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
+    "obsolete": true
+  },
+  "Settings-Reference:46": {
+    "text": "",
+    "status": "draft",
+    "source_hash": "b9d7eb1bd49651f9c06691ed5350a0882a0787f099915de792867f8aa4494c27",
+    "obsolete": true
+  },
+  "Blueprints:21": {
+    "text": "_Sist oppdatert: 2026-10-20 · Smart! v35.0.0 / Smart Camera v2.0.0 (utkast til utgivelse)_\n",
+    "source_hash": "b232413b7eca9c23fe13a59a7205511955aa299d09d7167b1af684d9d00c9659",
     "status": "reviewed",
     "review_method": "Direct assistant contextual translation and review; structural validation; no native-speaker certification",
     "obsolete": true

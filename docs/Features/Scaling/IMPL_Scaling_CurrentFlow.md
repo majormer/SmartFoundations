@@ -43,6 +43,20 @@ Scaling supports eligible single-click and multi-step buildables. It retains the
 6. `USFGridSpawnerService::UpdateChildPositions` uses `FSFPositionCalculator` and the current transform counters to place every child.
 7. Vanilla construction builds the parent and its registered children, with costs flowing through the normal hologram child list.
 
+### Multiplayer blueprint placement limit
+
+The placing client reads `BuildingBehavior.bBlueprintPlacementSafetyLimit` at fire time.
+Its default is `true`. With the limit enabled, `RegisterClientGridChunkFireHook` rejects
+a blueprint when `max(1, mBuildableToNewRoot.Num()) * Spec.CellCount()` exceeds 2,000.
+The estimate includes the original copy, so a single large blueprint can reach the limit.
+Single-player and the listen-server host do not pass through this client-only guard.
+
+Turning **Blueprint Placement Safety Limit** off in Building Behavior applies to the next
+placement without a world reload. It bypasses only this actor-count guard; payload bounds,
+authority validation, placement rules, resource costs and object-pressure checks remain.
+Large placements can stall or crash the server, desynchronize clients or disconnect players.
+Disabling the limit does not provide time-sliced construction or guarantee a safe size.
+
 ### Payment after materialization
 
 Native construction can query the price after `Construct` has consumed a staged grid

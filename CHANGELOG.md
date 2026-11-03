@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Audience note:** This changelog is read by players, not developers. Entries should describe what players experience — what was broken, what it felt like, and what's better now. Class names, internal APIs, and implementation details belong in code comments or design docs, not here. Unless an entry says otherwise, changes apply to both single-player and multiplayer.
 
+## [35.1.0] - Unreleased
+
+Conveyor handling improvements across Extend, Restore, Upgrade, Auto-Connect, Blueprint connections and Walking, fixes for scaled factory connections and settings, and an optional limit bypass for large multiplayer Blueprints. Normal construction costs still apply.
+
+### Added
+
+- **Blueprint Placement Safety Limit** in Building Behavior settings: multiplayer clients can opt out of the 2,000-building limit for a single Blueprint placement or a grid of copies. The limit stays enabled by default. Turning it off takes effect immediately and warns that larger placements can stall or crash the server, cause desynchronization, or disconnect players. Other placement and network safeguards remain active. (Issue #586, requested by Oogrimm)
+
+### Changed
+
+- **Conveyor construction and removal** - Extend, Restore, Upgrade, Auto-Connect, Blueprint connections, scaling and Walking now coordinate belt and lift changes with the game's own conveyor handling, including connections completed after placement. Smart no longer performs broad conveyor-chain cleanup after construction or dismantling.
+- **Safer multiplayer operations** - Repeated conveyor requests are checked to avoid duplicate construction and material charges. Cancelled or outdated work is discarded instead of affecting a later placement. Upgrade waits for connection and material checks before reporting completion; unresolved work remains pending or reports an error.
+
+### Fixed
+
+- **Extend refusing to build in multiplayer** - Fixed a 35.0.0 regression where a valid-looking Extend preview placed nothing or reported an invalid aim location because its connecting belts retained an outdated error state. Unscaled Extend and a scaled Assembler case now build successfully. This is also expected to address the matching Assembler report, pending confirmation with that player's save. (Issue #585, reported by Khaelas; related issue #580, reported by RomNiko)
+- **Conveyor cargo preservation** - Belt and lift upgrades retain carried item counts and item-specific state through replacement. Connection changes also account for items on affected neighboring conveyors; new Extend and Restore copies do not duplicate the source's cargo.
+- **Lift geometry and attachments** - Lift grids and conveyor upgrades preserve height, endpoint rotation, flow direction, floor-hole bindings and supported native attachments. Each grid copy validates its own native connections and mounting surface. Attached objects follow their own native construction and retirement rules rather than being replaced with generic copies. Invalid or stale attachment contexts are rejected before replacement.
+- **Distributor settings in Extend and Restore** - Supported splitter and merger copies retain their selected port directions, Smart/Programmable Splitter rules and Priority Merger input priorities. Saved layouts retain those settings when restored.
+- **Scaled Extend connections** - Fixed partial builds caused by processing the same copied distributor or lift more than once. Pipe layouts are wired once per placement and checked against their final routed shape after the game's pipe networks finish rebuilding. (Issue #588)
+- **Curved Extend loopback** - Curved grids no longer place duplicate factories and distributors on top of the source or an earlier copy after a full turn. A short HUD notice explains when the layout overlaps an earlier copy. (Issue #591)
+- **Splitter and merger Auto-Connect** - Prevented two branches from connecting to the same factory or to different factories on the same side of a row. Branch ports must face the factory ports they connect to; a wrongly rotated splitter no longer sends both side belts toward one row. Normal two-sided layouts remain supported, including Smart/Programmable Splitters and Priority Mergers. (Issue #589)
+- **Pipe junction Auto-Connect** - Opposite factory branches no longer select another port on the same factory or another factory on the same side. Cross- and T-junctions retain their different available connections, and vertical pipe connections remain supported. (Issue #589)
+- **Auto-Connect warnings** - An unused splitter or merger port pointing away from nearby factories no longer produces a misleading “misaligned ports” warning. Rejected forward-facing candidates still report a short reason. (Issue #589)
+- **Belt and pipe placement limits** - Removed incorrect 30-degree slope and connection-angle restrictions from Walking and scaled Extend. Routed belts and pipes use the game's own shape and length checks, including its small allowance at the 56 m boundary. Invalid routes show the game's placement reason. (Issue #590)
+- **Longer pipe lanes in Extend** - Removed an incorrect 25 m cutoff that hid additional copies for otherwise valid pipe connections, including 35 m spans between Particle Accelerators. (Issue #590)
+- **Copied factory settings** - Existing Power Shards and Somersloops in newly constructed factories no longer prevent settings from being applied. Smart preserves those items, charges only for additional items, and limits copied overclock and amplification settings to the available supply. (Issue #588)
+- **Restore activation and repeated placement** - Applying a saved layout can enter building mode when the build gun is not already active. Restore waits for the correct preview, becomes ready again after construction, and discards superseded or cancelled replay work instead of leaving the next placement waiting indefinitely.
+- **Auto-Connect refresh and standalone rows** - Changing connection settings at an unchanged placement position rebuilds the belt preview. Splitter and merger rows can connect to each other even when no nearby factory port is available; an absent or occupied factory connection no longer removes a valid distributor from its row.
+- **Deferred connection costs** - Power wires constructed after a grid retain their quoted cable cost through the game's later payment step.
+- **Factory and Miner replacement** - Upgrades that touch conveyors now check the affected connections, cargo, material charges and inventory transfers before reporting completion, while retaining the native building settings and dismantle-group rules.
+- **Lift-mounted splitter grids** - Fixed a construction crash by giving each attached copy its own valid destination lift and native attachment setup. A missing destination rejects the placement without spending materials. (Issue #584, reported by Beans42)
+- **First conveyor-pole preview** - Belts between regular conveyor poles align with the pole tops immediately, without first adjusting their height. Selected heights and normal construction costs are preserved. (Issue #583, reported by Dimooon / @DIm0oon)
+
+### Known issues and compatibility
+
+- **Linux server crash after dismantling lifts** - The conveyor changes remove Smart's broad cleanup of the game's conveyor lists. The current build passed ordinary and connected lift dismantling checks on an isolated Linux server, including saving and reloading. Drauku's exact save and mod combination have not been reproduced, so the reported crash is awaiting confirmation after release. (Issue #582, reported by Drauku)
+- **CurveBuilder circle placement** - Combining Smart scaling with CurveBuilder's circle mode can produce incomplete layouts and crash a dedicated server. Use Smart's own curve placement, or avoid Smart scaling during CurveBuilder placement. An integration between these overlapping placement systems is not planned. (Issue #521, reported by Brizburn)
+- **Floor Check 1.1.3** - A recipe-lookup crash was reproduced even with Smart removed. Disabling Floor Check allowed the tested sequence to complete with Smart enabled. Disable Floor Check and restart the game as a workaround; this release does not include a fix for Floor Check. (Issue #587, reported by @markmckenna)
+- **Reports still under investigation** - The original rain-removal crash during dismantling (#514) and Foundry Blueprint belt-tail connections (#578) are not being claimed as fixed by this release.
+
+### Documentation
+
+- Published an expanded [native conveyor reference](docs/Reference/THESIS_Belts_ChainActors_Placement.md) covering belts, lifts, conveyor chains, cargo, construction and multiplayer behavior, with updated feature and attachment references.
+
 ## [35.0.0] - 2026-10-22
 
 Broader building support, more flexible placement previews, upgrades that retain dismantle groups, and integration with Smart Camera 2.0.0. Normal material costs and vanilla construction rules still apply.

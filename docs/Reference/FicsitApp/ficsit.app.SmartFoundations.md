@@ -1,12 +1,23 @@
 # <img src="https://github.com/majormer/SmartFoundations/blob/main/images/Smart-Logo.png?raw=true" width="150" alt="Smart! Logo"> Smart! Mod
 
-![Status](https://img.shields.io/badge/Status-Released-brightgreen) ![Version](https://img.shields.io/badge/Version-35.0.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2.4%2B-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
+![Status](https://img.shields.io/badge/Status-Release%20candidate-orange) ![Version](https://img.shields.io/badge/Version-35.1.0-blue) ![Satisfactory](https://img.shields.io/badge/Satisfactory-1.2.4%2B-blue) ![Engine](https://img.shields.io/badge/Engine-UE%205.6-blue) ![SML](https://img.shields.io/badge/SML-3.12-blue) ![Multiplayer](https://img.shields.io/badge/Multiplayer-Supported-brightgreen) ![AI Assisted Development Used](https://img.shields.io/badge/AI%20Assisted%20Development%20Used-Disclosure%20Below-blue)
 
 > **Multiplayer note:** As of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux) — including **Smart Walking** and the new-in-v33.1.0 **hypertube** support. If you hit something odd in a multiplayer session, please report it on [GitHub](https://github.com/majormer/SmartFoundations/issues) or [Discord](https://discord.gg/SgXY4CwXYw).
 
 **Quick links:** [Watch the trailer](https://www.youtube.com/watch?v=FTlTEfIbBxw) • [First-time setup](https://github.com/majormer/SmartFoundations/wiki/Quick-Start) • [Wiki](https://github.com/majormer/SmartFoundations/wiki) • [Discord](https://discord.gg/SgXY4CwXYw) • [Report bugs](https://github.com/majormer/SmartFoundations/issues) • [Source](https://github.com/majormer/SmartFoundations)
 
 ---
+
+## Preparing 35.1.0
+
+This is the listing draft for the unreleased 35.1.0 candidate.
+
+- Conveyor and lift handling improvements for Extend, Restore and Upgrade, including native attachments, settings and cargo preservation during replacement.
+- Corrected route-length and slope checks, plus protection against curved Extend placing a copy over the source or an earlier copy.
+- Auto-Connect branches respect port facing and machine sides across splitter, merger and pipe-junction variants.
+- An optional Blueprint placement safety limit for remote multiplayer clients, enabled by default at 2,000 buildings. Disabling it permits larger attempts with increased failure risk; ordinary resource and payload checks remain.
+
+See the [changelog](https://github.com/majormer/SmartFoundations/blob/main/CHANGELOG.md) for the full release notes. Publication and release qualification are separate from this draft.
 
 ## 🚀 What is Smart!?
 
@@ -205,7 +216,7 @@ No. Smart! is a different system. It can place grids and factory modules in ways
 
 ### Does Smart! work in multiplayer?
 
-Yes — as of v32.0.0, every Smart! feature works in multiplayer on dedicated servers (Windows and Linux). Install the same Smart! version on the server and on every client. If something behaves differently in a multiplayer session than in single-player, that's a bug — please report it with clear reproduction steps.
+Yes. Smart! supports multiplayer, including Windows and Linux dedicated servers. Install the same Smart! version on the server and on every client. If something behaves differently in a multiplayer session than in single-player, that's a bug — please report it with clear reproduction steps.
 
 **More questions?** The [wiki FAQ](https://github.com/majormer/SmartFoundations/wiki/FAQ) covers controls, Auto-Connect, Extend, Smart Upgrade, Smart Walking, and common troubleshooting in detail.
 
