@@ -11,8 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Industrial Evolution Extend compatibility** - Extend can now build Industrial Evolution's supported production machines and power buildings instead of showing a valid preview that places nothing. Biomass Burner Mk.2, Refinery Mk.2 and Nuclear Power Plant Mk.2 builds were tested in single-player with Satisfactory Plus installed; other admitted buildings have not all been individually verified. (Issue #593, reported by @CaptainKlums)
-- **Consistent manifold lanes in scaled Extend** - Added copies retain the original manifold's belt flow and pipe junction port pair. Straight, stepped and rotated rows no longer reverse individual belt lanes or send them looping back around their splitters. Tested with a Biomass Burner Mk.2 spiral and a stepped, rotated Refinery Mk.2 pipe layout.
+- **Industrial Evolution Extend compatibility** - Enabled Extend for Industrial Evolution's production machines and power buildings, fixing valid-looking previews that placed nothing. Not every building has been individually tested; please report any that do not build or connect correctly. (Issue #593, reported by @CaptainKlums)
+- **Consistent manifold lanes in scaled Extend** - Added copies retain the original manifold's belt flow and pipe junction port pair. Straight, stepped and rotated rows no longer reverse individual belt lanes or send them looping back around their splitters.
 
 ## [35.1.0] - 2026-11-02
 
