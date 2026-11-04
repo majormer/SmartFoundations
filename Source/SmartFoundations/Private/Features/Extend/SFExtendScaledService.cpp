@@ -718,7 +718,8 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
             Pole.bSourceHasFreeConnections = Pole.MaxConnections > 0;
             Pole.SourceFreeConnections = Pole.MaxConnections;
         }
-        Clone.CloneTopology = MakeShared<FSFCloneTopology>(FSFCloneTopology::FromSource(CellSource, Clone.WorldOffset, PrincipalAxisWorld));
+        Clone.CloneTopology = MakeShared<FSFCloneTopology>(FSFCloneTopology::FromSource(
+            CellSource, Clone.WorldOffset, PrincipalAxisWorld, Owner->ScaledExtendBaseTopology.Get()));
 
         // === Step 2.25: RIGID BODY ROTATION ===
         // Clone topology is a rigid body relative to the factory building.
@@ -742,8 +743,8 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
                     {
                         FVector StartWorld = Holo.SplineData.Points[0].World.ToFVector();
                         FVector EndWorld = Holo.SplineData.Points.Last().World.ToFVector();
-                        FVector LaneDir = EndWorld - StartWorld;
-                        bool bCloneAtEnd = Holo.bIsSourceToCloneWire || (FVector::DotProduct(LaneDir, Clone.WorldOffset) > 0.0f);
+                        const bool bCloneAtEnd = Holo.bIsSourceToCloneWire
+                            || Holo.CloneConnections.ConveyorAny0.Target.StartsWith(TEXT("source:"));
 
                         if (bCloneAtEnd)
                         {
@@ -857,7 +858,7 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
             // ROTATED distributor connector position.
             // FromSource generates lanes between Source ↔ ThisClone.
             // The "source" end can be at START or END depending on flow direction.
-            // Detect which end is the source using dot product with clone direction.
+            // Use the captured endpoint role; the chord can reverse around a curve.
             for (FSFCloneHologram& Holo : Clone.CloneTopology->ChildHolograms)
             {
                 // Issue #345: source->clone power cables chain to the previous clone like lane segments.
@@ -868,11 +869,8 @@ void USFExtendScaledService::SpawnScaledExtendPreviews()
                     FVector OldStartWorld = Holo.SplineData.Points[0].World.ToFVector();
                     FVector OldEndWorld = Holo.SplineData.Points.Last().World.ToFVector();
 
-                    // Determine which end is the "source" end:
-                    // If lane direction (start→end) aligns with source→clone direction,
-                    // then start is at source. If anti-aligned, end is at source.
-                    FVector LaneDir = OldEndWorld - OldStartWorld;
-                    bool bSourceAtStart = Holo.bIsSourceToCloneWire || (FVector::DotProduct(LaneDir, Clone.WorldOffset) > 0.0f);
+                    const bool bSourceAtStart = Holo.bIsSourceToCloneWire
+                        || Holo.CloneConnections.ConveyorAny0.Target.StartsWith(TEXT("source:"));
 
                     // Helper: compute the previous clone's ROTATED connector position.
                     // The source-side endpoint is at the SOURCE distributor connector.

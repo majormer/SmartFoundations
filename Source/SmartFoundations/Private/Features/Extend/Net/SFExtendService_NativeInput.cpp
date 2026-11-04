@@ -52,6 +52,53 @@ namespace
     const FName NativeWiringEffect(TEXT("PostBuildWiring"));
     const FName FactorySettingsEffect(TEXT("FactorySettings"));
 
+    bool IsSupportedExtendBuildClass(const UClass* BuildClass)
+    {
+        const FString Package = BuildClass->GetOutermost()->GetName();
+        if (Package.StartsWith(TEXT("/Game/FactoryGame/")) || Package == TEXT("/Script/FactoryGame"))
+            return true;
+
+        // #593: released Industrial Evolution factory and power buildables.
+        // The same allowlist applies at admission and settlement.
+        if (Package.StartsWith(TEXT("/MkPlus/Buildables/")))
+        {
+            static const TSet<FName> IndustrialEvolutionClasses = {
+                FName(TEXT("Build_Assembler_Mk2_C")),
+                FName(TEXT("Build_Assembler_Mk3_C")),
+                FName(TEXT("Build_Blender_Mk2_C")),
+                FName(TEXT("Build_Blender_Mk3_C")),
+                FName(TEXT("Build_Constructor_Mk2_C")),
+                FName(TEXT("Build_Constructor_Mk3_C")),
+                FName(TEXT("Build_Converter_Mk2_C")),
+                FName(TEXT("Build_Converter_Mk3_C")),
+                FName(TEXT("Build_Foundry_Mk2_C")),
+                FName(TEXT("Build_Foundry_Mk3_C")),
+                FName(TEXT("Build_HadronCollider_Mk2_C")),
+                FName(TEXT("Build_HadronCollider_Mk3_C")),
+                FName(TEXT("Build_Manufacturer_Mk2_C")),
+                FName(TEXT("Build_Manufacturer_Mk3_C")),
+                FName(TEXT("Build_Packager_Mk2_C")),
+                FName(TEXT("Build_Packager_Mk3_C")),
+                FName(TEXT("Build_QuantumEncoder_Mk2_C")),
+                FName(TEXT("Build_QuantumEncoder_Mk3_C")),
+                FName(TEXT("Build_Refinery_Mk2_C")),
+                FName(TEXT("Build_Refinery_Mk3_C")),
+                FName(TEXT("Build_Smelter_Mk2_C")),
+                FName(TEXT("Build_Smelter_Mk3_C")),
+                FName(TEXT("Build_GeneratorCoal_Mk2_C")),
+                FName(TEXT("Build_GeneratorCoal_Mk3_C")),
+                FName(TEXT("Build_GeneratorFuel_Mk2_C")),
+                FName(TEXT("Build_GeneratorFuel_Mk3_C")),
+                FName(TEXT("Build_GeneratorNuclear_Mk2_C")),
+                FName(TEXT("Build_GeneratorNuclear_Mk3_C")),
+                FName(TEXT("Build_GeneratorGeoThermal_Mk2_C")),
+                FName(TEXT("Build_PowerStorage_Mk2_C")),
+            };
+            return IndustrialEvolutionClasses.Contains(BuildClass->GetFName());
+        }
+        return BuildClass->GetPathName() == TEXT("/MkPlusLibs/Buildables/GeneratorBiomass/Build_GeneratorBiomass_Automated_Mk2.Build_GeneratorBiomass_Automated_Mk2_C");
+    }
+
     struct FHologramFrame
     {
         TWeakObjectPtr<AFGHologram> Actor;
@@ -282,7 +329,7 @@ bool USFExtendService::ValidateCapturedConstructionPlan(AFGHologram* Root) const
     if (!StoredCloneTopology) return true;
     TArray<FHologramFrame> Frames;
     if (!IsValid(Root) || !CaptureFrames(Root, Frames)) return false;
-    // The same stock-class boundary used by completion must hold before effects,
+    // The same class boundary used by completion must hold before effects,
     // not first be discovered after native construction/payment has happened.
     for (const auto& Frame : Frames)
     {
@@ -290,8 +337,14 @@ bool USFExtendService::ValidateCapturedConstructionPlan(AFGHologram* Root) const
         if (!Frame.Actor.IsValid() || Frame.Actor->GetBlueprintDesigner() != Root->GetBlueprintDesigner()) return false;
         auto* BuildClass = Cast<UClass>(Frame.BuildClass.ResolveObjectPtr());
         if (!BuildClass) continue; // nonmaterializing native helper/preview node
-        const FString Package = BuildClass->GetOutermost()->GetName();
-        if (!Package.StartsWith(TEXT("/Game/FactoryGame/")) && Package != TEXT("/Script/FactoryGame")) return false;
+        if (!IsSupportedExtendBuildClass(BuildClass))
+        {
+            UE_LOG(LogSmartFoundations, Log,
+                TEXT("Extend/Restore plan rejected before construction: unsupported build class %s on %s (%s)."),
+                *BuildClass->GetPathName(), *GetNameSafe(Frame.Actor.Get()),
+                Frame.Actor.Get() == Root ? TEXT("root") : TEXT("child"));
+            return false;
+        }
     }
     auto ValidateSettings = [&](const FSFCloneTopology& Plan)
     {
@@ -924,8 +977,7 @@ void USFExtendService::ObserveOwnedNativeInput(const TSharedPtr<FSFExtendNativeI
                 // Inside a Designer, native membership replaces dismantle proxies.
                 bCompleteReceipts &= Built->GetBlueprintProxy() == nullptr;
             }
-            const FString Package = Built->GetClass()->GetOutermost()->GetName();
-            bCompleteReceipts &= Package.StartsWith(TEXT("/Game/FactoryGame/")) || Package == TEXT("/Script/FactoryGame");
+            bCompleteReceipts &= IsSupportedExtendBuildClass(Built->GetClass());
             // Configurable outputs were applied from the frozen plan and read back.
             if (Built->IsA<AFGBuildablePipeline>() || Built->IsA<AFGBuildablePipelineJunction>())
                 bCompleteReceipts &= PipeSiblings.Actors.Contains(Identity);

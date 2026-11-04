@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Audience note:** This changelog is read by players, not developers. Entries should describe what players experience — what was broken, what it felt like, and what's better now. Class names, internal APIs, and implementation details belong in code comments or design docs, not here. Unless an entry says otherwise, changes apply to both single-player and multiplayer.
 
+## [35.1.1] - 2026-11-03
+
+### Fixed
+
+- **Industrial Evolution Extend compatibility** - Extend can now build Industrial Evolution's supported production machines and power buildings instead of showing a valid preview that places nothing. Biomass Burner Mk.2, Refinery Mk.2 and Nuclear Power Plant Mk.2 builds were tested in single-player with Satisfactory Plus installed; other admitted buildings have not all been individually verified. (Issue #593, reported by @CaptainKlums)
+- **Consistent manifold lanes in scaled Extend** - Added copies retain the original manifold's belt flow and pipe junction port pair. Straight, stepped and rotated rows no longer reverse individual belt lanes or send them looping back around their splitters. Tested with a Biomass Burner Mk.2 spiral and a stepped, rotated Refinery Mk.2 pipe layout.
+
 ## [35.1.0] - 2026-11-02
 
 Conveyor handling improvements across Extend, Restore, Upgrade, Auto-Connect, Blueprint connections and Walking, fixes for scaled factory connections and settings, and an optional limit bypass for large multiplayer Blueprints. Normal construction costs still apply.

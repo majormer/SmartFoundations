@@ -145,6 +145,25 @@ bool FSFScaledExtendPipeAxisTest::RunTest(const FString& Parameters)
         }
         TestEqual(TEXT("All eight rotated-grid pipe lanes retained on either side and level"), Count, 8);
         // Later arced clones must reuse the first-clone axis, not their own direction.
+        const FSFCloneTopology BaseLanePlan = FSFCloneTopology::FromSource(Source, FirstOffset * Direction, Axis);
+        for (int32 CopyCount : {2, 8, 20, 36})
+        {
+            // Even a reversed chord/axis must not reselect ports for added copies.
+            const FVector Offset = FRotator(0, CopyCount * 15, 0).RotateVector(FirstOffset * CopyCount * Direction)
+                + FVector(0, 0, CopyCount * 150);
+            const FSFCloneTopology Added = FSFCloneTopology::FromSource(Source, Offset, -Axis, &BaseLanePlan);
+            TestEqual(TEXT("Added curved and stepped copies retain a pipe lane"), CountLanes(Added), 1);
+            for (const auto& Lane : Added.ChildHolograms)
+            {
+                if (!Lane.bIsLaneSegment) continue;
+                TestEqual(TEXT("Base source port wins over reversed selection axis"),
+                    Lane.CloneConnections.ConveyorAny0.Connector,
+                    FString(Direction > 0 ? TEXT("Connection3") : TEXT("Connection2")));
+                TestEqual(TEXT("Base destination port remains opposing"),
+                    Lane.CloneConnections.ConveyorAny1.Connector,
+                    FString(Direction > 0 ? TEXT("Connection2") : TEXT("Connection3")));
+            }
+        }
         TestEqual(TEXT("A distant clone cannot change the source port"),
             CountLanes(FSFCloneTopology::FromSource(Source, FVector(20000, 100, 3000), Axis)), 1);
         Source.PipeInputChains[0].Distributor.ConnectedConnectors.Add(

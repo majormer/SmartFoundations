@@ -128,7 +128,8 @@ void FSFCloneTopology::ApplyRigidYawRotation(const FRotator& RotOffset, const FV
     }
 }
 
-FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, const FVector& Offset, const FVector& PrincipalAxisWorld)
+FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, const FVector& Offset,
+    const FVector& PrincipalAxisWorld, const FSFCloneTopology* BaseLanePlan)
 {
     FSFCloneTopology Result;
     Result.SchemaVersion = TEXT("1.0");
@@ -1050,8 +1051,33 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
                 LaneCandidates.Remove(FactoryConnector);
             }
 
+            const FString SourceId = TEXT("source:") + DistributorId;
+            const auto* BasePipeLane = BaseLanePlan ? BaseLanePlan->ChildHolograms.FindByPredicate(
+                [&](const FSFCloneHologram& Lane)
+                {
+                    return Lane.bIsLaneSegment && Lane.LaneSegmentType == TEXT("pipe")
+                        && Lane.CloneConnections.ConveyorAny0.Target == SourceId;
+                }) : nullptr;
+            if (BasePipeLane)
+            {
+                BestSourceConn = BasePipeLane->CloneConnections.ConveyorAny0.Connector;
+                BestCloneConn = BasePipeLane->CloneConnections.ConveyorAny1.Connector;
+                const FVector* SourcePort = SourceConnectorPositions.Find(BestSourceConn);
+                const FVector* ClonePort = SourceConnectorPositions.Find(BestCloneConn);
+                if (!SourcePort || !ClonePort || BestSourceConn == BestCloneConn
+                    || !LaneCandidates.Contains(BestSourceConn) || !LaneCandidates.Contains(BestCloneConn))
+                    continue;
+
+                BestSourcePos = *SourcePort;
+                BestSourceNormal = (BestSourcePos - SourceDistCenter).GetSafeNormal();
+                const FVector LocalOffset = SourceRotation.UnrotateVector(*ClonePort - SourceDistCenter);
+                BestClonePos = CloneDistLocation + CloneDistRotation.RotateVector(LocalOffset);
+                BestCloneNormal = (BestClonePos - CloneDistLocation).GetSafeNormal();
+            }
+
             for (const FString& ConnectorName : LaneCandidates)
             {
+                if (BasePipeLane) break;
                 const FVector* ConnectorPosition = SourceConnectorPositions.Find(ConnectorName);
                 if (!ConnectorPosition || Distributor.ConnectedConnectors.Contains(ConnectorName)) continue;
                 const FVector Normal = (*ConnectorPosition - SourceDistCenter).GetSafeNormal();
@@ -1068,6 +1094,7 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
             float BestCloneOpposition = -2.0f;
             for (const FString& ConnectorName : LaneCandidates)
             {
+                if (BasePipeLane) break;
                 const FVector* ConnectorPosition = SourceConnectorPositions.Find(ConnectorName);
                 if (!ConnectorPosition || ConnectorName == BestSourceConn) continue;
                 const FVector SourceLayoutNormal = (*ConnectorPosition - SourceDistCenter).GetSafeNormal();
@@ -1155,8 +1182,11 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
             // Find closest Output→Input pair
             // Option 1: Source Output1 → Clone Input1
             // Option 2: Clone Output1 → Source Input1
-            float Dist1 = FVector::Dist(SourceOutput1, CloneInput1);
-            float Dist2 = FVector::Dist(CloneOutput1, SourceInput1);
+            // Pick the flow once in the initial row frame. A later cell's
+            // source-to-cell chord reverses on a curved row, but lane flow must not.
+            const FVector FlowOffset = PrincipalAxisWorld.IsNearlyZero() ? Offset : PrincipalAxisWorld;
+            const double Dist1 = (SourceInput1 + FlowOffset - SourceOutput1).SizeSquared();
+            const double Dist2 = (SourceOutput1 + FlowOffset - SourceInput1).SizeSquared();
             
             // Check if source connectors are already connected (skip manifold if so)
             bool bSourceOutput1Connected = Distributor.ConnectedConnectors.Contains(OutputPort);
@@ -1180,7 +1210,22 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
             const FVector InputNormalLocal = SourceRotation.UnrotateVector((SourceInput1 - SourceDistCenter).GetSafeNormal());
             
             // Choose the closest valid option
-            if (bOption1Valid && (!bOption2Valid || Dist1 <= Dist2))
+            bool bSourceFeedsClone = bOption1Valid && (!bOption2Valid || Dist1 <= Dist2);
+            if (BaseLanePlan)
+            {
+                const FString SourceId = TEXT("source:") + DistributorId;
+                const auto* BaseLane = BaseLanePlan->ChildHolograms.FindByPredicate([&](const FSFCloneHologram& Lane)
+                {
+                    return Lane.bIsLaneSegment && Lane.LaneSegmentType == TEXT("belt")
+                        && Lane.CloneConnections.ConveyorAny0.Connector == OutputPort
+                        && Lane.CloneConnections.ConveyorAny1.Connector == InputPort
+                        && (Lane.CloneConnections.ConveyorAny0.Target == SourceId
+                            || Lane.CloneConnections.ConveyorAny1.Target == SourceId);
+                });
+                if (BaseLane)
+                    bSourceFeedsClone = BaseLane->CloneConnections.ConveyorAny0.Target == SourceId;
+            }
+            if (bSourceFeedsClone)
             {
                 // Source Output1 → Clone Input1 (source feeds clone)
                 SplineStartPos = SourceOutput1;
@@ -1196,7 +1241,7 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
                 LaneEndNormal = CloneDistRotation.RotateVector(InputNormalLocal);
                 
                 UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🛤️ BELT LANE: Source.Output1(%.0f,%.0f)→Clone.Input1(%.0f,%.0f) (dist=%.1f vs %.1f)"),
-                    SourceOutput1.X, SourceOutput1.Y, CloneInput1.X, CloneInput1.Y, Dist1, Dist2);
+                    SourceOutput1.X, SourceOutput1.Y, CloneInput1.X, CloneInput1.Y, FMath::Sqrt(Dist1), FMath::Sqrt(Dist2));
             }
             else
             {
@@ -1214,7 +1259,7 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
                 LaneEndNormal = SourceRotation.RotateVector(InputNormalLocal);
                 
                 UE_LOG(LogSmartExtend, VeryVerbose, TEXT("🛤️ BELT LANE: Clone.Output1(%.0f,%.0f)→Source.Input1(%.0f,%.0f) (dist=%.1f vs %.1f)"),
-                    CloneOutput1.X, CloneOutput1.Y, SourceInput1.X, SourceInput1.Y, Dist2, Dist1);
+                    CloneOutput1.X, CloneOutput1.Y, SourceInput1.X, SourceInput1.Y, FMath::Sqrt(Dist2), FMath::Sqrt(Dist1));
             }
         }
         
