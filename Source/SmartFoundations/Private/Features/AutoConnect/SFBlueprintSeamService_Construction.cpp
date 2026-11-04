@@ -2,6 +2,7 @@
 #include "SmartFoundations.h"
 #include "Engine/World.h"
 #include "Buildables/FGBuildable.h"
+#include "Buildables/FGBuildableConveyorBelt.h"
 #include "Buildables/FGBuildableConveyorLift.h"
 #include "FGBuildableSubsystem.h"
 #include "FGFactoryConnectionComponent.h"
@@ -26,10 +27,11 @@ struct FCopyBindings
     TArray<FPortBinding> Ports;
 };
 TMap<TWeakObjectPtr<AFGBlueprintHologram>, FCopyBindings> Copies;
-bool SameBlueprintBindingPose(const FTransform& A, const FTransform& B)
+bool SameBlueprintBindingPose(const FTransform& A, const FTransform& B, bool bIgnoreRotation)
 {
     return A.GetLocation().Equals(B.GetLocation(), .2)
-        && A.GetRotation().Equals(B.GetRotation(), .0001) && A.GetScale3D().Equals(B.GetScale3D(), .0001);
+        && (bIgnoreRotation || A.GetRotation().Equals(B.GetRotation(), .0001))
+        && A.GetScale3D().Equals(B.GetScale3D(), .0001);
 }
 }
 
@@ -82,7 +84,15 @@ void FSFBlueprintSeamService::RecordBeltCopyBindings(AFGBlueprintHologram* Bluep
             if (!IsValid(Candidate) || Seen.Contains(Candidate) || !Candidate->HasAuthority()
                 || Candidate->IsActorBeingDestroyed() || Candidate->GetWorld() != World
                 || Candidate->GetClass() != Entry.Intent.ExpectedClass.Get()
-                || !SameBlueprintBindingPose(Candidate->GetActorTransform(), Entry.OwnerPose)) continue;
+                // [#578] Native Blueprint construction does not carry the placement
+                // rotation onto a belt actor; the belt's shape lives in its spline.
+                // A copy placed 90 degrees from its designer orientation builds a
+                // yaw-0 belt whose predicted pose is yaw 90, at the exact location
+                // and with exact port positions. Belts are therefore matched by
+                // location here and pinned by the exact port name/direction/
+                // position check below. Every other buildable keeps full pose.
+                || !SameBlueprintBindingPose(Candidate->GetActorTransform(), Entry.OwnerPose,
+                    Candidate->IsA<AFGBuildableConveyorBelt>())) continue;
             Seen.Add(Candidate);
             TInlineComponentArray<UFGFactoryConnectionComponent*> ActualPorts(Candidate);
             bool PortMatched = false;
