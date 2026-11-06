@@ -340,6 +340,62 @@ UFGPipeConnectionComponentHyper* FSFBlueprintSeamService::ResolveHypertubeConnec
 		? Connectors[Index] : nullptr;
 }
 
+uint32 FSFBlueprintSeamService::ComputeConnectorFingerprint(AFGBlueprintHologram* Blueprint)
+{
+	if (!Blueprint)
+	{
+		return 0;
+	}
+	const FTransform Frame = Blueprint->GetActorTransform();
+	uint32 Hash = 0;
+	auto AddConnector = [&](const USceneComponent* Duplicate, FName OriginalName, bool bOpen, int32 Kind)
+	{
+		const FVector Position = Frame.InverseTransformPosition(Duplicate->GetComponentLocation());
+		const FVector Normal = Frame.InverseTransformVectorNoScale(Duplicate->GetForwardVector());
+		Hash = HashCombine(Hash, GetTypeHash(QuantizeCm(Position.X)));
+		Hash = HashCombine(Hash, GetTypeHash(QuantizeCm(Position.Y)));
+		Hash = HashCombine(Hash, GetTypeHash(QuantizeCm(Position.Z)));
+		Hash = HashCombine(Hash, GetTypeHash(QuantizeCm(Normal.X * 100.0)));
+		Hash = HashCombine(Hash, GetTypeHash(QuantizeCm(Normal.Y * 100.0)));
+		Hash = HashCombine(Hash, GetTypeHash(QuantizeCm(Normal.Z * 100.0)));
+		Hash = HashCombine(Hash, GetTypeHash(OriginalName));
+		Hash = HashCombine(Hash, GetTypeHash(bOpen));
+		Hash = HashCombine(Hash, GetTypeHash(Kind));
+	};
+
+	TArray<UFGFactoryConnectionComponent*> Belts;
+	GetDuplicatedBeltConnectors(Blueprint, Belts);
+	for (UFGFactoryConnectionComponent* Duplicate : Belts)
+	{
+		if (const UFGFactoryConnectionComponent* Original = Cast<UFGFactoryConnectionComponent>(
+			Blueprint->mDuplicateConnectionToOriginalMap.FindRef(Duplicate)))
+		{
+			AddConnector(Duplicate, Original->GetFName(), !Original->IsConnected(), static_cast<int32>(Original->GetDirection()));
+		}
+	}
+	TArray<UFGPipeConnectionComponent*> Pipes;
+	GetDuplicatedPipeConnectors(Blueprint, Pipes);
+	for (UFGPipeConnectionComponent* Duplicate : Pipes)
+	{
+		if (const UFGPipeConnectionComponent* Original = Cast<UFGPipeConnectionComponent>(
+			Blueprint->mDuplicateConnectionToOriginalMap.FindRef(Duplicate)))
+		{
+			AddConnector(Duplicate, Original->GetFName(), !Original->IsConnected(), static_cast<int32>(Original->GetPipeConnectionType()));
+		}
+	}
+	TArray<UFGPipeConnectionComponentHyper*> Hypertubes;
+	GetDuplicatedHypertubeConnectors(Blueprint, Hypertubes);
+	for (UFGPipeConnectionComponentHyper* Duplicate : Hypertubes)
+	{
+		if (const UFGPipeConnectionComponentHyper* Original = Cast<UFGPipeConnectionComponentHyper>(
+			Blueprint->mDuplicateConnectionToOriginalMap.FindRef(Duplicate)))
+		{
+			AddConnector(Duplicate, Original->GetFName(), !Original->IsConnected(), static_cast<int32>(Original->GetPipeConnectionType()));
+		}
+	}
+	return Hash;
+}
+
 bool FSFBlueprintSeamService::BuildSeamTable(AFGBlueprintHologram* Blueprint, FSFBlueprintSeamTable& OutTable)
 {
 	OutTable.Pairs.Reset();
@@ -347,11 +403,13 @@ bool FSFBlueprintSeamService::BuildSeamTable(AFGBlueprintHologram* Blueprint, FS
 	OutTable.BeltConnectorCount = 0;
 	OutTable.PipeConnectorCount = 0;
 	OutTable.HypertubeConnectorCount = 0;
+	OutTable.ConnectorFingerprint = 0;
 	if (!Blueprint)
 	{
 		return false;
 	}
 	OutTable.BlueprintName = FName(*Blueprint->mBlueprintDescName);
+	OutTable.ConnectorFingerprint = ComputeConnectorFingerprint(Blueprint);
 
 	// GEOMETRY FRAME: the search runs on the parent hologram's DUP connectors transformed into
 	// HOLOGRAM-LOCAL space — that frame IS the grid frame (grid X/Y = parent local X/Y), which

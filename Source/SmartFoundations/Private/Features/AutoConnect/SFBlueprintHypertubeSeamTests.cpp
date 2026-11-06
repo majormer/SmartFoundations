@@ -92,6 +92,34 @@ bool FSFBlueprintHypertubeKindsTest::RunTest(const FString& Parameters)
 	return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSFBlueprintSeamFingerprintTest, "SmartFoundations.AutoConnect.BlueprintSeamFingerprint",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FSFBlueprintSeamFingerprintTest::RunTest(const FString& Parameters)
+{
+	FSeamFixture Fixture;
+	if (!TestNotNull(TEXT("Native duplicate map"), Fixture.MapProperty)) return false;
+	Fixture.AddPort<UFGPipeConnectionComponent>(TEXT("Fluid0"), FVector(1000, 0, 100), FVector::ForwardVector);
+	UFGPipeConnectionComponent* Moved = Fixture.AddPort<UFGPipeConnectionComponent>(TEXT("Fluid1"), FVector(-1000, 0, 100), -FVector::ForwardVector);
+
+	FSFBlueprintSeamTable Table;
+	FSFBlueprintSeamService::BuildSeamTable(Fixture.Blueprint, Table);
+	TestEqual(TEXT("A table records the layout it was built from"), Table.ConnectorFingerprint,
+		FSFBlueprintSeamService::ComputeConnectorFingerprint(Fixture.Blueprint));
+
+	Fixture.Blueprint->SetActorTransform(FTransform(FRotator(0, 90, 0), FVector(10000, -9000, 7500)));
+	TestEqual(TEXT("Moving or rotating the parent keeps the cached table"), Table.ConnectorFingerprint,
+		FSFBlueprintSeamService::ComputeConnectorFingerprint(Fixture.Blueprint));
+
+	const int32 ConnectorCount = Table.PipeConnectorCount;
+	Moved->SetRelativeLocation(FVector(-1000, 0, 300));
+	TestNotEqual(TEXT("A port moved by a re-save invalidates the cached table"), Table.ConnectorFingerprint,
+		FSFBlueprintSeamService::ComputeConnectorFingerprint(Fixture.Blueprint));
+	FSFBlueprintSeamService::BuildSeamTable(Fixture.Blueprint, Table);
+	TestEqual(TEXT("The connector count alone would not have caught this"), Table.PipeConnectorCount, ConnectorCount);
+	return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSFBlueprintHypertubeTransformsTest, "SmartFoundations.AutoConnect.BlueprintHypertubeTransforms",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
