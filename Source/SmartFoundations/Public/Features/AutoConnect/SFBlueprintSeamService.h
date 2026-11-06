@@ -98,6 +98,10 @@ struct FSFBlueprintSeamTable
 	int32 PipeConnectorCount = 0;
 	int32 HypertubeConnectorCount = 0;
 
+	/** Hologram-local connector layout at compute time. Catches a blueprint re-saved mid-session
+	 *  with its ports moved but their count unchanged, which the counts above cannot see. */
+	uint32 ConnectorFingerprint = 0;
+
 	int32 NumPairsForAxis(ESFSeamAxis Axis) const
 	{
 		int32 Count = 0;
@@ -144,6 +148,14 @@ public:
 	 * @return true if the table computed (even if empty — a blueprint with no open edge ports).
 	 */
 	static bool BuildSeamTable(AFGBlueprintHologram* Blueprint, FSFBlueprintSeamTable& OutTable);
+
+	/**
+	 * Hash the duplicated connectors' enumeration order, hologram-local position and normal,
+	 * direction or type, openness and original name. Parent transforms leave it unchanged; a
+	 * re-saved blueprint whose ports moved does not. Pairs are index-based, and every belt end
+	 * is named ConveyorAny0/1, so the resolve-time name check cannot catch that case.
+	 */
+	static uint32 ComputeConnectorFingerprint(AFGBlueprintHologram* Blueprint);
 
 	/** Native belt enumeration followed by exact-source-sorted temporary lift mouths. */
 	static void GetDuplicatedBeltConnectors(AFGBlueprintHologram* Blueprint, TArray<UFGFactoryConnectionComponent*>& OutConnectors);

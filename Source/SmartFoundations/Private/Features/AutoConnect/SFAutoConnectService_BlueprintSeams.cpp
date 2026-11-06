@@ -49,8 +49,9 @@ const FSFBlueprintSeamTable* USFAutoConnectService::FindOrBuildSeamTable(AFGBlue
 
 	if (const FSFBlueprintSeamTable* Existing = BlueprintSeamTables.Find(BlueprintName))
 	{
-		// Staleness check: same name but a different dup-connector population means the blueprint
-		// was re-saved mid-session — recompute instead of wiring stale indices.
+		// Staleness check: same name but a different dup-connector population or layout means the
+		// blueprint was re-saved mid-session — recompute instead of wiring stale indices. The
+		// fingerprint covers moved ports whose count did not change.
 		TArray<UFGFactoryConnectionComponent*> BeltDups;
 		TArray<UFGPipeConnectionComponent*> PipeDups;
 		TArray<UFGPipeConnectionComponentHyper*> HypertubeDups;
@@ -58,7 +59,8 @@ const FSFBlueprintSeamTable* USFAutoConnectService::FindOrBuildSeamTable(AFGBlue
 		FSFBlueprintSeamService::GetDuplicatedPipeConnectors(ParentBlueprint, PipeDups);
 		FSFBlueprintSeamService::GetDuplicatedHypertubeConnectors(ParentBlueprint, HypertubeDups);
 		if (Existing->BeltConnectorCount == BeltDups.Num() && Existing->PipeConnectorCount == PipeDups.Num()
-			&& Existing->HypertubeConnectorCount == HypertubeDups.Num())
+			&& Existing->HypertubeConnectorCount == HypertubeDups.Num()
+			&& Existing->ConnectorFingerprint == FSFBlueprintSeamService::ComputeConnectorFingerprint(ParentBlueprint))
 		{
 			return Existing;
 		}
