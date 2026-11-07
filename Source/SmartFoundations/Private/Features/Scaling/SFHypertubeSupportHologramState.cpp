@@ -54,6 +54,15 @@ void SFHypertubeSupportHologramState::Sync(AFGHologram* Parent, AFGHologram* Chi
 	SFSelectedPoleState::SyncNative(Parent, Child);
 }
 
+FVector SFHypertubeSupportHologramState::GridDimensions(const FVector& SelectedMeshDimensions,
+    const FVector& ProfileDimensions, const FRotator& Rotation)
+{
+    // Default support spacing subtracts this registered horizontal footprint.
+    // Using the narrower mesh here would shorten every repeated interval.
+    return SFScalingFootprint::FromLocalDimensions(
+        FVector(ProfileDimensions.X, ProfileDimensions.Y, SelectedMeshDimensions.Z), Rotation);
+}
+
 bool SFHypertubeSupportHologramState::TryGetDimensions(AFGHologram* Hologram, FVector& OutDimensions)
 {
 	if (!IsSelectedPole(Hologram) || Hologram->GetActorRotation().ContainsNaN()) return false;
@@ -67,15 +76,8 @@ bool SFHypertubeSupportHologramState::TryGetDimensions(AFGHologram* Hologram, FV
 		Bounds += Mesh->GetStaticMesh()->GetBoundingBox().TransformBy(LocalPose);
 	}
 	if (!Bounds.IsValid) return false;
-	FVector LocalDimensions = Bounds.GetSize();
-	if (Hologram->GetBuildClass()->GetFName() == FName(TEXT("Build_PipeHyperSupport_C")))
-	{
-		// The selected mesh controls the vertical extent, not the repetition pitch
-		// across the floor. Keep horizontal copies on the native placement grid.
-		const FVector GridSize = USFBuildableSizeRegistry::GetProfile(Hologram->GetBuildClass()).DefaultSize;
-		LocalDimensions.X = GridSize.X;
-		LocalDimensions.Y = GridSize.Y;
-	}
-	OutDimensions = SFScalingFootprint::FromLocalDimensions(LocalDimensions, Hologram->GetActorRotation());
+    OutDimensions = GridDimensions(Bounds.GetSize(),
+        USFBuildableSizeRegistry::GetProfile(Hologram->GetBuildClass()).DefaultSize,
+        Hologram->GetActorRotation());
 	return !OutDimensions.ContainsNaN() && OutDimensions.GetMin() > 0.0;
 }

@@ -11,5 +11,7 @@ namespace SFHypertubeSupportHologramState
 	bool IsFinalStep(AFGHologram* Hologram);
 	bool IsLocalProxyGridConstruction(AFGHologram* Parent);
 	void Sync(AFGHologram* Parent, AFGHologram* Child);
+    FVector GridDimensions(const FVector& SelectedMeshDimensions, const FVector& ProfileDimensions,
+        const FRotator& Rotation);
 	bool TryGetDimensions(AFGHologram* Hologram, FVector& OutDimensions);
 }
