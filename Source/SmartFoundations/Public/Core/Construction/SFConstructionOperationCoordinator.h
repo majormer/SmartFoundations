@@ -37,6 +37,12 @@ public:
     bool QueueContinuation(const FSFConstructionOperationKey& Key, FName EffectKey,
         TFunction<void(FSFConstructionOperationRecord&)> Continue);
     bool RequestCancellation(const FSFConstructionOperationKey& Key);
+    /** Called by an observer once feature-owned writes have stopped. Retains partial
+     * topology/effect evidence; retires callbacks after the observer returns.
+     * AdmissionActors must contain only the player, equipment or preview identities,
+     * never affected buildables or resources. The final callback receives Uncertain. */
+    bool RequestQuarantine(const FSFConstructionOperationKey& Key,
+        const TArray<TWeakObjectPtr<AActor>>& AdmissionActors);
     TOptional<ESFConstructionOperationState> GetOperationState(const FSFConstructionOperationKey& Key) const;
     FGuid GetWorldGeneration() const;
     bool IsInMutationPhase() const;

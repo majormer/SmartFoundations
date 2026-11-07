@@ -18,6 +18,8 @@ struct FSFConstructionOperationCoordinatorState
         TFunction<void(ESFConstructionOperationState)> OnSettled;
         TMap<FName, TFunction<void(FSFConstructionOperationRecord&)>> Continuations;
         bool bDispatched = false;
+        bool bQuarantineRequested = false;
+        TSet<FObjectKey> AdmissionActorsToRelease;
     };
     explicit FSFConstructionOperationCoordinatorState(const FGuid& Generation) : Registry(Generation) {}
     FSFConstructionOperationRegistry Registry;
@@ -194,6 +196,21 @@ void USFConstructionOperationCoordinator::PostFactoryTick(AFGBuildableSubsystem*
         if (!Work || !Record || !(*Work)->bDispatched) continue;
         auto* StableWork = Work->Get();
         StableWork->Observe(*Record);
+        if (StableWork->bQuarantineRequested)
+        {
+            // The observer has returned. No function object is destroyed while
+            // executing it, and no old continuation can mutate a newer build.
+            StableWork->Continuations.Reset();
+            State->Pending.Remove(Key);
+            State->PendingContinuations.RemoveAll([&](const auto& Entry) { return Entry.Key == Key; });
+            if (State->Registry.Quarantine(Key, StableWork->AdmissionActorsToRelease))
+            {
+                auto OnSettled = MoveTemp(StableWork->OnSettled);
+                State->Work.Remove(Key);
+                if (OnSettled) OnSettled(ESFConstructionOperationState::Uncertain);
+                continue;
+            }
+        }
         Record->SettleCancellation(GetWorldGeneration());
         ReleaseSettled(Key);
     }
@@ -240,6 +257,19 @@ bool USFConstructionOperationCoordinator::RequestCancellation(const FSFConstruct
     if (!IsInGameThread() || !State || State->bStopping) return false;
     FSFConstructionOperationRecord* Record = State->Registry.FindRecord(Key);
     return Record && Record->RequestCancellation(GetWorldGeneration());
+}
+
+bool USFConstructionOperationCoordinator::RequestQuarantine(const FSFConstructionOperationKey& Key,
+    const TArray<TWeakObjectPtr<AActor>>& AdmissionActors)
+{
+    if (!IsInObservationPhase()) return false;
+    auto* Work = State->Work.Find(Key);
+    auto* Record = State->Registry.FindRecord(Key);
+    if (!Work || !Record || !Record->RequireReconciliation(GetWorldGeneration())) return false;
+    for (const auto& Actor : AdmissionActors)
+        if (Actor.IsValid()) (*Work)->AdmissionActorsToRelease.Add(FObjectKey(Actor.Get()));
+    (*Work)->bQuarantineRequested = true;
+    return true;
 }
 
 TOptional<ESFConstructionOperationState> USFConstructionOperationCoordinator::GetOperationState(const FSFConstructionOperationKey& Key) const

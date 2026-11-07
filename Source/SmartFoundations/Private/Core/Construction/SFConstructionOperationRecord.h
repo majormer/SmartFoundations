@@ -20,6 +20,16 @@ public:
     bool IsSettled() const { return bSettled; }
     bool IsCancellationRequested() const { return bCancelRequested; }
 
+    /** Retire execution without pretending that partial effects were settled.
+     * The coordinator must discard all callbacks before releasing admission actors. */
+    bool RetireUncertainExecution(const FGuid& CurrentWorld)
+    {
+        if (!CanUpdate(CurrentWorld) || !bCancelRequested
+            || State != ESFConstructionOperationState::Uncertain) return false;
+        bExecutionRetired = true;
+        return true;
+    }
+
     /** An applied effect can be known while its resulting obligations are not.
      * Preserve the immutable effect outcome and require reconciliation explicitly. */
     bool RequireReconciliation(const FGuid& CurrentWorld)
@@ -131,7 +141,7 @@ public:
 private:
     bool CanUpdate(const FGuid& CurrentWorld) const
     {
-        return !bSettled && RequestId.IsValid() && WorldGeneration.IsValid() && CurrentWorld == WorldGeneration;
+        return !bSettled && !bExecutionRetired && RequestId.IsValid() && WorldGeneration.IsValid() && CurrentWorld == WorldGeneration;
     }
     bool HasUnresolvedEffects() const
     {
@@ -167,4 +177,5 @@ private:
     bool bCancelRequested = false;
     bool bSettled = false;
     bool bReconciliationRequired = false;
+    bool bExecutionRetired = false;
 };

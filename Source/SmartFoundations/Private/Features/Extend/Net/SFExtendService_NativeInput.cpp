@@ -884,6 +884,11 @@ void USFExtendService::ObserveOwnedNativeInput(const TSharedPtr<FSFExtendNativeI
     {
         Operation->bReconciliationReported = true;
         Record.RequireReconciliation(Operation->World);
+        // Native construction/wiring runs synchronously; deferred settings are
+        // coordinator continuations. Retire those before freeing this player's
+        // next build, while retaining leases on the actual affected layout.
+        Owner->RequestQuarantine(Operation->Key,
+            {Operation->Root.Get(), Operation->Pawn.Get(), Operation->Gun.Get()});
         UE_LOG(LogSmartFoundations, Warning,
             TEXT("Extend/Restore operation %s requires reconciliation: %s. wiring=%d cargo=%d distributors=%d adoptionFailed=%d settingsDone=%d settingsConserved=%d paymentObserved=%d materialsVerified=%d wiringRefusal=%s paymentFailure=%s. No success, rollback or automatic retry is reported."),
             *Operation->Id.ToString(), *Reason, Operation->bConveyorWiringVerified, Operation->bCargoVerified,
