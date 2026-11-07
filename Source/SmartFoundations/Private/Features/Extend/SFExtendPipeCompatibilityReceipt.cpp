@@ -10,10 +10,28 @@
 #include "FGPipeNetwork.h"
 #include "FGSplineBuildableInterface.h"
 #include "Core/Construction/SFConstructionOperationCoordinator.h"
+#include "Components/SplineComponent.h"
+
+bool FSFExtendPreparedPipeSpline::MatchesGeometry(const USplineComponent* Component) const
+{
+    if (!Component || Spline.Points.Num() < 2
+        || Component->GetNumberOfSplinePoints() != Spline.Points.Num()) return false;
+    for (int32 Index = 0; Index < Spline.Points.Num(); ++Index)
+    {
+        const auto& Point = Spline.Points[Index];
+        if (!Component->GetLocationAtSplinePoint(Index, ESplineCoordinateSpace::World)
+                .Equals(LocalToWorld.TransformPosition(Point.Local.ToFVector()), 0.1f)
+            || !Component->GetArriveTangentAtSplinePoint(Index, ESplineCoordinateSpace::World)
+                .Equals(LocalToWorld.TransformVector(Point.ArriveTangent.ToFVector()), 0.1f)
+            || !Component->GetLeaveTangentAtSplinePoint(Index, ESplineCoordinateSpace::World)
+                .Equals(LocalToWorld.TransformVector(Point.LeaveTangent.ToFVector()), 0.1f)) return false;
+    }
+    return true;
+}
 
 bool FSFExtendPipeCompatibilityReceipt::Verify(const FSFCloneTopology& Plan,
     const TMap<FString, FObjectKey>& Built, const TMap<FString, FObjectKey>& Sources,
-    const TSet<FObjectKey>& ActualOutputs, const TMap<FString, FSFSplineData>& PreparedSplines,
+    const TSet<FObjectKey>& ActualOutputs, const TMap<FString, FSFExtendPreparedPipeSpline>& PreparedSplines,
     USFConstructionOperationCoordinator& Owner,
     const FSFConstructionOperationKey& Key, FString& Reason)
 {
@@ -57,7 +75,8 @@ bool FSFExtendPipeCompatibilityReceipt::Verify(const FSFCloneTopology& Plan,
         const bool bJunction = Cast<AFGBuildablePipelineJunction>(Actor) != nullptr;
         if (!bPipe && !bAttachment && !bHole && !bJunction) continue;
         if (!Actor || Actor->GetClass()->GetName() != Child.BuildClass
-            || !Actor->GetActorTransform().Equals(Child.Transform.ToFTransform(), 0.1f)) return Fail(TEXT("pipe_sibling_identity_or_pose_mismatch"));
+            || (!bPipe && !Actor->GetActorTransform().Equals(Child.Transform.ToFTransform(), 0.1f)))
+            return Fail(TEXT("pipe_sibling_identity_or_pose_mismatch"));
         Actors.Add(FObjectKey(Actor));
         if (bPipe)
         {
@@ -65,17 +84,11 @@ bool FSFExtendPipeCompatibilityReceipt::Verify(const FSFCloneTopology& Plan,
             auto* Spline = Pipe ? Cast<IFGSplineBuildableInterface>(Pipe) : nullptr;
             auto* Component = Spline ? Spline->GetSplineComponent() : nullptr;
             const auto* Prepared = PreparedSplines.Find(Child.HologramId);
-            if (!Component || !Prepared || Prepared->Points.Num() < 2
-                || Component->GetNumberOfSplinePoints() != Prepared->Points.Num())
-                return Fail(TEXT("pipe_sibling_spline_shape_mismatch"));
-            for (int32 Index = 0; Index < Prepared->Points.Num(); ++Index)
-            {
-                const auto& Point = Prepared->Points[Index];
-                if (!Component->GetLocationAtSplinePoint(Index, ESplineCoordinateSpace::Local).Equals(Point.Local.ToFVector(), 0.1f)
-                    || !Component->GetArriveTangentAtSplinePoint(Index, ESplineCoordinateSpace::Local).Equals(Point.ArriveTangent.ToFVector(), 0.1f)
-                    || !Component->GetLeaveTangentAtSplinePoint(Index, ESplineCoordinateSpace::Local).Equals(Point.LeaveTangent.ToFVector(), 0.1f))
-                    return Fail(TEXT("pipe_sibling_spline_geometry_mismatch"));
-            }
+            // Native construction can rebase the same curve into a different actor
+            // frame. Its world-space geometry, not the template actor pose, is the
+            // observable contract. Attachments and junctions keep their pose check.
+            if (!Prepared || !Prepared->MatchesGeometry(Component))
+                return Fail(TEXT("pipe_sibling_spline_geometry_mismatch"));
             Pipes.Add(Pipe);
             const FSFConnectionRef* Targets[] = {&Child.CloneConnections.ConveyorAny0, &Child.CloneConnections.ConveyorAny1};
             UFGPipeConnectionComponentBase* Ends[] = {Pipe->GetPipeConnection0(), Pipe->GetPipeConnection1()};

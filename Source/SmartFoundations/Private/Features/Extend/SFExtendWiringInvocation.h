@@ -6,6 +6,7 @@
 #include "FGBuildableSubsystem.h"
 #include "Features/Extend/SFExtendWiringPlan.h"
 #include "Features/Extend/SFExtendScaledService.h"
+#include "Features/Extend/SFExtendPipeCompatibilityReceipt.h"
 
 /** Arbitration for one legacy wiring invocation, not evidence of native settlement.
  * Native IDs wrap and can be reused. The generated operation ID and world generation
@@ -77,7 +78,7 @@ public:
     TMap<FString, TWeakObjectPtr<UClass>> ExpectedClasses;
     // Native routing can replace a lane's template curve. Freeze the final
     // pre-construction spline rather than treating template tangents as output.
-    TMap<FString, FSFSplineData> PreparedPipeSplines;
+    TMap<FString, FSFExtendPreparedPipeSpline> PreparedPipeSplines;
     TSet<FObjectKey> ActualOutputs;
     TMap<FString, TObjectPtr<AActor>> ActorView;
     bool bRequiresOwnedNativePhase = false;
