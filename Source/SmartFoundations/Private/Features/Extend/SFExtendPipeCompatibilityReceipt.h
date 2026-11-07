@@ -23,5 +23,6 @@ struct FSFExtendPipeCompatibilityReceipt
     bool Verify(const FSFCloneTopology& Plan, const TMap<FString, FObjectKey>& Built,
         const TMap<FString, FObjectKey>& Sources, const TSet<FObjectKey>& ActualOutputs,
         const TMap<FString, FSFExtendPreparedPipeSpline>& PreparedSplines,
+        const TMap<FString, TWeakObjectPtr<UClass>>& ExpectedClasses,
         USFConstructionOperationCoordinator& Owner, const FSFConstructionOperationKey& Key, FString& Reason);
 };

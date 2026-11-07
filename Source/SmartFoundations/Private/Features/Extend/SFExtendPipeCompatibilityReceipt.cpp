@@ -32,6 +32,7 @@ bool FSFExtendPreparedPipeSpline::MatchesGeometry(const USplineComponent* Compon
 bool FSFExtendPipeCompatibilityReceipt::Verify(const FSFCloneTopology& Plan,
     const TMap<FString, FObjectKey>& Built, const TMap<FString, FObjectKey>& Sources,
     const TSet<FObjectKey>& ActualOutputs, const TMap<FString, FSFExtendPreparedPipeSpline>& PreparedSplines,
+    const TMap<FString, TWeakObjectPtr<UClass>>& ExpectedClasses,
     USFConstructionOperationCoordinator& Owner,
     const FSFConstructionOperationKey& Key, FString& Reason)
 {
@@ -74,7 +75,10 @@ bool FSFExtendPipeCompatibilityReceipt::Verify(const FSFCloneTopology& Plan,
         auto* Actor = bPipe || bAttachment || bHole || Child.Role == TEXT("distributor") ? Resolve(Child.HologramId) : nullptr;
         const bool bJunction = Cast<AFGBuildablePipelineJunction>(Actor) != nullptr;
         if (!bPipe && !bAttachment && !bHole && !bJunction) continue;
-        if (!Actor || Actor->GetClass()->GetName() != Child.BuildClass
+        // Lane templates predate tier resolution. Match the final native preview
+        // class captured before construction, as the wiring admission does.
+        const auto* ExpectedClass = ExpectedClasses.Find(Child.HologramId);
+        if (!Actor || !ExpectedClass || Actor->GetClass() != ExpectedClass->Get()
             || (!bPipe && !Actor->GetActorTransform().Equals(Child.Transform.ToFTransform(), 0.1f)))
             return Fail(TEXT("pipe_sibling_identity_or_pose_mismatch"));
         Actors.Add(FObjectKey(Actor));

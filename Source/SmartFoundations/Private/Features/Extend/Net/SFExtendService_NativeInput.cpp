@@ -948,7 +948,8 @@ void USFExtendService::ObserveOwnedNativeInput(const TSharedPtr<FSFExtendNativeI
     FSFExtendPipeCompatibilityReceipt PipeSiblings;
     if (!PipeSiblings.Verify(Operation->Wiring->Plan->GetTopology(), Operation->Wiring->Plan->GetBindings(),
         Operation->Wiring->SourceBindings, Operation->Wiring->ActualOutputs,
-        Operation->Wiring->PreparedPipeSplines, *Owner, Operation->Key, AttachmentReason))
+        Operation->Wiring->PreparedPipeSplines, Operation->Wiring->ExpectedClasses,
+        *Owner, Operation->Key, AttachmentReason))
     {
         // A native network rebuild can still be queued on the first observation
         // tick. Wait for that work using the same bounded settlement budget as
