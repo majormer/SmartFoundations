@@ -55,6 +55,24 @@ bool FSFNativeFloorHolePlacement::Validate(AFGHologram* Root, AFGHologram* Child
     // by every supported target's import library.
     Root->GetWorld()->LineTraceMultiByChannel(Hits, Pose.GetLocation() + Axis * Span,
         Pose.GetLocation() - Axis * Span, BuildChannel, Query);
+    if (Hits.IsEmpty())
+    {
+        // Adjacent foundation collision meshes can leave a sub-centimetre seam.
+        // Native placement still snaps a nearby real hit to the requested hole.
+        // Probe that surface without moving the requested pose or synthesizing a
+        // hit; the native pose, mount, thickness and cost checks below still apply.
+        const FVector X = Pose.GetUnitAxis(EAxis::X);
+        const FVector Y = Pose.GetUnitAxis(EAxis::Y);
+        for (const FVector Offset : {X, -X, Y, -Y, X + Y, X - Y, -X + Y, -X - Y})
+        {
+            TArray<FHitResult> NearbyHits;
+            const FVector Center = Pose.GetLocation() + Offset;
+            Root->GetWorld()->LineTraceMultiByChannel(NearbyHits, Center + Axis * Span,
+                Center - Axis * Span, BuildChannel, Query);
+            Hits.Append(NearbyHits);
+            if (Hits.Num() > 64) return Fail(TEXT("floor_hole_hit_capture_exceeds_bound"));
+        }
+    }
     if (Hits.Num() > 64) return Fail(TEXT("floor_hole_hit_capture_exceeds_bound"));
     FString LastFailure = TEXT("native_floor_hole_no_eligible_surface");
     for (auto Hit : Hits)
