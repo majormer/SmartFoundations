@@ -68,10 +68,28 @@ bool FSFNativeFloorHolePlacement::Validate(AFGHologram* Root, AFGHologram* Child
         Native->Tags.AddUnique(TEXT("SF_NativeFloorHoleValidator"));
         Native->SetInsideBlueprintDesigner(Root->GetBlueprintDesigner());
         Native->SetActorTransform(Pose);
-        Native->ResetConstructDisqualifiers();
-        Native->PreHologramPlacement(Hit, false);
-        if (!Native->TrySnapToActor(Hit)) Native->UpdateHologramPlacement(Hit);
-        Native->PostHologramPlacement(Hit, false);
+        auto ReplayPlacement = [&]()
+        {
+            Native->ResetConstructDisqualifiers();
+            Native->PreHologramPlacement(Hit, false);
+            if (!Native->TrySnapToActor(Hit)) Native->UpdateHologramPlacement(Hit);
+            Native->PostHologramPlacement(Hit, false);
+        };
+        ReplayPlacement();
+        // Native snapping derives orientation from the foundation and scroll state,
+        // overwriting SetActorTransform. Replay legal rotations before comparing the
+        // captured pose; a fresh zero-scroll hologram is not the only valid placement.
+        const int32 RotationStep = Spawned->GetRotationStep();
+        const int32 RotationCount = RotationStep > 0 ? FMath::CeilToInt(360.0 / RotationStep) : 0;
+        if (RotationCount > 0 && RotationCount <= 24)
+        {
+            for (int32 Turn = 1; Turn < RotationCount
+                && !Native->GetActorQuat().Equals(Pose.GetRotation(), 0.1f); ++Turn)
+            {
+                Native->Scroll(1);
+                ReplayPlacement();
+            }
+        }
         Native->SetActorHiddenInGame(false);
         Native->ValidatePlacementAndCost(Player->GetInventory());
         auto* Thickness = FindFProperty<FFloatProperty>(AFGPassthroughHologram::StaticClass(), TEXT("mSnappedBuildingThickness"));
