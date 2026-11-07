@@ -92,9 +92,19 @@ bool FSFNativeFloorHolePlacement::Validate(AFGHologram* Root, AFGHologram* Child
                 *GetNameSafe(Hit.GetActor() ? Hit.GetActor()->GetClass() : nullptr), Native->IsUpgrade() ? 1 : 0, *Names);
             continue;
         }
-        if (!Native->GetActorTransform().Equals(Pose, 0.1f)) { LastFailure = TEXT("native_floor_hole_pose_mismatch"); continue; }
+        if (!Native->GetActorTransform().Equals(Pose, 0.1f))
+        {
+            LastFailure = FString::Printf(TEXT("native_floor_hole_pose_mismatch: expected={%s} actual={%s} hit=%s"),
+                *Pose.ToHumanReadableString(), *Native->GetActorTransform().ToHumanReadableString(),
+                *GetNameSafe(Hit.GetActor()));
+            continue;
+        }
         if (!FMath::IsNearlyEqual(Thickness->GetPropertyValue_InContainer(Native), ExpectedThickness, 0.01f))
-        { LastFailure = TEXT("native_floor_hole_thickness_mismatch"); continue; }
+        {
+            LastFailure = FString::Printf(TEXT("native_floor_hole_thickness_mismatch: expected=%.3f actual=%.3f hit=%s"),
+                ExpectedThickness, Thickness->GetPropertyValue_InContainer(Native), *GetNameSafe(Hit.GetActor()));
+            continue;
+        }
         FScriptArrayHelper Mounted(Foundations, Foundations->ContainerPtrToValuePtr<void>(Native));
         if (Mounted.Num() == 0) { LastFailure = TEXT("native_floor_hole_missing_mount"); continue; }
         bool bLive = true;
@@ -119,5 +129,8 @@ bool FSFNativeFloorHolePlacement::Validate(AFGHologram* Root, AFGHologram* Child
         if (!bSameCost) { LastFailure = TEXT("native_floor_hole_cost_mismatch"); continue; }
         return true;
     }
-    return Fail(*LastFailure);
+    Reason = FString::Printf(TEXT("%s; child=%s class=%s pose={%s} thickness=%.3f traceHits=%d"),
+        *LastFailure, *GetNameSafe(Child), *GetNameSafe(Child->GetBuildClass()),
+        *Pose.ToHumanReadableString(), ExpectedThickness, Hits.Num());
+    return false;
 }
