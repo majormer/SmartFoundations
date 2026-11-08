@@ -1,3 +1,5 @@
+#include "FGPhotoModeComponent.h"
+#include "FGPlayerState.h"
 #include "Hologram/FGConveyorLiftHologram.h"
 #include "Holograms/Logistics/SFWaterPumpChildHologram.h"
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
@@ -908,6 +910,15 @@ void USFSubsystem::PollForActiveHologram()
 	AFGCharacterPlayer* Character = Cast<AFGCharacterPlayer>(PC->GetPawn());
 	if (!Character)
 	{
+		// Photo mode possesses a camera pawn, not the character. Mods can keep the build gun out
+		// through it, so this isn't the end of a build: keep the grid until the character returns.
+		const AFGPlayerState* PlayerState = PC->GetPlayerState<AFGPlayerState>();
+		const UFGPhotoModeComponent* PhotoMode = PlayerState ? PlayerState->GetPhotoModeComponent() : nullptr;
+		if (PhotoMode && PhotoMode->GetIsPhotoModeOn())
+		{
+			return;
+		}
+
 		const bool bAbortedRestore = AbortRestoreSession(TEXT("Player character unavailable"));
 
 		// Clear hologram if character is not available
