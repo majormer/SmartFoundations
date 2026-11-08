@@ -95,6 +95,40 @@ bool FSFConstructionOperationRegistryTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Evicted native result retains its own high water mark"), Streams.Admit(Native) == ESFConstructionAdmission::ReplayRejected);
     Native = Request(OwnerA.Get(), 2, ActorB.Get()); Native.Key.Stream = ESFConstructionRequestStream::AuthorityBuildInput;
     TestTrue(TEXT("Fresh native input remains valid below the unrelated client counter"), Streams.Admit(Native) == ESFConstructionAdmission::Accepted);
+
+    // A stopped partial operation retains its topology, not a global player lock.
+    // With capacity one, this also catches incidents still counted as executable work.
+    FSFConstructionOperationRegistry Recovery(World, 1, 1);
+    auto Partial = Request(OwnerA.Get(), 1, ActorA.Get());
+    Partial.Cohort.Add(FObjectKey(OwnerA.Get()));
+    TestTrue(TEXT("Partial operation admitted"), Recovery.Admit(Partial) == ESFConstructionAdmission::Accepted);
+    auto* PartialRecord = Recovery.FindRecord(Partial.Key);
+    if (!TestNotNull(TEXT("Partial record exists"), PartialRecord)) return false;
+    const FName Deferred(TEXT("DeferredSettings"));
+    PartialRecord->BeginMutation(World);
+    PartialRecord->ClaimEffect(World, Deferred);
+    PartialRecord->SealMutation(World);
+    TestFalse(TEXT("Running operation cannot be quarantined"), Recovery.Quarantine(Partial.Key, {FObjectKey(OwnerA.Get())}));
+    PartialRecord->RequireReconciliation(World);
+    TestTrue(TEXT("Stopped incident releases admission identity"), Recovery.Quarantine(Partial.Key, {FObjectKey(OwnerA.Get())}));
+    TestFalse(TEXT("Incident is no longer executable"), Recovery.IsActive(Partial.Key));
+    TestFalse(TEXT("Incident is not falsely settled"), PartialRecord->IsSettled());
+    TestFalse(TEXT("Old continuation cannot execute"), PartialRecord->CanContinueEffect(World, Deferred));
+    TestFalse(TEXT("Late observer cannot rewrite incident"), PartialRecord->ObserveEffect(World, Deferred, ESFConstructionEffectOutcome::Applied));
+    TestFalse(TEXT("Old operation cannot adopt a new output"), Recovery.Adopt(Partial.Key, FObjectKey(Replacement.Get())));
+    TestFalse(TEXT("Repeated quarantine cannot reduce capacity twice"), Recovery.Quarantine(Partial.Key, {}));
+    TestEqual(TEXT("Incident does not consume execution capacity"), Recovery.GetActiveCount(), 0);
+    TestTrue(TEXT("Affected topology remains protected"), Recovery.Admit(Request(OwnerB.Get(), 1, ActorA.Get())) == ESFConstructionAdmission::Conflict);
+    auto NextBuild = Request(OwnerA.Get(), 2, ActorB.Get());
+    NextBuild.Cohort.Add(FObjectKey(OwnerA.Get()));
+    TestTrue(TEXT("Same player can build on unrelated topology"), Recovery.Admit(NextBuild) == ESFConstructionAdmission::Accepted);
+    TestTrue(TEXT("Old request cannot charge or construct again"), Recovery.Admit(Partial) == ESFConstructionAdmission::Existing);
+    auto* NextRecord = Recovery.FindRecord(NextBuild.Key);
+    if (!TestNotNull(TEXT("New build record exists"), NextRecord)) return false;
+    NextRecord->RequestCancellation(World);
+    NextRecord->SettleCancellation(World);
+    Recovery.ReleaseSettled(NextBuild.Key);
+    TestTrue(TEXT("Incident survives recent-result eviction"), Recovery.GetState(Partial.Key).GetValue() == ESFConstructionOperationState::Uncertain);
     return true;
 }
 #endif

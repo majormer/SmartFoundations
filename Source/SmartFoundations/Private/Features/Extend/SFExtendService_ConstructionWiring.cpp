@@ -4,6 +4,7 @@
 #include "Hologram/FGHologram.h"
 #include "Hologram/FGPipelineHologram.h"
 #include "FGSplineComponent.h"
+#include "Components/SplineComponent.h"
 #include "UObject/UnrealType.h"
 #include "Data/SFHologramDataRegistry.h"
 #include "Core/Construction/SFConstructionOperationCoordinator.h"
@@ -67,15 +68,20 @@ TSharedPtr<FSFExtendWiringInvocation> USFExtendService::BeginNativeWiringCapture
                     || Element->GetElementSize() != sizeof(FSplinePointData)) return nullptr;
                 const auto* Points = Property->ContainerPtrToValuePtr<TArray<FSplinePointData>>(Pipe);
                 if (!Points || Points->Num() < 2) return nullptr;
-                FSFSplineData Prepared;
+                const auto* SplineProperty = FindFProperty<FObjectPropertyBase>(Pipe->GetClass(), TEXT("mSplineComponent"));
+                const auto* SplineComponent = SplineProperty
+                    ? Cast<USplineComponent>(SplineProperty->GetObjectPropertyValue_InContainer(Pipe)) : nullptr;
+                if (!SplineComponent) return nullptr;
+                FSFExtendPreparedPipeSpline Prepared;
+                Prepared.LocalToWorld = SplineComponent->GetComponentTransform();
                 for (const auto& Point : *Points)
                 {
                     FSFSplinePoint Value;
                     Value.Local = FSFVec3(Point.Location);
-                    Value.World = FSFVec3(Pipe->GetActorTransform().TransformPosition(Point.Location));
+                    Value.World = FSFVec3(Prepared.LocalToWorld.TransformPosition(Point.Location));
                     Value.ArriveTangent = FSFVec3(Point.ArriveTangent);
                     Value.LeaveTangent = FSFVec3(Point.LeaveTangent);
-                    Prepared.Points.Add(Value);
+                    Prepared.Spline.Points.Add(Value);
                 }
                 Capture.PreparedPipeSplines.Add(Data->JsonCloneId, MoveTemp(Prepared));
             }

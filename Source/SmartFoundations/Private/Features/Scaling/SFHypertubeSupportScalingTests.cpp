@@ -7,8 +7,41 @@
 #include "Misc/AutomationTest.h"
 #include "UObject/UnrealType.h"
 #include "UObject/Package.h"
+#include "Subsystem/SFPositionCalculator.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSFSelectedPoleIntervalTest, "SmartFoundations.Scaling.SelectedPoleInterval",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FSFSelectedPoleIntervalTest::RunTest(const FString& Parameters)
+{
+    const FVector Profile(100, 150, 100);
+    FSFCounterState State;
+    State.SpacingX = 5500;
+    const FSFPositionCalculator Calculator;
+    const FVector Origin(10000, -244000, 500);
+    for (double Height : {100.0, 300.0, 1000.0})
+    {
+        for (double Yaw : {0.0, 67.0, 90.0})
+        {
+            const FRotator Rotation(0, Yaw, 0);
+            const FVector Dimensions = SFHypertubeSupportHologramState::GridDimensions(
+                FVector(89.921875, 140, Height), Profile, Rotation);
+            TestEqual(TEXT("Selected pole height is retained"), Dimensions.Z, Height);
+            FVector Previous = Origin;
+            for (int32 Copy = 1; Copy <= 5; ++Copy)
+            {
+                const FVector Current = Calculator.CalculateChildPosition(Copy, 0, 0,
+                    Origin, Rotation, Dimensions, State);
+                TestTrue(TEXT("Every copy retains the foundation-aligned 56m interval"),
+                    FMath::IsNearlyEqual(FVector::Distance(Current, Previous), 5600.0, 0.01));
+                Previous = Current;
+            }
+        }
+    }
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSFHypertubeSupportStateTest, "SmartFoundations.Scaling.HypertubeSupportSelectedState",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 

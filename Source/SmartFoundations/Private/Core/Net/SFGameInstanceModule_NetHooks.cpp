@@ -10,6 +10,7 @@
 
 #include "SFGameInstanceModule.h"
 #include "SmartFoundations.h"
+#include "Features/Scaling/Net/SFScalingPayloadBudget.h"
 #include "Features/Restore/SFRestoreService.h"
 #include "Hologram/FGHologram.h"
 #include "Hologram/FGConveyorBeltHologram.h"
@@ -574,57 +575,33 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 						return;
 					}
 
-					// [MP-334] Reliable-RPC ceiling guard: a very large belt plan could overflow
-					// Server_StageScalingSpec the same way the construct message itself once did
-					// (a silently dropped staging RPC would leave the server constructing a bare
-					// 1x1). Refuse the fire BEFORE the previews are destroyed - the grid stays
-					// live so the player can place in smaller sections. Conservative estimate:
-					// Include the reflected endpoint fields even on non-exact entries (they still
-					// serialize), plus name payload headroom and ~80B per spline point.
-                    bool InvalidBeltEndpoints = false;
-					int32 PlanBytesEstimate = 0;
-					for (const FSFConduitPlanEntry& Entry : Spec.ConduitPlan)
-					{
-						// Pipe paint (#527): the color slot always serializes six floats plus two
-						// object refs (~32B). Only captured paint adds swatch/finish refs, which may
-						// resolve to full object paths on first send; charge those only when present
-						// so unpainted plans are not taxed for paint they do not carry.
-                        InvalidBeltEndpoints |= !Entry.HasBoundedConveyorIntent();
-                        // Both reflected conveyor endpoints serialize for every entry, including
-                        // unused defaults. Account for class/reference/name first-send headroom.
-                        PlanBytesEstimate += 2048 + Entry.Cost.Num() * 256
-                            + 2 * (Entry.ConveyorFrom.PortName.ToString().Len() + Entry.ConveyorTo.PortName.ToString().Len());
-						PlanBytesEstimate += 384 + 32 + (Entry.PipeColor.bCaptured ? 256 : 0) + Entry.SplinePoints.Num() * 80
-							+ 2 * (Entry.PowerStart.ComponentName.ToString().Len() + Entry.PowerEnd.ComponentName.ToString().Len());
-					}
-                    for (const auto& Route : Spec.LiftRoutes)
-                        PlanBytesEstimate += 1536 + Route.Spline.Num() * 80 + Route.Cost.Num() * 256
-                            + 2 * (Route.From.PortName.ToString().Len() + Route.To.PortName.ToString().Len());
-                    for (const auto& Route : Spec.BlueprintLiftSeams)
-                        PlanBytesEstimate += 2048 + Route.Spline.Num() * 160 + Route.Cost.Num() * 256
-                            + 2 * (Route.From.Name.ToString().Len() + Route.To.Name.ToString().Len());
-                    for (const auto& Seam : Spec.BlueprintRailSeams)
-                    {
-                        PlanBytesEstimate += 192 + Seam.Spline.Num() * 160;
-                        auto PortBytes = [](const FSFBlueprintRailPort& P)
-                        { return 512 + 2 * (P.ComponentName.ToString().Len() + GetPathNameSafe(P.BuildClass.Get()).Len()); };
-                        PlanBytesEstimate += PortBytes(Seam.To);
-                        for (const auto& Port : Seam.From) PlanBytesEstimate += PortBytes(Port);
-                    }
-                    PlanBytesEstimate += Spec.BlueprintRailCost.Num() * 256;
-                    for (const auto& Seam : Spec.BlueprintVehicleSeams)
-                        PlanBytesEstimate += 4096 + 160 * (Seam.Incoming.Spline.Num() + Seam.Outgoing.Spline.Num() + Seam.Bridge.Num()) + 256 * Seam.Cost.Num();
+                    // [MP-CLIENT] Validate selected peers, then measure the native staging
+                    // RPC before destroying any preview. The byte ceiling is unchanged.
+                    const bool InvalidBeltEndpoints = Spec.ConduitPlan.ContainsByPredicate(
+                        [](const FSFConduitPlanEntry& Entry) { return !Entry.HasBoundedConveyorIntent(); });
                     if (InvalidBeltEndpoints)
                     {
                         if (auto* Notice = USFSubsystem::Get(World))
                             Notice->ShowSmartNotice(NSLOCTEXT("SmartFoundations", "MP_MissingConveyorPeers", "The selected belt endpoints could not be captured. Refresh the placement before building.").ToString());
                         scope.Cancel(); return;
                     }
-					if (PlanBytesEstimate > 45000)
+                    APlayerController* BudgetPlayer = Holo->GetConstructionInstigator()
+                        ? Cast<APlayerController>(Holo->GetConstructionInstigator()->GetController()) : nullptr;
+                    const FSFScalingPayloadBudget Budget = FSFScalingPayloadBudget::Measure(BudgetPlayer, Spec);
+                    if (Budget.Status == ESFScalingPayloadStatus::Unavailable)
+                    {
+                        if (auto* Notice = USFSubsystem::Get(World))
+                            Notice->ShowSmartNotice(NSLOCTEXT("SmartFoundations", "ExtendEnvelopeRefused", "This construction request could not be sent safely. Re-select the source and try again.").ToString());
+                        scope.Cancel(); return;
+                    }
+                    UE_LOG(LogSmartFoundations, Log, TEXT("Scaling payload: cells=%d conduits=%d parameterBits=%lld fits=%d reserveBytes=%lld"),
+                        Spec.CellCount(), Spec.ConduitPlan.Num(), Budget.ParameterBits,
+                        Budget.Status == ESFScalingPayloadStatus::Fits, FSFScalingPayloadBudget::EnvelopeReserveBytes);
+					if (Budget.Status == ESFScalingPayloadStatus::TooLarge)
 					{
 						UE_LOG(LogSmartFoundations, Verbose,
-							TEXT("[MP-334] Refused client fire: conduit plan too large to stage reliably (%d conduits, ~%d bytes). Build in smaller sections."),
-							Spec.ConduitPlan.Num(), PlanBytesEstimate);
+							TEXT("[MP-CLIENT] Refused client fire: staging payload exceeds budget (%d conduits, limit %lld bytes). Build in smaller sections."),
+							Spec.ConduitPlan.Num(), FSFScalingPayloadBudget::MaxBytes);
 						if (GEngine)
 						{
 							GEngine->AddOnScreenDebugMessage(-1, 6.0f, FColor::Orange,

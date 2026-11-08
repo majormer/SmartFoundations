@@ -77,18 +77,36 @@ public:
     bool IsActive(const FSFConstructionOperationKey& Key) const
     {
         const TUniquePtr<FEntry>* Entry = Entries.Find(Key);
-        return Entry && (*Entry)->Record.IsValid();
+        return Entry && (*Entry)->Record.IsValid() && !(*Entry)->bQuarantined;
     }
 
     /** Returned actor identity joins this operation's lease before dependent work uses it. */
     bool Adopt(const FSFConstructionOperationKey& Key, const FObjectKey& Actor)
     {
         TUniquePtr<FEntry>* Entry = Entries.Find(Key);
-        if (!Entry || !(*Entry)->Record || (*Entry)->Record->IsSettled() || Actor == FObjectKey()) return false;
+        if (!Entry || (*Entry)->bQuarantined || !(*Entry)->Record || (*Entry)->Record->IsSettled() || Actor == FObjectKey()) return false;
         const FSFConstructionOperationKey* Lease = Leases.Find(Actor);
         if (Lease && !(*Lease == Key)) return false;
         (*Entry)->LeasedCohort.Add(Actor);
         Leases.Add(Actor, Key);
+        return true;
+    }
+
+    /** Retain the incident and affected topology, but stop charging execution capacity
+     * and release the caller's admission-only identities after its callbacks stop. */
+    bool Quarantine(const FSFConstructionOperationKey& Key, const TSet<FObjectKey>& AdmissionActors)
+    {
+        auto* Entry = Entries.Find(Key);
+        if (!Entry || (*Entry)->bQuarantined || !(*Entry)->Record
+            || !(*Entry)->Record->RetireUncertainExecution(WorldGeneration)) return false;
+        for (const auto& Actor : AdmissionActors)
+        {
+            const auto* Lease = Leases.Find(Actor);
+            if (Lease && *Lease == Key) Leases.Remove(Actor);
+            (*Entry)->LeasedCohort.Remove(Actor);
+        }
+        (*Entry)->bQuarantined = true;
+        --ActiveCount;
         return true;
     }
 
@@ -121,6 +139,7 @@ public:
 private:
     struct FEntry
     {
+        bool bQuarantined = false;
         FAdmission Admission;
         TSet<FObjectKey> LeasedCohort;
         TUniquePtr<FSFConstructionOperationRecord> Record;

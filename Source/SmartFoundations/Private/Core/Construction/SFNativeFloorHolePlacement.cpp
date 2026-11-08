@@ -55,6 +55,24 @@ bool FSFNativeFloorHolePlacement::Validate(AFGHologram* Root, AFGHologram* Child
     // by every supported target's import library.
     Root->GetWorld()->LineTraceMultiByChannel(Hits, Pose.GetLocation() + Axis * Span,
         Pose.GetLocation() - Axis * Span, BuildChannel, Query);
+    if (Hits.IsEmpty())
+    {
+        // Adjacent foundation collision meshes can leave a sub-centimetre seam.
+        // Native placement still snaps a nearby real hit to the requested hole.
+        // Probe that surface without moving the requested pose or synthesizing a
+        // hit; the native pose, mount, thickness and cost checks below still apply.
+        const FVector X = Pose.GetUnitAxis(EAxis::X);
+        const FVector Y = Pose.GetUnitAxis(EAxis::Y);
+        for (const FVector Offset : {X, -X, Y, -Y, X + Y, X - Y, -X + Y, -X - Y})
+        {
+            TArray<FHitResult> NearbyHits;
+            const FVector Center = Pose.GetLocation() + Offset;
+            Root->GetWorld()->LineTraceMultiByChannel(NearbyHits, Center + Axis * Span,
+                Center - Axis * Span, BuildChannel, Query);
+            Hits.Append(NearbyHits);
+            if (Hits.Num() > 64) return Fail(TEXT("floor_hole_hit_capture_exceeds_bound"));
+        }
+    }
     if (Hits.Num() > 64) return Fail(TEXT("floor_hole_hit_capture_exceeds_bound"));
     FString LastFailure = TEXT("native_floor_hole_no_eligible_surface");
     for (auto Hit : Hits)
@@ -68,10 +86,28 @@ bool FSFNativeFloorHolePlacement::Validate(AFGHologram* Root, AFGHologram* Child
         Native->Tags.AddUnique(TEXT("SF_NativeFloorHoleValidator"));
         Native->SetInsideBlueprintDesigner(Root->GetBlueprintDesigner());
         Native->SetActorTransform(Pose);
-        Native->ResetConstructDisqualifiers();
-        Native->PreHologramPlacement(Hit, false);
-        if (!Native->TrySnapToActor(Hit)) Native->UpdateHologramPlacement(Hit);
-        Native->PostHologramPlacement(Hit, false);
+        auto ReplayPlacement = [&]()
+        {
+            Native->ResetConstructDisqualifiers();
+            Native->PreHologramPlacement(Hit, false);
+            if (!Native->TrySnapToActor(Hit)) Native->UpdateHologramPlacement(Hit);
+            Native->PostHologramPlacement(Hit, false);
+        };
+        ReplayPlacement();
+        // Native snapping derives orientation from the foundation and scroll state,
+        // overwriting SetActorTransform. Replay legal rotations before comparing the
+        // captured pose; a fresh zero-scroll hologram is not the only valid placement.
+        const int32 RotationStep = Spawned->GetRotationStep();
+        const int32 RotationCount = RotationStep > 0 ? FMath::CeilToInt(360.0 / RotationStep) : 0;
+        if (RotationCount > 0 && RotationCount <= 24)
+        {
+            for (int32 Turn = 1; Turn < RotationCount
+                && !Native->GetActorQuat().Equals(Pose.GetRotation(), 0.1f); ++Turn)
+            {
+                Native->Scroll(1);
+                ReplayPlacement();
+            }
+        }
         Native->SetActorHiddenInGame(false);
         Native->ValidatePlacementAndCost(Player->GetInventory());
         auto* Thickness = FindFProperty<FFloatProperty>(AFGPassthroughHologram::StaticClass(), TEXT("mSnappedBuildingThickness"));
@@ -92,9 +128,19 @@ bool FSFNativeFloorHolePlacement::Validate(AFGHologram* Root, AFGHologram* Child
                 *GetNameSafe(Hit.GetActor() ? Hit.GetActor()->GetClass() : nullptr), Native->IsUpgrade() ? 1 : 0, *Names);
             continue;
         }
-        if (!Native->GetActorTransform().Equals(Pose, 0.1f)) { LastFailure = TEXT("native_floor_hole_pose_mismatch"); continue; }
+        if (!Native->GetActorTransform().Equals(Pose, 0.1f))
+        {
+            LastFailure = FString::Printf(TEXT("native_floor_hole_pose_mismatch: expected={%s} actual={%s} hit=%s"),
+                *Pose.ToHumanReadableString(), *Native->GetActorTransform().ToHumanReadableString(),
+                *GetNameSafe(Hit.GetActor()));
+            continue;
+        }
         if (!FMath::IsNearlyEqual(Thickness->GetPropertyValue_InContainer(Native), ExpectedThickness, 0.01f))
-        { LastFailure = TEXT("native_floor_hole_thickness_mismatch"); continue; }
+        {
+            LastFailure = FString::Printf(TEXT("native_floor_hole_thickness_mismatch: expected=%.3f actual=%.3f hit=%s"),
+                ExpectedThickness, Thickness->GetPropertyValue_InContainer(Native), *GetNameSafe(Hit.GetActor()));
+            continue;
+        }
         FScriptArrayHelper Mounted(Foundations, Foundations->ContainerPtrToValuePtr<void>(Native));
         if (Mounted.Num() == 0) { LastFailure = TEXT("native_floor_hole_missing_mount"); continue; }
         bool bLive = true;
@@ -119,5 +165,8 @@ bool FSFNativeFloorHolePlacement::Validate(AFGHologram* Root, AFGHologram* Child
         if (!bSameCost) { LastFailure = TEXT("native_floor_hole_cost_mismatch"); continue; }
         return true;
     }
-    return Fail(*LastFailure);
+    Reason = FString::Printf(TEXT("%s; child=%s class=%s pose={%s} thickness=%.3f traceHits=%d"),
+        *LastFailure, *GetNameSafe(Child), *GetNameSafe(Child->GetBuildClass()),
+        *Pose.ToHumanReadableString(), ExpectedThickness, Hits.Num());
+    return false;
 }
