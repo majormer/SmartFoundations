@@ -59,6 +59,9 @@ struct SMARTFOUNDATIONS_API FSFConduitPlanEntry
 {
 	GENERATED_BODY()
 
+    /** Lossless default-field elision; construction still consumes this exact plan. */
+    bool NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess);
+
 	UPROPERTY()
 	ESFConduitPlanKind Kind = ESFConduitPlanKind::Belt;
 
@@ -131,6 +134,12 @@ struct SMARTFOUNDATIONS_API FSFConduitPlanEntry
         for (const auto& Item : Cost) if (!Item.ItemClass || Item.Amount < 0 || Item.Amount > 100000) return false;
         return true;
     }
+};
+
+template<>
+struct TStructOpsTypeTraits<FSFConduitPlanEntry> : TStructOpsTypeTraitsBase2<FSFConduitPlanEntry>
+{
+    enum { WithNetSerializer = true };
 };
 
 USTRUCT()

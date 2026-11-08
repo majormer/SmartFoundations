@@ -982,9 +982,16 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
                 FSFScalingSpec EntranceSpec;
                 const bool Staged = FindStagedSpec(self, EntranceSpec, false);
                 const bool Valid = SFNativeAttachmentGridState::Prepare(self, Staged ? &EntranceSpec : nullptr);
-                scope(self, Inventory);
-                if (!Valid) self->AddConstructDisqualifier(UFGCDInvalidPlacement::StaticClass());
-                return;
+                if (!Valid || !FSFConveyorBeltPlan::IsPrepared(self))
+                {
+                    scope(self, Inventory);
+                    if (!Valid) self->AddConstructDisqualifier(UFGCDInvalidPlacement::StaticClass());
+                    return;
+                }
+                // Attachment legality still gates this request. A prepared belt plan
+                // must then use its parent-only native validation below, just like
+                // other scaled factories. Its fresh copies have no independent aim
+                // or floor state; the plan owns their exact geometry, peers and cost.
             }
             if (SFRailroadAttachmentHologramState::IsRequestActive() && SFRailroadAttachmentHologramState::IsHandled(self)
                 && !self->GetParentHologram())
