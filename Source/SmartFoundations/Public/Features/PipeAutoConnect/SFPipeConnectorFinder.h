@@ -31,7 +31,10 @@ public:
 		AFGBuildable* Building,
 		TArray<UFGPipeConnectionComponent*>& OutConnectors);
 
-	/** Get all pipe connectors on a junction hologram. */
+	/** Ports which native attachment construction will consume before Auto-Connect. */
+	static TArray<FName> GetNativeSnapReservations(AFGHologram* JunctionHologram);
+
+	/** Get junction ports available to Auto-Connect, excluding native snap reservations. */
 	static void GetJunctionConnectors(
 		AFGHologram* JunctionHologram,
 		TArray<UFGPipeConnectionComponent*>& OutConnectors);

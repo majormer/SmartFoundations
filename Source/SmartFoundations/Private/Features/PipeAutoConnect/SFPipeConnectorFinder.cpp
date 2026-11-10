@@ -7,7 +7,9 @@
 #include "Buildables/FGBuildable.h"
 #include "Hologram/FGHologram.h"
 #include "Hologram/FGPipelineJunctionHologram.h"
+#include "Hologram/FGPipeAttachmentHologram.h"
 #include "FGPipeConnectionComponent.h"
+#include "UObject/UnrealType.h"
 
 bool FSFPipeConnectorFinder::IsPipelineJunctionHologram(AFGHologram* Hologram)
 {
@@ -105,6 +107,42 @@ void FSFPipeConnectorFinder::GetPipeConnectors(
 	}
 }
 
+TArray<FName> FSFPipeConnectorFinder::GetNativeSnapReservations(AFGHologram* JunctionHologram)
+{
+	TArray<FName> Reserved;
+	auto* Attachment = Cast<AFGPipeAttachmentHologram>(JunctionHologram);
+	if (!Attachment) return Reserved;
+
+	// Hologram ports are not physically connected yet. Native insertion will split
+	// the existing pipeline and consume its named inline pair during construction.
+	static const auto* Pipe = FindFProperty<FObjectPropertyBase>(AFGPipeAttachmentHologram::StaticClass(), TEXT("mSnappedPipe"));
+	static const auto* Endpoint = FindFProperty<FObjectPropertyBase>(AFGPipeAttachmentHologram::StaticClass(), TEXT("mSnappedConnectionComponent"));
+	if (Pipe && IsValid(Pipe->GetObjectPropertyValue_InContainer(Attachment)))
+	{
+		Reserved.Add(TEXT("Connection0"));
+		Reserved.Add(TEXT("Connection1"));
+	}
+	else if (Endpoint && IsValid(Endpoint->GetObjectPropertyValue_InContainer(Attachment)))
+	{
+		// This index belongs to the native cached connection array, NOT GetComponents
+		// enumeration. Resolve it to the actual component's stable name.
+		static const auto* Index = FindFProperty<FIntProperty>(AFGPipeAttachmentHologram::StaticClass(), TEXT("mSnapConnectionIndex"));
+		static const auto* Ports = FindFProperty<FArrayProperty>(AFGPipeAttachmentHologram::StaticClass(), TEXT("mPipeConnectionComponents"));
+		if (Index && Ports)
+		{
+			FScriptArrayHelper Array(Ports, Ports->ContainerPtrToValuePtr<void>(Attachment));
+			const int32 Selected = Index->GetPropertyValue_InContainer(Attachment);
+			const auto* Inner = CastField<FObjectPropertyBase>(Ports->Inner);
+			if (Inner && Array.IsValidIndex(Selected))
+			{
+				if (const auto* Port = Cast<UFGPipeConnectionComponentBase>(Inner->GetObjectPropertyValue(Array.GetRawPtr(Selected))))
+					Reserved.Add(Port->GetFName());
+			}
+		}
+	}
+	return Reserved;
+}
+
 void FSFPipeConnectorFinder::GetJunctionConnectors(
 	AFGHologram* JunctionHologram,
 	TArray<UFGPipeConnectionComponent*>& OutConnectors)
@@ -118,12 +156,13 @@ void FSFPipeConnectorFinder::GetJunctionConnectors(
 
 	TArray<UActorComponent*> Components;
 	JunctionHologram->GetComponents(UFGPipeConnectionComponent::StaticClass(), Components);
+	const TArray<FName> Reserved = GetNativeSnapReservations(JunctionHologram);
 
 	for (UActorComponent* Comp : Components)
 	{
 		if (UFGPipeConnectionComponent* PipeConn = Cast<UFGPipeConnectionComponent>(Comp))
 		{
-			OutConnectors.Add(PipeConn);
+			if (!Reserved.Contains(PipeConn->GetFName())) OutConnectors.Add(PipeConn);
 		}
 	}
 }

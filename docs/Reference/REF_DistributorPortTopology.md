@@ -63,6 +63,23 @@ World-facing labels are intentionally omitted. A rotated distributor retains the
 
 Every listed connector is 100 cm from the actor origin on its listed local axis.
 
+### Native pipe attachment reservations
+
+A junction snapped into an existing pipeline reserves `Connection0` and `Connection1`
+for the native split operation. Those hologram ports can still report unconnected before
+construction; they are not available for generated factory branches or manifold lanes.
+A snap directly to a pipe endpoint reserves only the selected component from the native
+`mPipeConnectionComponents` array and `mSnapConnectionIndex`. Resolve that component to its
+name rather than interpreting the index as `GetComponents()` order.
+
+`FSFPipeConnectorFinder::GetNativeSnapReservations` applies this contract to both branch
+and lane candidates. Reservation changes participate in the pipe preview cache signature,
+so snapping or unsnapping at an otherwise unchanged transform reevaluates the routes.
+Without this reservation, a scaled junction inserted into a pipeline can preview an
+additional manifold pipe to the same inline port; native construction retains its split
+connection and the generated pipe is left disconnected. The reservation test covers
+insertion, endpoint selection, rotation, and restoring availability after unsnapping.
+
 ### Lift-mounted conveyor splitters
 
 The floor-mounted port table does not describe the lift-mounted variants. On CL 513885,

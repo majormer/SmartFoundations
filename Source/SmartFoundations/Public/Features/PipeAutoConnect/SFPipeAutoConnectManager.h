@@ -110,6 +110,7 @@ private:
 	FVector LastEvalFirstJunctionLoc = FVector::ZeroVector;
 	FVector LastEvalLastJunctionLoc = FVector::ZeroVector;
 	float LastEvalLogisticsRange = -1.0f;
+	uint32 LastEvalNativeReservations = 0;
 
 	/**
 	 * Spawn a pipe child hologram between two connectors.
