@@ -124,11 +124,18 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 		const FTransform ParentTransformNow = ParentJunctionHologram->GetActorTransform();
 		const FVector FirstLoc = AllJunctions[0] ? AllJunctions[0]->GetActorLocation() : FVector::ZeroVector;
 		const FVector LastLoc = AllJunctions.Last() ? AllJunctions.Last()->GetActorLocation() : FVector::ZeroVector;
+		uint32 NativeReservations = 0;
+		for (AFGHologram* Junction : AllJunctions)
+		{
+			for (FName Port : FSFPipeConnectorFinder::GetNativeSnapReservations(Junction))
+				NativeReservations = HashCombine(NativeReservations, HashCombine(GetTypeHash(Junction), GetTypeHash(Port)));
+		}
 
 		if (bHasLastEvalSignature
 			&& AllJunctions.Num() == LastEvalJunctionCount
 			&& bParentLockedNow == bLastEvalParentLocked
 			&& RangeNow == LastEvalLogisticsRange
+			&& NativeReservations == LastEvalNativeReservations
 			&& ParentTransformNow.Equals(LastEvalParentTransform, 0.5f)
 			&& FirstLoc.Equals(LastEvalFirstJunctionLoc, 0.5f)
 			&& LastLoc.Equals(LastEvalLastJunctionLoc, 0.5f))
@@ -137,6 +144,7 @@ void FSFPipeAutoConnectManager::ProcessAllJunctions(AFGHologram* ParentJunctionH
 			return;
 		}
 		bHasLastEvalSignature = true;
+		LastEvalNativeReservations = NativeReservations;
 		LastEvalParentTransform = ParentTransformNow;
 		bLastEvalParentLocked = bParentLockedNow;
 		LastEvalJunctionCount = AllJunctions.Num();

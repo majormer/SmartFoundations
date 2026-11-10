@@ -1,5 +1,6 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
 #include "Features/Scaling/SFScalingSpec.h"
+#include "Features/Scaling/Net/SFConduitSchema.h"
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
 #include "Misc/ScopeExit.h"
@@ -21,6 +22,34 @@ TArray<uint8> Canonical(FSFConduitPlanEntry& Entry)
     return Bytes;
 }
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSFConduitSchemaIdentityTest,
+    "SmartFoundations.Network.ConduitSchemaIdentity", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FSFConduitSchemaIdentityTest::RunTest(const FString& Parameters)
+{
+    using SFConduitEncoding::HashSchemaToken;
+    const auto Fingerprint = [](const TArray<FString>& Tokens)
+    {
+        uint32 Hash = 0;
+        for (const FString& Token : Tokens) Hash = HashSchemaToken(Token, Hash);
+        return Hash;
+    };
+    // Actual Shipping-process spellings captured from the failing Windows/Linux pair.
+    const TArray<FString> Client = { TEXT("recipe"), TEXT("TSubclassOf<UFGRecipe>"), TEXT("1"), TEXT("amount"), TEXT("int32"), TEXT("1") };
+    const TArray<FString> Server = { TEXT("Recipe"), TEXT("TSubclassOf<UFGRecipe>"), TEXT("1"), TEXT("Amount"), TEXT("int32"), TEXT("1") };
+    TestEqual(TEXT("Equivalent reflected identity is independent of process name casing"), Fingerprint(Client), Fingerprint(Server));
+    TestEqual(TEXT("Reflected names inside CPP types are normalized"), HashSchemaToken(TEXT("TSubclassOf<UFGRecipe>"), 0), HashSchemaToken(TEXT("TSubclassOf<UFGRECIPE>"), 0));
+    for (const auto& Change : TArray<TPair<int32, FString>>{ {0, TEXT("OtherRecipe")}, {4, TEXT("float")}, {5, TEXT("2")} })
+    {
+        auto Changed = Server;
+        Changed[Change.Key] = Change.Value;
+        TestNotEqual(TEXT("Different field, type or dimension still changes schema"), Fingerprint(Client), Fingerprint(Changed));
+    }
+    auto Reordered = Server;
+    Reordered.Swap(0, 3);
+    TestNotEqual(TEXT("Field order remains significant"), Fingerprint(Client), Fingerprint(Reordered));
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FSFConduitEncodingTest,
     "SmartFoundations.Network.CompactConduitLossless", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FSFConduitEncodingTest::RunTest(const FString& Parameters)

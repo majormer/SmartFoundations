@@ -1,5 +1,7 @@
 // Copyright (c) 2025-present Finalomega. All rights reserved. See LICENSE.md.
+#include "SmartFoundations.h"
 #include "Features/Scaling/SFScalingSpec.h"
+#include "Features/Scaling/Net/SFConduitSchema.h"
 #include "Misc/Crc.h"
 #include "UObject/CoreNet.h"
 #include "UObject/UnrealType.h"
@@ -39,9 +41,9 @@ bool Equal(const FProperty* P, const void* A, const void* B)
 
 uint32 SchemaProperty(const FProperty* P, uint32 Hash)
 {
-    Hash = FCrc::StrCrc32(*P->GetName(), Hash);
-    Hash = FCrc::StrCrc32(*P->GetCPPType(), Hash);
-    Hash = FCrc::StrCrc32(*FString::FromInt(P->ArrayDim), Hash);
+    Hash = HashSchemaToken(P->GetName(), Hash);
+    Hash = HashSchemaToken(P->GetCPPType(), Hash);
+    Hash = HashSchemaToken(FString::FromInt(P->ArrayDim), Hash);
     if (const auto* S = CastField<FStructProperty>(P))
         for (TFieldIterator<FProperty> It(S->Struct); It; ++It) Hash = SchemaProperty(*It, Hash);
     if (const auto* A = CastField<FArrayProperty>(P)) Hash = SchemaProperty(A->Inner, Hash);
@@ -114,7 +116,13 @@ bool FSFConduitPlanEntry::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOu
     uint8 WireVersion = Version;
     uint32 WireSchema = Schema();
     Ar << WireVersion << WireSchema;
-    if (Ar.IsError() || WireVersion != Version || WireSchema != Schema()) { Ar.SetError(); return false; }
+    if (Ar.IsError() || WireVersion != Version || WireSchema != Schema())
+    {
+        UE_LOG(LogSmartFoundations, Warning, TEXT("Conduit payload header rejected: version=%u expected=%u schema=%08x expected=%08x archiveError=%d. Check that client and server run matching Smart builds."),
+            WireVersion, Version, WireSchema, Schema(), Ar.IsError());
+        Ar.SetError();
+        return false;
+    }
     if (Ar.IsSaving() && (SplinePoints.Num() > 64 || Cost.Num() > 16)) { Ar.SetError(); return false; }
     const FSFConduitPlanEntry Default;
     FSFConduitPlanEntry Decoded;

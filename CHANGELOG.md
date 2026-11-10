@@ -7,12 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Audience note:** This changelog is read by players, not developers. Entries should describe what players experience — what was broken, what it felt like, and what's better now. Class names, internal APIs, and implementation details belong in code comments or design docs, not here. Unless an entry says otherwise, changes apply to both single-player and multiplayer.
 
+## [35.1.4] - Unreleased
+
+### Fixed
+
+- **Auto-Connect on Linux dedicated servers** - Fixed a 35.1.3 regression that disconnected Windows players when building Auto-Connect belt or pipe rows on a Linux dedicated server, even for small placements. Update Smart! on both the server and clients. (Issue #603, reported by @rmartignoni)
+- **Pipe junction Auto-Connect** - Fixed connecting pipes being left disconnected when a junction row started by snapping onto an existing pipe. Smart now keeps those existing connections available to the snapped junction and uses its remaining ports for the row. Straight, stepped and rotated rows retain their connections after saving and loading.
+
 ## [35.1.3] - 2026-11-08
 
 ### Fixed
 
 - **Multiplayer splitter and merger placement** - Fixed valid Auto-Connect previews refusing to build on dedicated servers. (Issue #597, reported by Ollie)
-- **Larger multiplayer Auto-Connect rows** - Reduced the network data needed to build connected rows, allowing larger placements without changing their connections, shapes or material costs. Rows that still exceed the limit keep their preview and resources so you can build a smaller section. Update Smart! on both the server and clients.
+- **Larger multiplayer Auto-Connect rows** - Reduced the network data needed to build connected rows, allowing larger placements without changing their connections, shapes or material costs. Rows that still exceed the limit keep their preview and resources so you can build a smaller section. Update Smart! on both the server and clients. (Issue #597, reported by Ollie)
 - **Extend with floor holes and pipes** - Fixed valid floor-hole placements being refused at rotated foundations and foundation seams, and valid completed pipes being incorrectly reported as failures. (Issue #580, reported by RomNiko and Erithi)
 - **Building after an interrupted Extend** - Fixed cases where an interrupted Extend left other Smart builds blocked until the game was restarted.
 - **Conveyor-pole spacing** - Ordinary conveyor-pole rows retain their intended horizontal spacing instead of shortening each span by about 10 cm. (Issue #601, reported by Erithi)
