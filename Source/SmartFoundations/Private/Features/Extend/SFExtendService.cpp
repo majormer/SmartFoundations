@@ -161,6 +161,8 @@ void USFExtendService::Initialize(USFSubsystem* InSubsystem)
 
 void USFExtendService::ClearExtendState()
 {
+    BlockedExtendTarget.Reset();
+    BlockedExtendHologram.Reset();
     if (bHasValidTarget)
     {
         // [EXTEND-MP] Stage an explicit commit CLEAR (client-only no-op otherwise): a pre-staged
@@ -1496,6 +1498,17 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
         LastEntryLog = EntryNow;
     }
 
+    if (BlockedExtendTarget.IsValid())
+    {
+        if (BlockedExtendTarget.Get() == HitBuilding && BlockedExtendHologram.Get() == SourceHologram
+            && FPlatformTime::Seconds() < RetryBlockedExtendAt)
+        {
+            return false;
+        }
+        BlockedExtendTarget.Reset();
+        BlockedExtendHologram.Reset();
+    }
+
     // Native construction can destroy the root before the subsystem poll unregisters
     // it. An expired preview cannot keep a committed/manual hold on another building.
     if (bHasValidTarget && !CurrentExtendHologram.IsValid())
@@ -1717,6 +1730,11 @@ bool USFExtendService::TryExtendFromBuilding(AFGBuildable* HitBuilding, AFGHolog
         SF_EXTEND_DIAGNOSTIC_LOG(LogSmartExtend, Warning, TEXT("ðŸ”„ EXTEND: Cannot activate - both directions blocked by existing buildings"));
         CurrentExtendTarget.Reset();
         bHasValidTarget = false;
+        // Refresh soon if another player clears a side while our aim stays put.
+        // A target or hologram change, or explicit source selection, retries immediately.
+        BlockedExtendTarget = HitBuilding;
+        BlockedExtendHologram = SourceHologram;
+        RetryBlockedExtendAt = FPlatformTime::Seconds() + 0.25;
         return false;
     }
 

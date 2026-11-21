@@ -193,6 +193,10 @@ struct FSFUpgradeAuditParams
 	/** Player who requested the audit (for RPC result delivery) */
 	UPROPERTY()
 	TWeakObjectPtr<class AFGPlayerController> RequestingPlayer;
+
+	/** Correlates a remote scan and its pages. Unset for local scans. */
+	UPROPERTY()
+	FGuid RequestId;
 };
 
 /**
@@ -249,6 +253,7 @@ public:
 	/** Cancel an in-progress audit */
 	UFUNCTION(BlueprintCallable, Category = "Smart! Upgrade")
 	void CancelAudit();
+	void CancelRemoteAudit(const AFGPlayerController* Requester, FGuid RequestId);
 
 	/** Check if an audit is currently in progress */
 	UFUNCTION(BlueprintPure, Category = "Smart! Upgrade")
@@ -318,6 +323,7 @@ private:
 
 	/** Finalize audit and build results */
 	void FinalizeAudit();
+	void ReplyToRemoteAudit(const FSFUpgradeAuditResult& Result) const;
 
 	/** Add entry to appropriate family bucket */
 	void AddEntryToResults(const FSFUpgradeAuditEntry& Entry);

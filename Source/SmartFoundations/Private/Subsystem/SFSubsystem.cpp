@@ -1166,7 +1166,13 @@ void USFSubsystem::Tick(float DeltaTime)
 	// EXTEND Mode Processing (Issue #219)
 	// AUTOMATIC: When holding a factory hologram and pointing at a matching building,
 	// EXTEND activates automatically (no toggle needed - matches original Smart! behavior)
-	if (ExtendService && ActiveHologram.IsValid())
+	const FIntVector& ExtendHoverGrid = GetCounterState().GridCounters;
+	const bool bLockedScalingGrid = ActiveHologram.IsValid() && ActiveHologram->IsHologramLocked()
+		&& (FMath::Abs(ExtendHoverGrid.X) > 1 || FMath::Abs(ExtendHoverGrid.Y) > 1 || FMath::Abs(ExtendHoverGrid.Z) > 1)
+		&& !IsExtendModeActive();
+	// Hover must not replace a locked scaling grid. Explicit source selection
+	// enters through the Extend panel, and active Extend still updates below.
+	if (ExtendService && ActiveHologram.IsValid() && !bLockedScalingGrid)
 	{
 		// Get the building the player is looking at via line trace
 		AFGBuildable* LookedAtBuilding = nullptr;

@@ -790,6 +790,11 @@ private:
     UPROPERTY()
     TWeakObjectPtr<AFGBuildable> LastBuiltFromBuilding;
 
+    // A failed direction check should not rewalk the same manifold every frame.
+    TWeakObjectPtr<AFGBuildable> BlockedExtendTarget;
+    TWeakObjectPtr<AFGHologram> BlockedExtendHologram;
+    double RetryBlockedExtendAt = 0.0;
+
     UPROPERTY()
     FSFExtendTopology LastExtendTopology;
 

@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > **Audience note:** This changelog is read by players, not developers. Entries should describe what players experience — what was broken, what it felt like, and what's better now. Class names, internal APIs, and implementation details belong in code comments or design docs, not here. Unless an entry says otherwise, changes apply to both single-player and multiplayer.
 
+## [35.1.5] - 2026-11-21
+
+Restores Smart! compatibility with Satisfactory 1.2.5.1 (build 520140). Update Satisfactory Mod Loader to 3.12.1 or later and install the same Smart! version on the server and clients.
+
+### Fixed
+
+- **Satisfactory 1.2.5.1 compatibility** - Fixed the crash when aiming Extend at a belt-connected Manufacturer after the game update. (Issue #626)
+- **Splitters at different heights on one lift** - A vertical grid can place two splitters on the same existing conveyor lift. Both connect and pass items through the lift. (Issue #607, reported by Beans42)
+- **Refinery Extend preview** - Conveyor lift previews now match the lifts that get built. (Issue #611, reported by Marra)
+- **Blueprint Dismantle after one Extend copy** - A single Extend copy and its new connections form a dismantle group so you can remove the copy without removing the original. (Issue #612, reported by Marra)
+- **Smoother previews at blocked Extend targets** - Smart pauses briefly between checks when a machine is blocked on both sides and makes Extend available when a side opens. (Issue #613, reported by @scotthowson)
+- **Spaced lift floor holes** - Lift floor-hole grids accept horizontal spacing in either direction on X and Y when their positions have valid support. Upward placement across separate floors can still fail and is tracked in #631. (Issue #615, reported by Marra)
+- **Blueprint Dismantle for floor-hole grids** - Newly placed conveyor lift and pipeline floor-hole grids can be removed as a group. (Issue #616, reported by Marra)
+- **Somersloops in Manufacturer Extend** - Copies keep the sampled Somersloop count, including three or four, and spend that number of loops. (Issue #617, reported by @scotthowson)
+- **Refused multiplayer placement** - The full grid stays visible when a click is refused, and you can adjust it or try again. (Issue #618, reported by @scotthowson)
+- **Multiplayer Upgrade scans** - Empty Radius scans finish and clear previous results. Large scans, including Entire Map, can return their results without exceeding the server's message size limit. (Issues #619 and #621, reported by @scotthowson)
+- **Fluid Extras junctions** - Water Extractor Extend can copy the Fluid Extras Junction DoubleT and reconnect its pipes. (Issue #620, reported by Beans42)
+- **Locked Assembler grids** - Looking at an existing Assembler no longer replaces your locked scaling grid with an Extend preview. (Issue #623, reported by Beans42)
+
 ## [35.1.4] - 2026-11-09
 
 ### Fixed

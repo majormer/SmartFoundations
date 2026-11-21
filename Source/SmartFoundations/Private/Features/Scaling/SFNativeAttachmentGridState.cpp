@@ -15,6 +15,7 @@
 #include "Buildables/FGBuildableConveyorLift.h"
 #include "FGFactoryConnectionComponent.h"
 #include "FGCharacterPlayer.h"
+#include "Patching/NativeHookManager.h"
 #include "Misc/ScopeExit.h"
 #include "UObject/UnrealType.h"
 
@@ -30,17 +31,109 @@ namespace
     TMap<TWeakObjectPtr<AFGHologram>, TWeakObjectPtr<AFGHologram>> EntrancePreparedCells;
     TArray<TWeakObjectPtr<AFGHologram>> EntranceRequestCells;
 
+    struct FLiftCut
+    {
+        TWeakObjectPtr<AFGBuildableConveyorLift> Lift;
+        FVector Location;
+        float Offset;
+        bool bConsumed = false;
+    };
+    TMap<TWeakObjectPtr<AFGHologram>, FLiftCut> PreparedLiftCuts;
+    // The splitter grid's native-size pitch. Leave at least this much shaft
+    // between cuts; independent validation on the full shaft cannot test this.
+    constexpr float MinimumSplitPitch = 400.0f;
+    constexpr float SplitTolerance = 1.0f;
+
+    const FObjectPropertyBase* GetConveyorProperty()
+    {
+        return FindFProperty<FObjectPropertyBase>(
+            AFGConveyorAttachmentHologram::StaticClass(), TEXT("mSnappedConveyor"));
+    }
+
+    const FFloatProperty* GetConveyorOffsetProperty()
+    {
+        return FindFProperty<FFloatProperty>(
+            AFGConveyorAttachmentHologram::StaticClass(), TEXT("mSnappedConveyorOffset"));
+    }
+
     UObject* GetEntranceBinding(AFGHologram* Hologram)
     {
         if (Hologram->IsA<AFGConveyorAttachmentHologram>())
         {
-            const FObjectPropertyBase* Conveyor = FindFProperty<FObjectPropertyBase>(
-                AFGConveyorAttachmentHologram::StaticClass(), TEXT("mSnappedConveyor"));
+            const FObjectPropertyBase* Conveyor = GetConveyorProperty();
             return Conveyor ? Conveyor->GetObjectPropertyValue_InContainer(Hologram) : nullptr;
         }
         const FObjectPropertyBase* Binding = FindFProperty<FObjectPropertyBase>(
             AFGPipePartHologram::StaticClass(), TEXT("mSnappedConnectionComponent"));
         return Binding ? Cast<UFGPipeConnectionComponentBase>(Binding->GetObjectPropertyValue_InContainer(Hologram)) : nullptr;
+    }
+
+    bool PrepareSharedLiftCuts(AFGHologram* Root, const TMap<UObject*, TArray<AFGHologram*>>& Groups)
+    {
+        for (const auto& Group : Groups)
+        {
+            if (Group.Value.Num() < 2) continue;
+            auto* Lift = Cast<AFGBuildableConveyorLift>(Group.Key);
+            const auto* OffsetProperty = GetConveyorOffsetProperty();
+            if (!IsValid(Lift) || !OffsetProperty || !GetConveyorProperty()
+                || Root->GetBuildClass()->GetFName() != TEXT("Build_ConveyorAttachmentSplitterLift_C"))
+                return false;
+
+            TArray<float> Offsets;
+            for (auto* Cell : Group.Value)
+            {
+                const float Offset = OffsetProperty->GetPropertyValue_InContainer(Cell);
+                if (!FMath::IsFinite(Offset) || Offset <= SplitTolerance || Offset >= Lift->GetLength() - SplitTolerance
+                    || Cell->GetBuildClass() != Root->GetBuildClass()) return false;
+                Offsets.Add(Offset);
+            }
+            Offsets.Sort();
+            for (int32 Index = 1; Index < Offsets.Num(); ++Index)
+                if (Offsets[Index] - Offsets[Index - 1] < MinimumSplitPitch - KINDA_SMALL_NUMBER) return false;
+        }
+        for (const auto& Group : Groups)
+        {
+            if (Group.Value.Num() < 2) continue;
+            auto* Lift = CastChecked<AFGBuildableConveyorLift>(Group.Key);
+            for (auto* Cell : Group.Value)
+                PreparedLiftCuts.Add(Cell, {Lift, Cell->GetActorLocation(),
+                    GetConveyorOffsetProperty()->GetPropertyValue_InContainer(Cell)});
+        }
+        return true;
+    }
+
+    void RebindAfterLiftSplit(AFGBuildableConveyorLift* Original, float Offset,
+        const TArray<AFGBuildableConveyorLift*>& Segments)
+    {
+        for (auto& Entry : PreparedLiftCuts)
+        {
+            FLiftCut& Cut = Entry.Value;
+            // The native split may already have destroyed the original.
+            if (Cut.bConsumed || !Cut.Lift.HasSameIndexAndSerialNumber(TWeakObjectPtr<AFGBuildableConveyorLift>(Original))) continue;
+            auto* Cell = Entry.Key.Get();
+            if (!IsValid(Cell)) continue;
+            if (FMath::IsNearlyEqual(Cut.Offset, Offset, SplitTolerance))
+            {
+                Cut.bConsumed = true;
+                continue; // Native ConfigureComponents still owns the cut in progress.
+            }
+            Cut.Lift.Reset();
+            if (Segments.Num() != 2) continue;
+            // The native return contract is [0, offset], [offset, length], in
+            // conveyor offset order (which is not necessarily world Z order).
+            auto* Replacement = Segments[Cut.Offset < Offset ? 0 : 1];
+            const float NewOffset = Cut.Offset < Offset ? Cut.Offset : Cut.Offset - Offset;
+            if (!IsValid(Replacement) || Replacement->GetClass() != Original->GetClass()
+                || Replacement->GetWorld() != Cell->GetWorld() || NewOffset <= SplitTolerance
+                || NewOffset >= Replacement->GetLength() - SplitTolerance) continue;
+            FVector Location, Direction;
+            Replacement->GetLocationAndDirectionAtOffset(NewOffset, Location, Direction);
+            if (!FMath::IsNearlyEqual(Location.Z, Cut.Location.Z, SplitTolerance)) continue;
+            GetConveyorProperty()->SetObjectPropertyValue_InContainer(Cell, Replacement);
+            GetConveyorOffsetProperty()->SetPropertyValue_InContainer(Cell, NewOffset);
+            Cut.Lift = Replacement;
+            Cut.Offset = NewOffset;
+        }
     }
 
     AFGHologram* SpawnEntranceCell(AFGHologram* Root, const FTransform& Pose)
@@ -225,8 +318,8 @@ bool SFNativeAttachmentGridState::Prepare(AFGHologram* Root, const FSFScalingSpe
                     Poses.Emplace(Rotation, Location);
                 }
     }
-    TSet<UObject*> UsedEndpoints;
-    UsedEndpoints.Add(GetEntranceBinding(Root));
+    TMap<UObject*, TArray<AFGHologram*>> UsedEndpoints;
+    UsedEndpoints.FindOrAdd(GetEntranceBinding(Root)).Add(Root);
     TArray<AFGHologram*> Accepted;
     for (const FTransform& Pose : Poses)
     {
@@ -238,12 +331,12 @@ bool SFNativeAttachmentGridState::Prepare(AFGHologram* Root, const FSFScalingSpe
         if (Resolution == EEntranceResolution::Accepted)
         {
             UObject* Endpoint = GetEntranceBinding(Cell);
-            if (UsedEndpoints.Contains(Endpoint)) return false;
-            UsedEndpoints.Add(Endpoint);
+            UsedEndpoints.FindOrAdd(Endpoint).Add(Cell);
             Accepted.Add(Cell);
         }
         else Accepted.Add(nullptr);
     }
+    if (!PrepareSharedLiftCuts(Root, UsedEndpoints)) return false;
     for (int32 Index = 0; Index < Accepted.Num(); ++Index)
     {
         if (!Previews.IsEmpty())
@@ -274,6 +367,22 @@ AFGHologram* SFNativeAttachmentGridState::FindPreparedCell(AFGHologram* Preview)
     return bEntranceRequestActive && Cell ? Cell->Get() : nullptr;
 }
 bool SFNativeAttachmentGridState::IsRequestActive() { return bEntranceRequestActive; }
+bool SFNativeAttachmentGridState::CanConstructPreparedLiftCell(AFGHologram* Cell)
+{
+    if (!bEntranceRequestActive) return true;
+    const FLiftCut* Cut = PreparedLiftCuts.Find(Cell);
+    return !Cut || (!Cut->bConsumed && Cut->Lift.IsValid() && GetEntranceBinding(Cell) == Cut->Lift.Get());
+}
+
+void SFNativeAttachmentGridState::InstallLiftSplitHook()
+{
+    SUBSCRIBE_METHOD_AFTER(AFGBuildableConveyorLift::Split,
+        [](const TArray<AFGBuildableConveyorLift*>& Segments, AFGBuildableConveyorLift* Lift, float Offset)
+        {
+            if (IsInGameThread() && bEntranceRequestActive && Lift && !PreparedLiftCuts.IsEmpty())
+                RebindAfterLiftSplit(Lift, Offset, Segments);
+        });
+}
 SFNativeAttachmentGridState::FRequestScope::FRequestScope()
 {
     bOwnsRequest = !bEntranceRequestActive;
@@ -286,5 +395,6 @@ SFNativeAttachmentGridState::FRequestScope::~FRequestScope()
     EntranceRequestCells.Reset();
     EntrancePreparedRoots.Reset();
     EntrancePreparedCells.Reset();
+    PreparedLiftCuts.Reset();
     bEntranceRequestActive = false;
 }

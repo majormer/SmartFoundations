@@ -761,7 +761,7 @@ void USmartUpgradePanel::RefreshAudit()
 					if (USFRCO* RCO = FGPC->GetRemoteCallObjectOfClass<USFRCO>())
 					{
 						SetRadiusScanPending(true);
-						RCO->Server_StartUpgradeAudit(Params);
+						RCO->RequestUpgradeAudit(Params);
 						UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Sent Refresh request via SFRCO"));
 						return;
 					}
@@ -801,7 +801,7 @@ void USmartUpgradePanel::CancelAudit()
 				{
 					if (USFRCO* RCO = FGPC->GetRemoteCallObjectOfClass<USFRCO>())
 					{
-						RCO->Server_CancelUpgradeAudit();
+						RCO->CancelUpgradeAuditRequest();
 						UE_LOG(LogSmartUI, VeryVerbose, TEXT("Upgrade Panel: Sent Cancel request via SFRCO"));
 						return;
 					}

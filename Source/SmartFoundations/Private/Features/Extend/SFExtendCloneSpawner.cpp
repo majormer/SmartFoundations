@@ -623,36 +623,13 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                 // [#497 L5] This child keeps its collision; kill only the clearance-detector overlap box.
                 USFHologramDataService::DisableClearanceDetector(LiftChild);
                 
-                // Apply lift top transform and force mesh rebuild (critical for visibility)
+                // Build the preview from the same captured lift state used by construction.
                 if (ChildData.bHasLiftData)
                 {
-                    FTransform TopTransform = ChildData.LiftData.TopTransform.ToFTransform();
-                    if (!LiftChild->ApplyCapturedNativeState(TopTransform, ChildData.LiftData.bIsReversed))
+                    const FTransform TopTransform = ChildData.LiftData.TopTransform.ToFTransform();
+                    if (!LiftChild->ApplyCapturedNativeState(TopTransform, ChildData.LiftData.bIsReversed)
+                        || !LiftChild->RebuildExtendPreviewMeshes())
                     { LiftChild->Destroy(); continue; }
-                    
-                    // Force mesh rebuild by simulating a location update.
-                    // [#497] Must go through RebuildExtendPreviewMeshes: the SF_ExtendChild tag is
-                    // already on (added before FinishSpawning), so a plain SetHologramLocationAndRotation
-                    // hits the drift-proof early-return and the lift preview stays a default stub.
-                    FHitResult DummyHit;
-                    DummyHit.Location = Location;
-                    DummyHit.ImpactPoint = Location;
-                    DummyHit.ImpactNormal = FVector::UpVector;
-                    LiftChild->RebuildExtendPreviewMeshes(DummyHit);
-                    
-                    // SetHologramLocationAndRotation may have reset mTopTransform - restore it
-                    if (!LiftChild->ApplyCapturedNativeState(TopTransform, ChildData.LiftData.bIsReversed))
-                    { LiftChild->Destroy(); continue; }
-                    
-                    // CRITICAL: SetHologramLocationAndRotation adjusts Z position - restore exact location
-                    LiftChild->SetActorLocation(Location);
-                    LiftChild->SetActorRotation(Rotation);
-                    
-                    // Call UpdateConnectionDirections to update the visual mesh orientations
-                    if (UFunction* UpdateFunc = AFGConveyorLiftHologram::StaticClass()->FindFunctionByName(TEXT("UpdateConnectionDirections")))
-                    {
-                        LiftChild->ProcessEvent(UpdateFunc, nullptr);
-                    }
                 }
                 
                 // Store lift data in registry BEFORE AddChild (matches working EXTEND code order)
@@ -1287,8 +1264,9 @@ int32 FSFCloneTopology::SpawnChildHolograms(
                     
                     if (ChildData.bHasLiftData)
                     {
-                        FTransform TopTransform = ChildData.LiftData.TopTransform.ToFTransform();
-                        if (!LiftLane->ApplyCapturedNativeState(TopTransform, ChildData.LiftData.bIsReversed))
+                        const FTransform TopTransform = ChildData.LiftData.TopTransform.ToFTransform();
+                        if (!LiftLane->ApplyCapturedNativeState(TopTransform, ChildData.LiftData.bIsReversed)
+                            || !LiftLane->RebuildExtendPreviewMeshes())
                         { LiftLane->Destroy(); continue; }
                     }
                     

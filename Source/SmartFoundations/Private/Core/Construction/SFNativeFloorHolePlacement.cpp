@@ -3,6 +3,7 @@
 #include "SmartFoundations.h"
 #include "Engine/CollisionProfile.h"
 #include "Engine/World.h"
+#include "Equipment/FGBuildGunBuild.h"
 #include "UObject/StrongObjectPtr.h"
 #include "UObject/UnrealType.h"
 #include "Hologram/FGPassthroughHologram.h"
@@ -10,6 +11,59 @@
 #include "FGConstructDisqualifier.h"
 #include "Core/SFNativeHit.h"
 #include "Misc/ScopeExit.h"
+
+namespace
+{
+    constexpr double LiftHoleRiseLimit = 400.0;
+    constexpr double LiftHoleLateralLimit = 100.0;
+    constexpr double LiftHolePoseTolerance = 0.1;
+}
+
+bool FSFNativeFloorHolePlacement::ReplayLiftHoleNudge(AFGPassthroughHologram* Native, const FTransform& Pose, FString& Detail)
+{
+    auto Fail = [&Detail](const TCHAR* Why) { Detail = Why; return false; };
+    const FQuat Frame = Native->GetActorQuat();
+    if (!Frame.Equals(Pose.GetRotation(), 0.001) || !Native->CanLockHologram()) return Fail(TEXT("cannot_lock_at_requested_rotation"));
+    const FVector Offset = Frame.UnrotateVector(Pose.GetLocation() - Native->GetActorLocation());
+    if (Offset.ContainsNaN() || FMath::Abs(Offset.X) > LiftHoleLateralLimit + LiftHolePoseTolerance
+        || FMath::Abs(Offset.Y) > LiftHoleLateralLimit + LiftHolePoseTolerance
+        || Offset.Z < -LiftHolePoseTolerance || Offset.Z > LiftHoleRiseLimit + LiftHolePoseTolerance)
+        return Fail(TEXT("outside_replay_range"));
+
+    // The temporary cell has no player lock marker. Set the local native
+    // lock context and let native nudge operations accept or reject each step.
+    Native->mHologramLockLocation = Native->GetActorLocation();
+    Native->mHologramIsLocked = true;
+    if (!Native->CanNudgeHologram()) return Fail(TEXT("cannot_nudge"));
+    // Use the ordinary full upward steps first, then the native half-step
+    // control for the lateral correction. Each axis still uses native bounds.
+    for (const int32 Axis : {2, 0, 1})
+    {
+        Native->SetSnapToGuideLines(Axis != 2);
+        const double Step = Native->GetNudgeDistance();
+        if (!FMath::IsFinite(Step) || Step <= 0 || FMath::Abs(Offset[Axis] / Step) > 16.0)
+            return Fail(TEXT("invalid_step_distance"));
+        const int32 Count = FMath::RoundToInt(Offset[Axis] / Step);
+        if (!FMath::IsNearlyEqual(Count * Step, Offset[Axis], LiftHolePoseTolerance))
+        {
+            Detail = FString::Printf(TEXT("axis=%d offset=%.3f step=%.3f"), Axis, Offset[Axis], Step);
+            return false;
+        }
+        FVector Direction = FVector::ZeroVector;
+        Direction[Axis] = FMath::Sign(Count);
+        for (int32 Index = 0; Index < FMath::Abs(Count); ++Index)
+        {
+            const auto Verdict = Native->NudgeTowardsWorldDirection(Frame.RotateVector(Direction));
+            if (Verdict != ENudgeFailReason::NFR_Success)
+            {
+                Detail = FString::Printf(TEXT("axis=%d step=%d verdict=%d"), Axis, Index, static_cast<int32>(Verdict));
+                return false;
+            }
+            Native->SetHologramNudgeLocation();
+        }
+    }
+    return Native->GetActorTransform().Equals(Pose, LiftHolePoseTolerance) || Fail(TEXT("final_pose_mismatch"));
+}
 
 // Native placement replay shared by captured conveyor companions and ordinary grids.
 // No buildable, live face, native registration or material payment is changed.
@@ -38,6 +92,11 @@ bool FSFNativeFloorHolePlacement::Validate(AFGHologram* Root, AFGHologram* Child
         Seen.Add(Holo); Query.AddIgnoredActor(Holo); PendingHolograms.Append(Holo->GetHologramChildren());
     }
     const FVector Axis = Pose.GetUnitAxis(EAxis::Z);
+    // A spaced grid can be off the foundation's default snap lattice, while
+    // an Extend companion can also have been nudged up from a lower floor.
+    const bool bReplayLiftNudge = Axis.Z > 0.999 && !Root->GetBlueprintDesigner()
+        && Child->GetBuildClass()->GetName() == TEXT("Build_FoundationPassthrough_Lift_C");
+    const bool bAllowLowerMount = bReplayLiftNudge && Root->GetBuildClass() != Child->GetBuildClass();
     TArray<FHitResult> Hits;
     // The recipe's native validator bounds legal thickness. Bound the query too;
     // malformed preset data must not turn a placement into an unbounded world probe.
@@ -73,10 +132,40 @@ bool FSFNativeFloorHolePlacement::Validate(AFGHologram* Root, AFGHologram* Child
             if (Hits.Num() > 64) return Fail(TEXT("floor_hole_hit_capture_exceeds_bound"));
         }
     }
+    if (bAllowLowerMount)
+    {
+        // A floor hole can be snapped to a real floor and then nudged upward.
+        // Only examine nearby lower mounts within this replay's height budget.
+        const FVector X = Pose.GetUnitAxis(EAxis::X);
+        const FVector Y = Pose.GetUnitAxis(EAxis::Y);
+        // A seam may have a valid native snap point on either side of the
+        // exact centre. Sample both sides within one native half-step.
+        for (const FVector Offset : {FVector::ZeroVector, X, -X, Y, -Y, X + Y, X - Y, -X + Y, -X - Y,
+            25.0 * X, -25.0 * X, 25.0 * Y, -25.0 * Y})
+        {
+            const FVector Center = Pose.GetLocation() + Offset;
+            TArray<FHitResult> Below;
+            Root->GetWorld()->LineTraceMultiByChannel(Below, Center - Axis * Span,
+                Center - Axis * (LiftHoleRiseLimit + ExpectedThickness * 0.5), BuildChannel, Query);
+            for (auto& Hit : Below)
+            {
+                if (!Hits.ContainsByPredicate([&Hit](const FHitResult& Existing) {
+                    return Existing.GetActor() == Hit.GetActor() && Existing.Item == Hit.Item
+                        && Existing.ImpactPoint.Equals(Hit.ImpactPoint, 1.5);
+                })) Hits.Add(MoveTemp(Hit));
+            }
+            if (Hits.Num() > 64) return Fail(TEXT("floor_hole_hit_capture_exceeds_bound"));
+        }
+    }
     if (Hits.Num() > 64) return Fail(TEXT("floor_hole_hit_capture_exceeds_bound"));
-    FString LastFailure = TEXT("native_floor_hole_no_eligible_surface");
+    TArray<FString> Failures;
     for (auto Hit : Hits)
     {
+        FString LastFailure;
+        ON_SCOPE_EXIT {
+            if (!LastFailure.IsEmpty() && Failures.Num() < 4)
+                Failures.AddUnique(MoveTemp(LastFailure));
+        };
         SFNativeHit::ResolveForPlacement(Hit);
         auto* Spawned = AFGHologram::SpawnHologramFromRecipe(Child->GetRecipe(), Root->GetOwner(), Pose.GetLocation(), Player);
         TStrongObjectPtr<AFGHologram> KeepAlive(Spawned);
@@ -109,7 +198,37 @@ bool FSFNativeFloorHolePlacement::Validate(AFGHologram* Root, AFGHologram* Child
             }
         }
         Native->SetActorHiddenInGame(false);
+        const bool bNudged = bReplayLiftNudge && !Native->GetActorTransform().Equals(Pose, LiftHolePoseTolerance);
+        FString NudgeFailure;
+        if (bNudged && !bAllowLowerMount
+            && !FMath::IsNearlyEqual(Pose.GetLocation().Z, Native->GetActorLocation().Z, LiftHolePoseTolerance))
+        {
+            LastFailure = TEXT("native_floor_hole_grid_requires_same_level_mount");
+            continue;
+        }
+        if (bNudged && !ReplayLiftHoleNudge(Native, Pose, NudgeFailure))
+        {
+            LastFailure = FString::Printf(TEXT("native_floor_hole_nudge_not_reproducible: %s expected={%s} actual={%s} hit=%s"),
+                *NudgeFailure, *Pose.ToHumanReadableString(), *Native->GetActorTransform().ToHumanReadableString(),
+                *GetNameSafe(Hit.GetActor()));
+            continue;
+        }
+        const FVector Nudge = Native->GetNudgeOffset();
         Native->ValidatePlacementAndCost(Player->GetInventory());
+        if (bNudged)
+        {
+            // Passthrough validation can resnap to the supporting foundation.
+            // Restore only the offset that native nudge accepted, then check
+            // clearance again at the final pose without clearing any verdict.
+            if (!Native->GetNudgeOffset().Equals(Nudge, LiftHolePoseTolerance))
+            {
+                LastFailure = TEXT("native_floor_hole_nudge_changed_during_validation");
+                continue;
+            }
+            Native->SetHologramNudgeLocation();
+            if (Native->GetActorTransform().Equals(Pose, LiftHolePoseTolerance))
+                static_cast<AFGHologram*>(Native)->CheckClearance();
+        }
         auto* Thickness = FindFProperty<FFloatProperty>(AFGPassthroughHologram::StaticClass(), TEXT("mSnappedBuildingThickness"));
         auto* Foundations = FindFProperty<FArrayProperty>(AFGPassthroughHologram::StaticClass(), TEXT("mSnappedFoundations"));
         auto* FoundationObject = Foundations ? CastField<FObjectPropertyBase>(Foundations->Inner) : nullptr;
@@ -166,7 +285,8 @@ bool FSFNativeFloorHolePlacement::Validate(AFGHologram* Root, AFGHologram* Child
         return true;
     }
     Reason = FString::Printf(TEXT("%s; child=%s class=%s pose={%s} thickness=%.3f traceHits=%d"),
-        *LastFailure, *GetNameSafe(Child), *GetNameSafe(Child->GetBuildClass()),
+        Failures.IsEmpty() ? TEXT("native_floor_hole_no_eligible_surface") : *FString::Join(Failures, TEXT("; ")),
+        *GetNameSafe(Child), *GetNameSafe(Child->GetBuildClass()),
         *Pose.ToHumanReadableString(), ExpectedThickness, Hits.Num());
     return false;
 }

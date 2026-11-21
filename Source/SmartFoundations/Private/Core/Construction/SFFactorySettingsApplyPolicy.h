@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreTypes.h"
+#include "FGInventoryComponent.h"
 #include "Math/UnrealMathUtility.h"
 #include "Resources/FGPowerShardDescriptor.h"
 
@@ -17,6 +18,31 @@ enum class ESFFactorySettingsApplyDecision : uint8
 /** Pure readiness/value policy shared by every factory-settings construction path. */
 namespace FSFFactorySettingsApplyPolicy
 {
+    // Four is the vanilla protocol bound, not the capacity of every factory.
+    inline constexpr int32 MaxProductionBoostShardCount = 4;
+
+    constexpr bool IsProductionBoostShardCountValid(int32 Count)
+    {
+        return Count >= 0 && Count <= MaxProductionBoostShardCount;
+    }
+
+    /** Bound Somersloop intent by the destination's own native slot filters. */
+    inline int32 GetProductionBoostShardTarget(const UFGInventoryComponent* Slots,
+        TSubclassOf<UFGItemDescriptor> ShardClass, int32 Count)
+    {
+        if (!Slots || !ShardClass) return 0;
+        Count = FMath::Clamp(Count, 0, MaxProductionBoostShardCount);
+        int32 Capacity = 0;
+        for (int32 Index = 0; Index < Slots->GetSizeLinear() && Capacity < Count; ++Index)
+        {
+            if (Slots->IsItemAllowed(ShardClass, Index))
+            {
+                Capacity += FMath::Clamp(Slots->GetSlotSize(Index, ShardClass), 0, Count - Capacity);
+            }
+        }
+        return Capacity;
+    }
+
     constexpr ESFFactorySettingsApplyDecision Decide(
         const bool bFactoryValid,
         const bool bActorHasBegunPlay,
