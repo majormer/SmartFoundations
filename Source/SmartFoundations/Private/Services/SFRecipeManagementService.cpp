@@ -666,7 +666,8 @@ void USFRecipeManagementService::InstallFactorySettingsSnapshot(const FSFFactory
 	if (Snapshot.bHasProductionBoost && Snapshot.ProductionBoostShardClass && FMath::IsFinite(Snapshot.ProductionBoost))
 	{
 		StoredProductionBoost = FMath::Clamp(Snapshot.ProductionBoost, 1.0f, 2.0f);
-		StoredProductionBoostShardCount = FMath::Clamp(Snapshot.ProductionBoostShardCount, 0, 2);
+		StoredProductionBoostShardCount = FMath::Clamp(Snapshot.ProductionBoostShardCount, 0,
+			FSFFactorySettingsApplyPolicy::MaxProductionBoostShardCount);
 		bHasStoredProductionBoost = StoredProductionBoost > 1.0f && StoredProductionBoostShardCount > 0;
 		StoredProductionBoostShardClass = bHasStoredProductionBoost ? Snapshot.ProductionBoostShardClass : nullptr;
 	}
@@ -1603,8 +1604,10 @@ bool USFRecipeManagementService::ApplyFactorySettingsSnapshot(AFGBuildableFactor
 	if (Snapshot.bHasProductionBoost && FMath::IsFinite(Snapshot.ProductionBoost)
 		&& Snapshot.ProductionBoost > 1.0f && Factory->CanChangeProductionBoost())
 	{
+		const int32 Target = FSFFactorySettingsApplyPolicy::GetProductionBoostShardTarget(
+			Factory->GetPotentialInventory(), Snapshot.ProductionBoostShardClass.Get(), Snapshot.ProductionBoostShardCount);
 		const int32 Transferred = FillShardType(EPowerShardType::PST_ProductionBoost,
-			Snapshot.ProductionBoostShardClass, FMath::Clamp(Snapshot.ProductionBoostShardCount, 0, 2));
+			Snapshot.ProductionBoostShardClass, Target);
 		float PendingValue = 1.0f;
 		if (Transferred > 0 && FSFFactorySettingsApplyPolicy::TryResolvePendingValue(
 			Snapshot.ProductionBoost, Factory->GetCurrentMaxProductionBoost(), PendingValue))

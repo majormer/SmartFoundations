@@ -167,27 +167,23 @@ public:
 	// Upgrade Audit RPCs
 	// ========================================
 
-	/**
-	 * Client requests to start an upgrade audit
-	 * 
-	 * @param Params - Audit parameters (radius, families, etc.)
-	 */
+	void RequestUpgradeAudit(FSFUpgradeAuditParams Params);
+	void CancelUpgradeAuditRequest();
+	void SendUpgradeAuditResult(FGuid RequestId, const FSFUpgradeAuditResult& Result);
+
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_StartUpgradeAudit(FSFUpgradeAuditParams Params);
 
-	/**
-	 * Client requests to cancel an in-progress audit
-	 */
-	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_CancelUpgradeAudit();
+	UFUNCTION(Server, Reliable)
+	void Server_CancelUpgradeAudit(FGuid RequestId);
 
-	/**
-	 * Server sends audit result back to the client
-	 * 
-	 * @param Result - The complete audit result snapshot
-	 */
+	// Header carries counts and bucket layout only. The client pulls one bounded page at a time.
 	UFUNCTION(Client, Reliable)
-	void Client_ReceiveAuditResult(FSFUpgradeAuditResult Result);
+	void Client_BeginUpgradeAuditResult(FGuid RequestId, FSFUpgradeAuditResult Header, int32 TotalEntries);
+	UFUNCTION(Server, Reliable)
+	void Server_RequestUpgradeAuditPage(FGuid RequestId, int32 Offset);
+	UFUNCTION(Client, Reliable)
+	void Client_ReceiveUpgradeAuditPage(FGuid RequestId, int32 Offset, const TArray<FSFUpgradeAuditEntry>& Entries);
 
 	// ========================================
 	// Upgrade Execution + Traversal RPCs ([UPGRADE-MP])
@@ -290,6 +286,21 @@ protected:
 	bool CheckRateLimit() const;
 
 private:
+	void ArmIncomingAuditTimeout();
+	void FinishIncomingAudit(bool bSuccess);
+	void ResetOutgoingAudit();
+
+	FGuid IncomingAuditId;
+	FSFUpgradeAuditResult IncomingAuditResult;
+	int32 IncomingAuditTotal = INDEX_NONE;
+	int32 IncomingAuditOffset = 0;
+	FTimerHandle IncomingAuditTimeout;
+
+	FGuid OutgoingAuditId;
+	TArray<FSFUpgradeAuditEntry> OutgoingAuditEntries;
+	int32 OutgoingAuditOffset = 0;
+	FTimerHandle OutgoingAuditTimeout;
+
 	// Future: Rate limiting state per client
 	// TMap<AFGPlayerController*, float> LastRequestTime;
 };

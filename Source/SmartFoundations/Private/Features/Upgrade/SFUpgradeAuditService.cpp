@@ -92,7 +92,15 @@ bool USFUpgradeAuditService::StartAudit(const FSFUpgradeAuditParams& Params)
 
 	if (bAuditInProgress)
 	{
+		// The world has one scan worker. A remote request may replace its own
+		// scan, but must not interrupt a different player's scan.
+		if (Params.RequestId.IsValid() && CurrentParams.RequestingPlayer != Params.RequestingPlayer
+			&& (!CurrentParams.RequestId.IsValid() || CurrentParams.RequestingPlayer.IsValid()))
+		{
+			return false;
+		}
 		UE_LOG(LogSmartUpgrade, Verbose, TEXT("USFUpgradeAuditService: Audit already in progress, canceling previous"));
+		ReplyToRemoteAudit(FSFUpgradeAuditResult{});
 		CancelAudit();
 	}
 
@@ -119,20 +127,18 @@ bool USFUpgradeAuditService::StartAudit(const FSFUpgradeAuditParams& Params)
 
 	// Gather buildables to scan
 	GatherBuildablesToScan();
+	CurrentScanIndex = 0;
 
 	if (PendingBuildables.Num() == 0)
 	{
 		UE_LOG(LogSmartUpgrade, Verbose, TEXT("USFUpgradeAuditService: No buildables to scan"));
-		WorkingResult.bSuccess = true;
-		WorkingResult.bInProgress = false;
-		WorkingResult.CompletionTime = FDateTime::Now();
-		LastResult = WorkingResult;
-		OnAuditCompleted.Broadcast(LastResult);
+		// Empty scans still owe their requester a completion reply.
+		WorkingResult.ProgressPercent = 100.0f;
+		FinalizeAudit();
 		return true;
 	}
 
 	bAuditInProgress = true;
-	CurrentScanIndex = 0;
 
 	UE_LOG(LogSmartUpgrade, Verbose, TEXT("USFUpgradeAuditService: Started audit - %d buildables to scan (Radius: %.0f)"),
 		PendingBuildables.Num(), Params.Radius);
@@ -172,6 +178,15 @@ void USFUpgradeAuditService::CancelAudit()
 	CurrentScanIndex = 0;
 	
 	UE_LOG(LogSmartUpgrade, Verbose, TEXT("USFUpgradeAuditService: Audit canceled"));
+}
+
+void USFUpgradeAuditService::CancelRemoteAudit(const AFGPlayerController* Requester, FGuid RequestId)
+{
+	if (bAuditInProgress && Requester && RequestId.IsValid()
+		&& CurrentParams.RequestingPlayer.Get() == Requester && CurrentParams.RequestId == RequestId)
+	{
+		CancelAudit();
+	}
 }
 
 void USFUpgradeAuditService::ClearResults()
@@ -609,31 +624,24 @@ void USFUpgradeAuditService::FinalizeAudit()
 			*FamilyResult.GetFamilyDisplayName(), FamilyResult.TotalCount, FamilyResult.UpgradeableCount);
 	}
 
-	// If we're on the server, send results back to the client via RCO
-	UWorld* World = GetWorld();
-	if (World && World->GetNetMode() < NM_Client)
+	ReplyToRemoteAudit(LastResult);
+	OnAuditCompleted.Broadcast(LastResult);
+}
+
+void USFUpgradeAuditService::ReplyToRemoteAudit(const FSFUpgradeAuditResult& Result) const
+{
+	if (!CurrentParams.RequestId.IsValid()) return;
+	if (AFGPlayerController* PC = CurrentParams.RequestingPlayer.Get())
 	{
-		if (AFGPlayerController* PC = CurrentParams.RequestingPlayer.Get())
+		// The RCO is owned by the controller that requested this scan.
+		if (PC->HasAuthority())
 		{
-			// RCOs are UObjects outered to the player controller, NOT actors — the old
-			// GetAllActorsOfClass scan here could never find one, so audit results were never
-			// delivered to clients (live finding 2026-06-10; the panel-side request lookup had
-			// the same bug, masking this one).
 			if (USFRCO* RCO = PC->GetRemoteCallObjectOfClass<USFRCO>())
 			{
-				RCO->Client_ReceiveAuditResult(LastResult);
-				UE_LOG(LogSmartUpgrade, Verbose, TEXT("USFUpgradeAuditService: Sent audit result to client via RCO"));
-			}
-			else
-			{
-				UE_LOG(LogSmartUpgrade, Verbose,
-					TEXT("USFUpgradeAuditService: Could not resolve USFRCO for %s - audit result not delivered."),
-					*GetNameSafe(PC));
+				RCO->SendUpgradeAuditResult(CurrentParams.RequestId, Result);
 			}
 		}
 	}
-
-	OnAuditCompleted.Broadcast(LastResult);
 }
 
 void USFUpgradeAuditService::AddEntryToResults(const FSFUpgradeAuditEntry& Entry)

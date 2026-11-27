@@ -29,6 +29,7 @@
 #include "Holograms/Logistics/SFConveyorBeltHologram.h"  // #341: DrainStackBuiltConveyors
 #include "FGConstructDisqualifier.h"
 #include "FGCentralStorageSubsystem.h"
+#include "FGCharacterPlayer.h"
 #include "FGGameState.h"
 #include "Core/SF_ATAnchor.h"
 #include "Patching/NativeHookManager.h"
@@ -356,6 +357,24 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 			if (!bFinalNativeStep)
 			{
 				return;
+			}
+			// [MP-CLIENT] Validate the intact grid before staging a replacement for its
+			// children. A refused native click leaves the same hologram alive, so
+			// stripping first can leave the next click building invisible cells.
+			static const FName GridChildTag(TEXT("SF_GridChild"));
+			if (FSFNetworkHelper::IsClient(World)
+				&& Holo->GetHologramChildren().ContainsByPredicate([](const AFGHologram* Child)
+				{
+					return IsValid(Child) && Child->Tags.Contains(GridChildTag);
+				}))
+			{
+				const auto* Player = Cast<AFGCharacterPlayer>(Holo->GetConstructionInstigator());
+				Holo->ValidatePlacementAndCost(Player ? Player->GetInventory() : nullptr);
+				if (!Holo->CanTakeNextBuildStep())
+				{
+					scope.Cancel();
+					return;
+				}
 			}
 			// [MP-SEAM] An existing-shaft extension is one native owner-bound placement.
 			// Keep its native child/state serialization intact: the generic scaling staging
@@ -710,7 +729,6 @@ void USFGameInstanceModule::RegisterClientGridChunkFireHook()
 			}
 
 			// Count Smart grid child holograms (tagged SF_GridChild). +1 for the parent/origin cell.
-			static const FName GridChildTag(TEXT("SF_GridChild"));
 			int32 GridChildCount = 0;
 			for (const AFGHologram* Child : Holo->GetHologramChildren())
 			{

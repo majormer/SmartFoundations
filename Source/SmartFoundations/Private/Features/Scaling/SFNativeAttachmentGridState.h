@@ -6,10 +6,12 @@ struct FSFScalingSpec;
 
 namespace SFNativeAttachmentGridState
 {
+    void InstallLiftSplitHook();
     bool IsHandled(const AFGHologram* Root);
     bool HasProxyGrid(AFGHologram* Root);
     bool Prepare(AFGHologram* Root, const FSFScalingSpec* Spec = nullptr);
     AFGHologram* FindPreparedCell(AFGHologram* Preview);
+    bool CanConstructPreparedLiftCell(AFGHologram* Cell);
     bool IsRequestActive();
     class FRequestScope
     {

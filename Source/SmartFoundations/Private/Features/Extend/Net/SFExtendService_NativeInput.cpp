@@ -58,6 +58,12 @@ namespace
         if (Package.StartsWith(TEXT("/Game/FactoryGame/")) || Package == TEXT("/Script/FactoryGame"))
             return true;
 
+        // #620: DoubleT uses the native pipe junction and the same exact
+        // connector and network checks at settlement as vanilla junctions.
+        if (Package == TEXT("/AB_FluidExtras/Junctions/PipeJunc-DT/Build_PipeJunc-DT"))
+            return BuildClass->GetFName() == TEXT("Build_PipeJunc-DT_C")
+                && BuildClass->IsChildOf(AFGBuildablePipelineJunction::StaticClass());
+
         // #593: released Industrial Evolution factory and power buildables.
         // The same allowlist applies at admission and settlement.
         if (Package.StartsWith(TEXT("/MkPlus/Buildables/")))
@@ -320,9 +326,69 @@ struct FSFExtendNativeInputOperation
     TMap<FString, FPowerWireReceipt> PowerWires;
     TMap<FObjectKey, FPowerPortReceipt> PowerPorts;
     TSet<FObjectKey> AuxiliaryOutputs;
+    TWeakObjectPtr<AFGBlueprintProxy> LocalSingleExtendGroup;
     bool bPowerFailed = false;
     bool bAdoptionFailed = false;
 };
+
+namespace
+{
+bool NeedsLocalSingleExtendGroup(const FSFExtendNativeInputOperation& Operation)
+{
+    return !Operation.bRemote && !Operation.Intent.bIsRestore && Operation.Intent.ScaledClones.IsEmpty()
+        && !Operation.Designer.IsValid() && !Operation.Designer.IsStale();
+}
+
+// A single local Extend has no second factory marked as a grid cell and no
+// staged server spec to create its group. Use the exact outputs of the paid,
+// wired operation, including any wires built after the native Construct call.
+AFGBlueprintProxy* GroupLocalSingleExtend(const FSFExtendNativeInputOperation& Operation, UWorld* World)
+{
+    if (!IsValid(World) || World->bIsTearingDown || World->GetNetMode() == NM_Client || !Operation.Wiring) return nullptr;
+    const auto* Parent = Cast<AFGBuildableFactory>(Operation.Wiring->GetParentIdentity().ResolveObjectPtr());
+    if (!IsValid(Parent) || !Operation.Wiring->ActualOutputs.Contains(FObjectKey(Parent))) return nullptr;
+
+    TSet<FObjectKey> Outputs = Operation.Wiring->ActualOutputs;
+    Outputs.Append(Operation.AuxiliaryOutputs);
+    TSet<FObjectKey> Sources;
+    for (const auto& Source : Operation.SourceBindings) Sources.Add(Source.Value);
+    TArray<AFGBuildable*> Members;
+    AFGBlueprintProxy* Group = nullptr;
+    for (const FObjectKey& Identity : Outputs)
+    {
+        auto* Member = Cast<AFGBuildable>(Identity.ResolveObjectPtr());
+        if (!IsValid(Member) || Member->IsActorBeingDestroyed() || !Member->HasAuthority()
+            || Member->GetWorld() != World || Member->GetBlueprintDesigner() || Sources.Contains(Identity)) return nullptr;
+        if (auto* Existing = Member->GetBlueprintProxy())
+        {
+            if (Group && Existing != Group) return nullptr;
+            Group = Existing;
+        }
+        Members.Add(Member);
+    }
+    if (Group)
+    {
+        // Never absorb or replace a native/foreign group. An already grouped
+        // result is acceptable only if it represents this exact operation.
+        if (!IsValid(Group) || Group->IsActorBeingDestroyed() || !Group->HasAuthority()
+            || Group->GetWorld() != World || !Group->GetLightweightClassAndIndices().IsEmpty()
+            || Group->GetBuildables().Num() != Members.Num()) return nullptr;
+        for (const auto* Member : Members)
+            if (Member->GetBlueprintProxy() != Group || !Group->GetBuildables().Contains(Member)) return nullptr;
+        return Group;
+    }
+    FActorSpawnParameters Params;
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    Group = World->SpawnActor<AFGBlueprintProxy>(AFGBlueprintProxy::StaticClass(), Parent->GetActorTransform(), Params);
+    if (!IsValid(Group) || Group->IsActorBeingDestroyed()) return nullptr;
+    for (auto* Member : Members)
+    {
+        Member->SetBlueprintProxy(Group);
+        Group->RegisterBuildable(Member);
+    }
+    return Group;
+}
+}
 
 bool USFExtendService::ValidateCapturedConstructionPlan(AFGHologram* Root) const
 {
@@ -617,7 +683,7 @@ bool USFExtendService::QueueNativeBuildInput(UFGBuildGunStateBuild* Receiver, bo
         || (Settings.bHasPotential && (!FMath::IsFinite(Settings.Potential) || Settings.Potential <= 0.0f))
         || (Settings.bHasProductionBoost && (!FMath::IsFinite(Settings.ProductionBoost) || Settings.ProductionBoost <= 0.0f))
         || Settings.OverclockShardCount < 0 || Settings.OverclockShardCount > 3
-        || Settings.ProductionBoostShardCount < 0 || Settings.ProductionBoostShardCount > 2)
+        || !FSFFactorySettingsApplyPolicy::IsProductionBoostShardCountValid(Settings.ProductionBoostShardCount))
     {
         UE_LOG(LogSmartFoundations, Log, TEXT("Extend/Restore native input refused before construction: invalid factory settings values."));
         return true;
@@ -854,6 +920,8 @@ void USFExtendService::FinishOwnedNativeInputDispatch(const TSharedPtr<FSFExtend
     if (bOutputs && Operation->bConveyorWiringVerified && Operation->bDistributorSettingsVerified && Operation->bCargoVerified
         && Operation->bConstructionMaterialsVerified && !Operation->bAdoptionFailed && ValidateOwnedPowerWiring(Operation))
     {
+        if (NeedsLocalSingleExtendGroup(*Operation))
+            Operation->LocalSingleExtendGroup = GroupLocalSingleExtend(*Operation, Owner->GetWorld());
         if (!Owner->QueueContinuation(Operation->Key, FactorySettingsEffect,
             [WeakService, Operation](FSFConstructionOperationRecord& NextRecord)
             {
@@ -969,6 +1037,10 @@ void USFExtendService::ObserveOwnedNativeInput(const TSharedPtr<FSFExtendNativeI
     {
         TSet<FObjectKey> AllOutputs = Operation->Wiring->ActualOutputs;
         AllOutputs.Append(Operation->AuxiliaryOutputs);
+        auto* RequiredGroup = Operation->LocalSingleExtendGroup.Get();
+        const bool bRequiresGroup = NeedsLocalSingleExtendGroup(*Operation);
+        if (bRequiresGroup)
+            bCompleteReceipts &= IsValid(RequiredGroup) && RequiredGroup->GetBuildables().Num() == AllOutputs.Num();
         for (const auto& Identity : AllOutputs)
         {
             auto* Built = Cast<AFGBuildable>(Identity.ResolveObjectPtr());
@@ -992,6 +1064,7 @@ void USFExtendService::ObserveOwnedNativeInput(const TSharedPtr<FSFExtendNativeI
             if (auto* Lift = Cast<AFGBuildableConveyorLift>(Built))
                 for (auto* Passthrough : Lift->GetSnappedPassthroughs())
                     if (Passthrough) bCompleteReceipts &= LiftAttachments.Lifts.Contains(Identity);
+            if (bRequiresGroup) bCompleteReceipts &= Built->GetBlueprintProxy() == RequiredGroup;
             if (auto* Group = Built->GetBlueprintProxy())
             {
                 if (!IsValid(Group) || Group->IsActorBeingDestroyed() || Group->GetWorld() != Owner->GetWorld())
@@ -1313,7 +1386,8 @@ void USFExtendService::ContinueOwnedFactorySettings(const TSharedPtr<FSFExtendNa
         const int32 OverclockTarget = bOverclock ? FSFFactorySettingsApplyPolicy::GetAffordableShardTarget(
             FMath::Clamp(Settings.OverclockShardCount, 0, 3), BeforeOverclock, Inventory->GetNumItems(OverclockClass)) : 0;
         const int32 BoostTarget = bBoost ? FSFFactorySettingsApplyPolicy::GetAffordableShardTarget(
-            FMath::Clamp(Settings.ProductionBoostShardCount, 0, 2), BeforeBoostItems, Inventory->GetNumItems(BoostClass)) : 0;
+            FSFFactorySettingsApplyPolicy::GetProductionBoostShardTarget(BeforeInventory, BoostClass, Settings.ProductionBoostShardCount),
+            BeforeBoostItems, Inventory->GetNumItems(BoostClass)) : 0;
         const int32 ExpectedOverclock = FMath::Max(BeforeOverclock, OverclockTarget);
         const int32 ExpectedBoost = FMath::Max(BeforeBoostItems, BoostTarget);
         Operation->SettingsReceipts.Add(Receipt); // retain this identity even on an unexpected partial result

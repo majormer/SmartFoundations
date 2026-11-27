@@ -804,6 +804,53 @@ FSFCloneTopology FSFCloneTopology::FromSource(const FSFSourceTopology& Source, c
                 if (!Hole.IsEmpty())
                     if (const auto* Clone = SourceIdToHologramId.Find(Hole)) Hole = *Clone;
 
+    // An older world can retain both native lift-side slots while the floor
+    // hole stores only one face. Complete that one-sided capture from the
+    // exact surviving slot and mouth pose, without searching nearby actors.
+    TMultiMap<FString, int32> LiftIndicesByHole;
+    for (int32 Index = 0; Index < Result.ChildHolograms.Num(); ++Index)
+    {
+        const auto& Lift = Result.ChildHolograms[Index];
+        if (!Lift.bHasLiftData || !Lift.bConstructible || Lift.bPreviewOnly) continue;
+        for (const auto& Slot : Lift.LiftData.PassthroughCloneIds)
+            if (!Slot.IsEmpty()) LiftIndicesByHole.AddUnique(Slot, Index);
+    }
+    for (auto& Hole : Result.ChildHolograms)
+    {
+        if (Hole.Role != TEXT("passthrough") || Hole.BuildClass != TEXT("Build_FoundationPassthrough_Lift_C")
+            || !Hole.bConstructible || Hole.bPreviewOnly || !Hole.bHasPassthroughLinks) continue;
+        const bool bMissingTop = Hole.PassthroughTop.Target.IsEmpty() && Hole.PassthroughTop.Connector.IsEmpty();
+        const bool bMissingBottom = Hole.PassthroughBottom.Target.IsEmpty() && Hole.PassthroughBottom.Connector.IsEmpty();
+        if (bMissingTop == bMissingBottom) continue;
+        const auto& Captured = bMissingTop ? Hole.PassthroughBottom : Hole.PassthroughTop;
+        FSFConnectionRef Candidates[2]; // bottom, top
+        bool bAmbiguous = false;
+        for (auto It = LiftIndicesByHole.CreateConstKeyIterator(Hole.HologramId); It; ++It)
+        {
+            const auto& Lift = Result.ChildHolograms[It.Value()];
+            const auto& Slots = Lift.LiftData.PassthroughCloneIds;
+            const FVector Top = Lift.LiftData.TopTransform.ToFTransform().GetTranslation();
+            if (Slots.Num() != 2 || Top.ContainsNaN() || FMath::IsNearlyZero(Top.Z))
+            { bAmbiguous = true; break; }
+            for (int32 Slot = 0; Slot < 2; ++Slot)
+            {
+                if (Slots[Slot] != Hole.HologramId) continue;
+                const int32 Face = (Slot == 0 ? Top.Z > 0 : Top.Z < 0) ? 1 : 0;
+                const FVector MouthOffset = Slot == 0 ? FVector::ZeroVector : Top;
+                const FVector Mouth = Lift.Transform.ToFTransform().TransformPosition(MouthOffset);
+                if (!Mouth.Equals(Hole.Transform.Location.ToFVector(), 1.0) || !Candidates[Face].Target.IsEmpty())
+                { bAmbiguous = true; break; }
+                Candidates[Face] = FSFConnectionRef(Lift.HologramId, Slot == 0 ? TEXT("ConveyorAny0") : TEXT("ConveyorAny1"));
+            }
+            if (bAmbiguous) break;
+        }
+        const auto& Known = Candidates[bMissingTop ? 0 : 1];
+        const auto& Missing = Candidates[bMissingTop ? 1 : 0];
+        if (!bAmbiguous && !Missing.Target.IsEmpty() && !Known.Target.IsEmpty()
+            && Known.Target == Captured.Target && Known.Connector == Captured.Connector)
+            (bMissingTop ? Hole.PassthroughTop : Hole.PassthroughBottom) = Missing;
+    }
+
     // ========================================================================
     // PHASE 2.7: Generate Wall Hole Clone Holograms
     // ========================================================================

@@ -3,6 +3,7 @@
 #include "Core/Net/SFRCO.h"
 #include "SmartFoundations.h"
 #include "Core/Construction/SFConstructionOperationCoordinator.h"
+#include "Core/Construction/SFFactorySettingsApplyPolicy.h"
 #include "Features/AutoConnect/SFBlueprintRailSeams.h"
 #include "Features/AutoConnect/SFBlueprintVehicleSeams.h"
 #include "Features/AutoConnect/SFBlueprintLiftSeams.h"
@@ -462,7 +463,7 @@ bool USFRCO::Server_StageExtendCommit_Validate(FSFExtendCommitSpec Spec)
         || (Settings.bHasPotential && (!FMath::IsFinite(Settings.Potential) || Settings.Potential <= 0.0f))
         || (Settings.bHasProductionBoost && (!FMath::IsFinite(Settings.ProductionBoost) || Settings.ProductionBoost <= 0.0f))
         || Settings.OverclockShardCount < 0 || Settings.OverclockShardCount > 3
-        || Settings.ProductionBoostShardCount < 0 || Settings.ProductionBoostShardCount > 2) return false;
+        || !FSFFactorySettingsApplyPolicy::IsProductionBoostShardCountValid(Settings.ProductionBoostShardCount)) return false;
 	// Sanity-bound the commit parameters (a forged/buggy commit cannot demand absurd spawning).
 	// For an EXTEND commit the clone topology is derived SERVER-side from these, never shipped.
 	if (Spec.ScaledClones.Num() > 1024 || Spec.ParentOffset.Size() > 1.0e7)
@@ -538,60 +539,6 @@ bool USFRCO::Server_StageWalkCommit_Validate(FSFWalkCommitSpec Spec)
 			return false;
 		}
 	}
-	return true;
-}
-
-// ========================================
-// Upgrade Audit RPCs
-// ========================================
-
-void USFRCO::Server_StartUpgradeAudit_Implementation(FSFUpgradeAuditParams Params)
-{
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("[SFRCO] Server_StartUpgradeAudit: Radius=%f"), Params.Radius);
-
-	USFSubsystem* Subsystem = USFSubsystem::Get(this);
-	if (!IsValid(Subsystem))
-	{
-		UE_LOG(LogSmartFoundations, Verbose, TEXT("[SFRCO] Server_StartUpgradeAudit: Failed to get SFSubsystem"));
-		return;
-	}
-
-	USFUpgradeAuditService* AuditService = Subsystem->GetUpgradeAuditService();
-	if (!IsValid(AuditService))
-	{
-		UE_LOG(LogSmartFoundations, Verbose, TEXT("[SFRCO] Server_StartUpgradeAudit: Failed to get UpgradeAuditService"));
-		return;
-	}
-
-	// Set the requesting player for result delivery back to client
-	Params.RequestingPlayer = Cast<AFGPlayerController>(GetOuter());
-
-	// Start the audit on the server
-	AuditService->StartAudit(Params);
-}
-
-bool USFRCO::Server_StartUpgradeAudit_Validate(FSFUpgradeAuditParams Params)
-{
-	float RadiusSq = 0.0f;
-	return SFConveyorGeometryPolicy::TryResolveRadiusSquared(Params.Origin, Params.Radius, RadiusSq);
-}
-
-void USFRCO::Server_CancelUpgradeAudit_Implementation()
-{
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("[SFRCO] Server_CancelUpgradeAudit"));
-
-	USFSubsystem* Subsystem = USFSubsystem::Get(this);
-	if (IsValid(Subsystem))
-	{
-		if (USFUpgradeAuditService* AuditService = Subsystem->GetUpgradeAuditService())
-		{
-			AuditService->CancelAudit();
-		}
-	}
-}
-
-bool USFRCO::Server_CancelUpgradeAudit_Validate()
-{
 	return true;
 }
 
@@ -723,21 +670,6 @@ void USFRCO::Client_ReceiveServerCloneTopology_Implementation(FSFCloneTopology T
 		if (USFExtendService* ExtendService = Subsystem->GetExtendService())
 		{
 			ExtendService->ReceiveServerCloneTopology(Topology);
-		}
-	}
-}
-
-void USFRCO::Client_ReceiveAuditResult_Implementation(FSFUpgradeAuditResult Result)
-{
-	UE_LOG(LogSmartFoundations, VeryVerbose, TEXT("[SFRCO] Client_ReceiveAuditResult: Success=%d, TotalScanned=%d"), Result.bSuccess, Result.TotalScanned);
-
-	// Results are received on the client and injected into the local audit service
-	USFSubsystem* Subsystem = USFSubsystem::Get(this);
-	if (IsValid(Subsystem))
-	{
-		if (USFUpgradeAuditService* AuditService = Subsystem->GetUpgradeAuditService())
-		{
-			AuditService->InjectAuditResult(Result);
 		}
 	}
 }

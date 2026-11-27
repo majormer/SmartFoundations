@@ -617,7 +617,13 @@ void FSFHologramHelperService::RegenerateChildHologramGrid(
 				ChildHologram = ASFBuildableChildHologram::SpawnPreview(ParentHologram,
 					FTransform(ParentHologram->GetActorRotation(), SpawnLocation), ESFChildHologramType::ScalingGrid,
 					ChildName, ASFFoundationPassthroughPreviewHologram::StaticClass());
-				SFFoundationPassthroughState::Sync(ParentHologram, ChildHologram);
+				if (ChildHologram)
+				{
+					// The native construction request recognizes the grid before
+					// these passthrough previews materialize their native cells.
+					ChildHologram->Tags.AddUnique(TEXT("SF_GridChild"));
+					SFFoundationPassthroughState::Sync(ParentHologram, ChildHologram);
+				}
 			}
 			else if (ParentHologram->IsA(AFGPassthroughHologram::StaticClass()))
 			{

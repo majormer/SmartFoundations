@@ -170,6 +170,7 @@ static bool SFIsSmartGridChildOrDescendant(const AFGHologram* Holo)
 void USFGameInstanceModule::RegisterSpecConstructionHooks()
 {
     FSFConveyorConstructionLinks::InstallHooks();
+    SFNativeAttachmentGridState::InstallLiftSplitHook();
 	static const FName GridChildTag(TEXT("SF_GridChild"));
     FSFBlueprintRailSeams::InstallNativeHooks();
 
@@ -1502,6 +1503,8 @@ void USFGameInstanceModule::RegisterSpecConstructionHooks()
 	SUBSCRIBE_METHOD_VIRTUAL(AFGBuildableHologram::Construct, BuildableHologramCDO,
 		[=](auto& scope, AFGBuildableHologram* self, TArray<AActor*>& out_children, FNetConstructionID constructionID)
 		{
+            if (!SFNativeAttachmentGridState::CanConstructPreparedLiftCell(self))
+            { scope.Override(static_cast<AActor*>(nullptr)); return; }
             if (IsValid(self) && self->ActorHasTag(TEXT("SF_LiftGridConstructionCell")))
             {
                 TStrongObjectPtr<AFGBuildableHologram> CellPin(self);

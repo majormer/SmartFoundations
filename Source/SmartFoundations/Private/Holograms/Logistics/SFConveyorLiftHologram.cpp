@@ -87,16 +87,16 @@ void ASFConveyorLiftHologram::SetHologramLocationAndRotation(const FHitResult& h
     }
 }
 
-void ASFConveyorLiftHologram::RebuildExtendPreviewMeshes(const FHitResult& hitResult)
+bool ASFConveyorLiftHologram::RebuildExtendPreviewMeshes()
 {
-    // [#497] The SF_ExtendChild early-return above drift-proofs this lift against vanilla's
-    // per-frame parent propagation — but it also swallowed the clone spawner's own one-shot
-    // "force mesh rebuild" call, leaving extend lift previews as default unraised stubs
-    // (mTopTransform set, mesh stack never rebuilt from it; builds were unaffected). This
-    // is the deliberate bypass for that one Smart-driven call: vanilla rebuilds the
-    // bottom/mid/top mesh stack from the current mTopTransform. The spawner re-asserts
-    // mTopTransform and restores the actor transform right after, as it always has.
-    Super::SetHologramLocationAndRotation(hitResult);
+    // A native aim update can overwrite the captured signed top before building
+    // the mesh stack. Use the same native refresh as a received lift transform.
+    const FTransform Pose = GetActorTransform();
+    const FTransform Top = GetTopTransform();
+    UFunction* Refresh = FindFunction(TEXT("OnRep_TopTransform"));
+    if (!Refresh || Refresh->NumParms != 0) return false;
+    ProcessEvent(Refresh, nullptr);
+    return GetTopTransform().Equals(Top, .001f) && GetActorTransform().Equals(Pose, .001f);
 }
 
 TArray<FItemAmount> ASFConveyorLiftHologram::GetBaseCost() const

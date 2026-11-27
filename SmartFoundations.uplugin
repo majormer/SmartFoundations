@@ -2,7 +2,7 @@
 	"AcceptsAnyRemoteVersion": true,
 	"FileVersion": 3,
 	"Version": 35,
-	"VersionName": "35.1.4",
+	"VersionName": "35.1.5",
 	"FriendlyName": "Smart!",
 	"Description": "Advanced hologram control for precision building - Rebuilt for Satisfactory 1.2",
 	"Category": "Modding",
@@ -27,7 +27,7 @@
 		{
 			"Name": "SML",
 			"Enabled": true,
-			"SemVersion": "^3.12.0"
+			"SemVersion": "^3.12.1"
 		},
 		{
 			"Name": "AbstractInstance",
@@ -41,8 +41,8 @@
 			"SemVersion": ">=2.0.0"
 		}
 	],
-	"SemVersion": "35.1.4",
-	"GameVersion": ">=502094",
+	"SemVersion": "35.1.5",
+	"GameVersion": ">=520140",
 	"LocalizationTargets": [
 		{
 			"Name": "SmartFoundations",
